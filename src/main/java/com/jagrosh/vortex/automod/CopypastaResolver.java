@@ -16,7 +16,6 @@
 package com.jagrosh.vortex.automod;
 
 import com.jagrosh.vortex.utils.OtherUtil;
-import java.util.Arrays;
 import java.util.HashMap;
 
 /**
