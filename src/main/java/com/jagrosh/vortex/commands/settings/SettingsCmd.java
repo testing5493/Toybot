@@ -18,7 +18,6 @@ package com.jagrosh.vortex.commands.settings;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.vortex.Vortex;
-import com.jagrosh.vortex.database.managers.PremiumManager.PremiumInfo;
 import com.jagrosh.vortex.utils.FormatUtil;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.MessageBuilder;

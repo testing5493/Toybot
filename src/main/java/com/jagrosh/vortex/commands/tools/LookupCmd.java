@@ -20,7 +20,6 @@ import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.vortex.Constants;
 import com.jagrosh.vortex.Emoji;
 import com.jagrosh.vortex.Vortex;
-import com.jagrosh.vortex.database.managers.PremiumManager;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.OtherUtil;
 import java.time.format.DateTimeFormatter;
