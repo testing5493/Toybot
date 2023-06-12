@@ -234,8 +234,8 @@ public class BasicLogger
             .setColor(Color.YELLOW)
                 .setAuthor(author==null ? getLoggingName(oldMessage) : getLoggingName(guild, author), author == null ? null : author.getEffectiveAvatarUrl())*/
     }
-    //Commented to prevent #0000 spam in modlogs
-    /*public void logNameChange(UserUpdateNameEvent event)
+
+    public void logNameChange(UserUpdateNameEvent event)
     {
         OffsetDateTime now = OffsetDateTime.now();
         User user = event.getUser();
@@ -287,7 +287,7 @@ public class BasicLogger
                         .setTimestamp(now)
                 );
             });
-    }*/
+    }
 
     public void logGuildJoin(GuildMemberJoinEvent event, OffsetDateTime now)
     {
