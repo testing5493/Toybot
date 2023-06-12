@@ -17,44 +17,36 @@ package com.jagrosh.vortex.commands.automod;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandTools;
 import net.dv8tion.jda.api.Permission;
-import com.jagrosh.vortex.Vortex;
-import com.jagrosh.vortex.commands.CommandExceptionListener;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class AntiinviteCmd extends Command
-{
+public class AntiinviteCmd extends Command {
     private final Vortex vortex;
-    
-    public AntiinviteCmd(Vortex vortex)
-    {
+
+    public AntiinviteCmd(Vortex vortex) {
         this.vortex = vortex;
         this.name = "antiinvite";
         this.guildOnly = true;
-        this.aliases = new String[] {
-                "antinvite", "antiinvites", "antinvites", "invitefiltering",
-                "anti-invite", "anti-invites", "invite-filter", "invitefilter"
-        };
+        this.aliases = new String[]{"antinvite", "antiinvites", "antinvites", "invitefiltering", "anti-invite", "anti-invites", "invite-filter", "invitefilter"};
         this.category = new Category("AutoMod");
         this.arguments = "<on/off|whitelist...>";
         this.help = "enables/disabled invite filter, adds invites to whitelist";
         this.userPermissions = new Permission[]{Permission.MANAGE_SERVER};
-        this.children = new Command[] {new WhitelistInvitesCmd(vortex)};
+        this.children = new Command[]{new WhitelistInvitesCmd(vortex)};
     }
 
     @Override
     protected void execute(CommandEvent event) {
         boolean enabled = false;
-        if(event.getArgs().isEmpty())
-        {
+        if (event.getArgs().isEmpty()) {
             event.replyError("Please specify if you want to turn on or off invites");
             try {
                 enabled = CommandTools.parseEnabledDisabled(event.getArgs().split(" ")[0]);
-            } catch (IllegalArgumentException e){
+            } catch (IllegalArgumentException e) {
                 event.replyError("Please specify if invite filtering should be on or off.");
                 return;
             }

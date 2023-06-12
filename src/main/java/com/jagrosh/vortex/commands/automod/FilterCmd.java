@@ -17,30 +17,24 @@ package com.jagrosh.vortex.commands.automod;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
-import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Constants;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.automod.Filter;
 import com.jagrosh.vortex.database.managers.FilterManager;
-import com.jagrosh.vortex.database.managers.PremiumManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.MessageEmbed.Field;
-
 
 import java.util.Arrays;
 import java.util.List;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class FilterCmd extends Command
-{
+public class FilterCmd extends Command {
     private final Vortex vortex;
-    
-    public FilterCmd(Vortex vortex)
-    {
+
+    public FilterCmd(Vortex vortex) {
         this.vortex = vortex;
         this.guildOnly = true;
         this.name = "filter";
@@ -53,27 +47,18 @@ public class FilterCmd extends Command
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
-        StringBuilder sb = new StringBuilder(Constants.VORTEX_EMOJI);
-        sb.append(" The filter command is used to add and remove words from the bad words filter and the very bad words filter. "
-                + " The difference between the two filters is that the very bad words filter will be logged to the \"important modlogs\" channel,"
-                + " as its meant to log messages deleted because of slurs or other things that require a mods attention, opposed to being drowned out by the countless other logs. "
-                + "multiple words which are individually checked for within every message sent on the server. "
-                + "Additionally, a regex can be checked by surrounding the word in grave accents (\\`), or an exact "
-                + "quote can be checked for by surrounding the word in double quotation marks (\"). \n");
-        for(Command cmd: children)
-        {
-            sb.append("\n`").append(event.getClient().getPrefix()).append(name).append(" ").append(cmd.getName())
-                    .append(cmd.getArguments() == null ? "" : " " + cmd.getArguments()).append("` - ").append(cmd.getHelp());
+    protected void execute(CommandEvent event) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("The filter command is used to add and remove words from the bad words filter and the very bad words filter. " + " The difference between the two filters is that the very bad words filter will be logged to the \"important modlogs\" channel," + " as its meant to log messages deleted because of slurs or other things that require a mods attention, opposed to being drowned out by the countless other logs. " + "multiple words which are individually checked for within every message sent on the server. " + "Additionally, a regex can be checked by surrounding the word in grave accents (\\`), or an exact " + "quote can be checked for by surrounding the word in double quotation marks (\"). \n");
+        for (Command cmd : children) {
+            sb.append("\n`").append(event.getClient().getPrefix()).append(name).append(" ").append(cmd.getName()).append(cmd.getArguments() == null ? "" : " " + cmd.getArguments()).append("` - ").append(cmd.getHelp());
         }
+
         event.reply(sb.toString());
     }
-    
-    private static class FilterAddCmd extends Command
-    {
-        public FilterAddCmd()
-        {
+
+    private static class FilterAddCmd extends Command {
+        public FilterAddCmd() {
             this.guildOnly = true;
             this.name = "add";
             this.category = new Category("AutoMod");
@@ -84,16 +69,13 @@ public class FilterCmd extends Command
         }
 
         @Override
-        protected void execute(CommandEvent event)
-        {
-                // TODO: IMplement? idk
+        protected void execute(CommandEvent event) {
+            // TODO: IMplement? idk
         }
     }
-    
-    private class FilterRemoveCmd extends Command
-    {
-        public FilterRemoveCmd()
-        {
+
+    private class FilterRemoveCmd extends Command {
+        public FilterRemoveCmd() {
             this.guildOnly = true;
             this.name = "remove";
             this.category = new Category("AutoMod");
@@ -104,8 +86,7 @@ public class FilterCmd extends Command
         }
 
         @Override
-        protected void execute(CommandEvent event)
-        {
+        protected void execute(CommandEvent event) {
             long guildId = event.getGuild().getIdLong();
             String[] parts = event.getArgs().split("\\s+", 2);
             String filterName = parts[0].toLowerCase();
@@ -132,10 +113,9 @@ public class FilterCmd extends Command
                 } else {
                     filters.updateBadWordFilter(event.getGuild(), removeWordsFromFilter(filters.getBadWordsFilter(guildId), parts[1]));
                 }
+
                 event.reply("Successfully updated the " + (isVeryBadFilter ? "Very " : "") + "Bad Words filter!");
-            }
-            catch(IllegalArgumentException ex)
-            {
+            } catch (IllegalArgumentException ex) {
                 event.replyError(ex.getMessage());
             }
         }
@@ -149,11 +129,9 @@ public class FilterCmd extends Command
             return Filter.parseFilter(parsedFilteredWords.toString().trim());
         }
     }
-    
-    private class FilterListCmd extends Command
-    {
-        public FilterListCmd()
-        {
+
+    private class FilterListCmd extends Command {
+        public FilterListCmd() {
             this.guildOnly = true;
             this.name = "list";
             this.category = new Category("AutoMod");
@@ -164,22 +142,15 @@ public class FilterCmd extends Command
         }
 
         @Override
-        protected void execute(CommandEvent event)
-        {
+        protected void execute(CommandEvent event) {
             long guildId = event.getGuild().getIdLong();
             FilterManager filters = vortex.getDatabase().filters;
             Filter badWordsFilter = filters.getBadWordsFilter(guildId);
             Filter veryBadWordsFilter = filters.getVeryBadWordsFilter(guildId);
 
-            String embedContent = String.format("**Bad Words:** %s%n**Very Bad Words:**%s",
-                    badWordsFilter == null ? "_None_" : badWordsFilter.printContentEscaped(),
-                    veryBadWordsFilter == null ? "_None_" : veryBadWordsFilter.printContentEscaped()
-            ).trim();
+            String embedContent = String.format("**Bad Words:** %s%n**Very Bad Words:**%s", badWordsFilter == null ? "_None_" : badWordsFilter.printContentEscaped(), veryBadWordsFilter == null ? "_None_" : veryBadWordsFilter.printContentEscaped()).trim();
 
-            event.reply(new EmbedBuilder()
-                    .setColor(event.getSelfMember().getColor())
-                    .addField(new Field("\uD83D\uDEAF Filters", embedContent, true))
-                    .build());
+            event.reply(new EmbedBuilder().setColor(event.getSelfMember().getColor()).addField(new Field("\uD83D\uDEAF Filters", embedContent, true)).build());
             // Todo: add page turning if the embeds are too big
         }
     }

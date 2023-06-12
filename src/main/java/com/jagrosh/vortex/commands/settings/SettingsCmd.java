@@ -18,22 +18,18 @@ package com.jagrosh.vortex.commands.settings;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.vortex.Vortex;
-import com.jagrosh.vortex.database.managers.PremiumManager.PremiumInfo;
 import com.jagrosh.vortex.utils.FormatUtil;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 
 /**
- *
  * @author John Grosh (jagrosh)
  */
-public class SettingsCmd extends Command
-{
+public class SettingsCmd extends Command {
     private final Vortex vortex;
-    
-    public SettingsCmd(Vortex vortex)
-    {
+
+    public SettingsCmd(Vortex vortex) {
         this.vortex = vortex;
         this.name = "settings";
         this.category = new Category("Settings");
@@ -41,19 +37,12 @@ public class SettingsCmd extends Command
         this.guildOnly = true;
         this.userPermissions = new Permission[]{Permission.MANAGE_SERVER};
     }
-    
+
     @Override
-    protected void execute(CommandEvent event)
-    {
-        event.getChannel().sendMessage(new MessageCreateBuilder()
-                .setContent(FormatUtil.filterEveryone("**" + event.getSelfUser().getName() + "** settings on **" + event.getGuild().getName() + "**:"))
-                .addEmbeds(new EmbedBuilder()
-                        //.setThumbnail(event.getGuild().getIconId()==null ? event.getSelfUser().getEffectiveAvatarUrl() : event.getGuild().getIconUrl())
-                        .addField(vortex.getDatabase().settings.getSettingsDisplay(event.getGuild()))
-                        .addField(vortex.getDatabase().automod.getSettingsDisplay(event.getGuild()))
-                        .addField(vortex.getDatabase().filters.getFiltersDisplay(event.getGuild()))
-                        .setColor(event.getSelfMember().getColor())
-                        .build()).build()).queue();
+    protected void execute(CommandEvent event) {
+        event.getChannel().sendMessage(new MessageCreateBuilder().setContent(FormatUtil.filterEveryone("**" + event.getSelfUser().getName() + "** settings on **" + event.getGuild().getName() + "**:")).addEmbeds(new EmbedBuilder()
+                //.setThumbnail(event.getGuild().getIconId()==null ? event.getSelfUser().getEffectiveAvatarUrl() : event.getGuild().getIconUrl())
+                .addField(vortex.getDatabase().settings.getSettingsDisplay(event.getGuild())).addField(vortex.getDatabase().automod.getSettingsDisplay(event.getGuild())).addField(vortex.getDatabase().filters.getFiltersDisplay(event.getGuild())).setColor(event.getSelfMember().getColor()).build()).build()).queue();
     }
-    
+
 }

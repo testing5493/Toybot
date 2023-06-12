@@ -13,6 +13,5 @@ public class ToycatPallete {
     public static final Color LIGHT_BROWN = new Color(0xBA7632);
     public static final Color DARK_BROWN = new Color(0x472A10);
     public static final Color WHITE = new Color(0xF5FBF5);
-
     public static final Color DEFAULT_ROLE_WHITE = new Color(0xC2C7CD);
 }

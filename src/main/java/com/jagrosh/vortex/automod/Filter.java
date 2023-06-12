@@ -21,191 +21,178 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class Filter
-{
+public class Filter {
     public final static int MAX_CONTENT_LENGTH = 255;
-    
+
     private final static String[] TEST_CASES = {"welcome", "i will follow the rules", "this is a sentence"};
     public final List<Item> items = new ArrayList<>();
-    
-    public boolean test(String message)
-    {
-        if(items.isEmpty())
+
+    public boolean test(String message) {
+        if (items.isEmpty()) {
             return false;
+        }
+
         String lower = message.toLowerCase();
         return items.stream().anyMatch(item -> item.test(lower));
     }
-    
-    public String printContent()
-    {
+
+    public String printContent() {
         StringBuilder sb = new StringBuilder();
         items.forEach(item -> sb.append(" ").append(item.print()));
         return sb.toString().trim();
     }
-    
-    public String printContentEscaped()
-    {
+
+    public String printContentEscaped() {
         return printContent().replace("*", "\\*").replace("`", "\\`");
     }
-    
-    public static Filter parseFilter(String content) throws IllegalArgumentException
-    {
+
+    public static Filter parseFilter(String content) throws IllegalArgumentException {
         // pre checks
-        if(content.length() > MAX_CONTENT_LENGTH + 50) // parsing may reduce a bit
+        if (content.length() > MAX_CONTENT_LENGTH + 50) { // parsing may reduce a bit
             throw new IllegalArgumentException("Filter content is longer than " + MAX_CONTENT_LENGTH + " characters");
+        }
 
         // begin parsing
         Filter filter = new Filter();
         String current = content.trim();
-        while(!current.isEmpty())
-        {
-            switch(current.charAt(0))
-            {
-                case Quote.CHAR:
-                {
+        while (!current.isEmpty()) {
+            switch (current.charAt(0)) {
+                case Quote.CHAR -> {
                     int index = current.indexOf(Quote.CHAR, 1);
-                    if(index == -1)
+                    if (index == -1) {
                         throw new IllegalArgumentException("Missing closing quotations within provided filtered quote");
+                    }
+
                     filter.items.add(new Quote(current.substring(1, index)));
                     current = current.substring(index + 1).trim();
-                    break;
                 }
-                case Regex.CHAR:
-                {
+                case Regex.CHAR -> {
                     int index = current.indexOf(Regex.CHAR, 1);
-                    if(index == -1)
+                    if (index == -1) {
                         throw new IllegalArgumentException("Missing closing grave accent within provided filtered regex");
-                    try
-                    {
-                        filter.items.add(new Regex(current.substring(1, index)));
                     }
-                    catch(PatternSyntaxException ex)
-                    {
+
+                    try {
+                        filter.items.add(new Regex(current.substring(1, index)));
+                    } catch (PatternSyntaxException ex) {
                         throw new IllegalArgumentException("Invalid regex pattern `" + current.substring(1, index) + "`");
                     }
+
                     current = current.substring(index + 1).trim();
-                    break;
                 }
-                default:
-                {
+                default -> {
                     String[] parts = current.split("\\s+", 2);
                     filter.items.add(new Glob(parts[0]));
                     current = parts.length == 1 ? "" : parts[1];
-                    break;
                 }
             }
         }
-        
+
         // post checks
-        if(filter.items.isEmpty())
+        if (filter.items.isEmpty()) {
             throw new IllegalArgumentException("Filter contains no valid filtered items");
-        if(filter.printContent().length() > MAX_CONTENT_LENGTH)
+        }
+
+        if (filter.printContent().length() > MAX_CONTENT_LENGTH) {
             throw new IllegalArgumentException("Filter content is longer than " + MAX_CONTENT_LENGTH + " characters");
-        
+        }
+
         // sanity checks
-        if(filter.test(""))
+        if (filter.test("")) {
             throw new IllegalArgumentException("Filter activates on empty content");
-        for(String test: TEST_CASES)
-            if(filter.test(test))
+        }
+
+        for (String test : TEST_CASES) {
+            if (filter.test(test)) {
                 throw new IllegalArgumentException("Filter activates on test case `" + test + "`");
-        
+            }
+        }
+
         // return
         return filter;
     }
-    
-    public static abstract class Item
-    {
+
+    public static abstract class Item {
         abstract boolean test(String message);
+
         abstract String print();
     }
-    
-    public static class Glob extends Item
-    {
+
+    public static class Glob extends Item {
         private final boolean startWildcard, endWildcard;
         public final String glob;
-        
-        public Glob(String glob)
-        {
+
+        public Glob(String glob) {
             glob = glob.replaceAll("\\*+", "*"); // remove double wildcards
             this.startWildcard = glob.startsWith("*");
             this.endWildcard = glob.endsWith("*");
-            this.glob = glob.substring(startWildcard ? 1 : 0, endWildcard ? glob.length()-1 : glob.length());
+            this.glob = glob.substring(startWildcard ? 1 : 0, endWildcard ? glob.length() - 1 : glob.length());
         }
-        
+
         @Override
-        public boolean test(String message) 
-        {
+        public boolean test(String message) {
             String lower = message.toLowerCase();
             int index = -1;
-            while((index = lower.indexOf(glob, index + 1)) > -1)
-            {
-                if((startWildcard || isWordBoundary(lower, index - 1)) 
-                        && (endWildcard || isWordBoundary(lower, index + glob.length())))
+            while ((index = lower.indexOf(glob, index + 1)) > -1) {
+                if ((startWildcard || isWordBoundary(lower, index - 1)) && (endWildcard || isWordBoundary(lower, index + glob.length()))) {
                     return true;
+                }
             }
+
             return false;
         }
 
         @Override
-        String print()
-        {
+        String print() {
             return (startWildcard ? "*" : "") + glob.trim() + (endWildcard ? "*" : "");
         }
-        
-        private static boolean isWordBoundary(String str, int index)
-        {
-            if(index < 0 || index >= str.length())
+
+        private static boolean isWordBoundary(String str, int index) {
+            if (index < 0 || index >= str.length()) {
                 return true;
+            }
+
             char c = str.charAt(index);
             return !(c >= 'a' && c <= 'z') && !(c >= 'A' && c <= 'Z') && !(c >= '0' && c <= '9');
         }
     }
-    
-    public static class Quote extends Item
-    {
+
+    public static class Quote extends Item {
         public final static char CHAR = '"';
         public final String quote;
-        
-        public Quote(String quote)
-        {
+
+        public Quote(String quote) {
             this.quote = quote.toLowerCase();
         }
 
         @Override
-        public boolean test(String message)
-        {
+        public boolean test(String message) {
             return message.contains(quote);
         }
 
         @Override
-        String print()
-        {
+        String print() {
             return CHAR + quote + CHAR;
         }
     }
-    
-    public static class Regex extends Item
-    {
+
+    public static class Regex extends Item {
         public final static char CHAR = '`';
         public final Pattern pattern;
-        
-        public Regex(String pattern) throws PatternSyntaxException
-        {
+
+        public Regex(String pattern) throws PatternSyntaxException {
             this.pattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
         }
 
         @Override
-        public boolean test(String message)
-        {
+        public boolean test(String message) {
             return pattern.matcher(message).find();
         }
 
         @Override
-        String print()
-        {
+        String print() {
             return CHAR + pattern.pattern() + CHAR;
         }
     }

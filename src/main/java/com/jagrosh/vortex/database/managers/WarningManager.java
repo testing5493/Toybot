@@ -16,8 +16,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WarningManager extends DataManager implements ModlogManager
-{
+public class WarningManager extends DataManager implements ModlogManager {
     public static final SQLColumn<Long> GUILD_ID = new LongColumn("GUILD_ID", false, 0);
     public static final SQLColumn<Long> MOD_ID = new LongColumn("MOD_ID", false, 0);
     public static final SQLColumn<Long> USER_ID = new LongColumn("USER_ID", false, 0);
@@ -25,15 +24,12 @@ public class WarningManager extends DataManager implements ModlogManager
     public static final SQLColumn<Integer> CASE_ID = new IntegerColumn("CASE_ID", false, 0);
     public static final SQLColumn<Instant> TIME = new InstantColumn("TIME", false, Instant.EPOCH);
 
-    public WarningManager(Database connector)
-    {
+    public WarningManager(Database connector) {
         super(connector, "WARNINGS");
     }
 
-    public void logCase(Vortex vortex, Guild guild, long modId, long userId, String reason)
-    {
-        readWrite(selectAll(), rs ->
-        {
+    public void logCase(Vortex vortex, Guild guild, long modId, long userId, String reason) {
+        readWrite(selectAll(), rs -> {
             Instant now = Instant.now();
             int id = Database.genNewId(guild.getIdLong());
             rs.moveToInsertRow();
@@ -49,16 +45,13 @@ public class WarningManager extends DataManager implements ModlogManager
     }
 
     public int getMaxId(long guildId) {
-        String query = selectAll(GUILD_ID.is(guildId)+" ORDER BY CASE_ID DESC NULLS LAST");
+        String query = selectAll(GUILD_ID.is(guildId) + " ORDER BY CASE_ID DESC NULLS LAST");
         return read(query, rs -> rs.next() ? rs.getInt("CASE_ID") : -1);
     }
 
-    public String updateReason(long guildId, int id, String reason)
-    {
-        return readWrite(selectAll(CASE_ID.is(id)+" AND "+GUILD_ID.is(guildId)), rs ->
-        {
-            if (rs.next())
-            {
+    public String updateReason(long guildId, int id, String reason) {
+        return readWrite(selectAll(CASE_ID.is(id) + " AND " + GUILD_ID.is(guildId)), rs -> {
+            if (rs.next()) {
                 String oldReason = REASON.getValue(rs);
                 rs.updateString("REASON", Database.sanitise(reason));
                 rs.updateRow();
@@ -70,15 +63,13 @@ public class WarningManager extends DataManager implements ModlogManager
     }
 
     @Override
-    protected final String primaryKey()
-    {
-        return GUILD_ID+", "+ CASE_ID;
+    protected final String primaryKey() {
+        return GUILD_ID + ", " + CASE_ID;
     }
 
     @Override
-    public final Modlog deleteCase(long guildId, int id)
-    {
-        return readWrite(selectAll(GUILD_ID.is(guildId)+" AND "+ CASE_ID.is(id)), rs -> {
+    public final Modlog deleteCase(long guildId, int id) {
+        return readWrite(selectAll(GUILD_ID.is(guildId) + " AND " + CASE_ID.is(id)), rs -> {
             long modId = rs.getLong("MOD_ID");
             String reason = rs.getString("REASON");
             Modlog modlog = new Modlog(USER_ID.getValue(rs), modId, Action.KICK, id, reason, TIME.getValue(rs));
@@ -87,11 +78,9 @@ public class WarningManager extends DataManager implements ModlogManager
         });
     }
 
-    public List<Modlog> getModlogs(long guildId, long userId)
-    {
-        String query = selectAll(GUILD_ID.is(guildId)+" AND "+USER_ID.is(userId));
-        return read(query, rs ->
-        {
+    public List<Modlog> getModlogs(long guildId, long userId) {
+        String query = selectAll(GUILD_ID.is(guildId) + " AND " + USER_ID.is(userId));
+        return read(query, rs -> {
             List<Modlog> modlogs = new ArrayList<>();
             while (rs.next()) {
                 long modId = rs.getLong("MOD_ID");
@@ -99,6 +88,7 @@ public class WarningManager extends DataManager implements ModlogManager
                 String reason = rs.getString("REASON");
                 modlogs.add(new Modlog(userId, modId, Action.WARN, id, reason, TIME.getValue(rs)));
             }
+
             return modlogs;
         });
     }

@@ -28,15 +28,11 @@ import java.util.stream.Collectors;
 /**
  * @author Michael Ritter (Kantenkugel)
  */
-public class WhitelistInvitesCmd extends Command
-{
+public class WhitelistInvitesCmd extends Command {
     private final Vortex vortex;
-    private final static String DESCRIPTION = "Used to add/remove guilds from the invite whitelist. " +
-            "Invites to whitelisted guilds are completely ignored by the automod.\n" +
-            "Valid options are `ADD GUILD_ID[ GUILD_ID...]`, `REMOVE GUILD_ID[ GUILD_ID...]` and `SHOW`";
+    private final static String DESCRIPTION = "Used to add/remove guilds from the invite whitelist. " + "Invites to whitelisted guilds are completely ignored by the automod.\n" + "Valid options are `ADD GUILD_ID[ GUILD_ID...]`, `REMOVE GUILD_ID[ GUILD_ID...]` and `SHOW`";
 
-    public WhitelistInvitesCmd(Vortex vortex)
-    {
+    public WhitelistInvitesCmd(Vortex vortex) {
         this.vortex = vortex;
         this.name = "whitelist";
         this.guildOnly = true;
@@ -47,11 +43,9 @@ public class WhitelistInvitesCmd extends Command
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
+    protected void execute(CommandEvent event) {
         String[] args = event.getArgs().toLowerCase().split("\\s+");
-        switch(args[0])
-        {
+        switch (args[0]) {
             case "show":
                 handleShow(event, args);
                 break;
@@ -67,87 +61,76 @@ public class WhitelistInvitesCmd extends Command
         }
     }
 
-    private void handleShow(CommandEvent event, String[] args)
-    {
-        if(args.length > 1)
-        {
+    private void handleShow(CommandEvent event, String[] args) {
+        if (args.length > 1) {
             event.replyWarning(DESCRIPTION);
             return;
         }
+
         List<Long> currentWL = vortex.getDatabase().inviteWhitelist.readWhitelist(event.getGuild());
-        event.replySuccess(FormatUtil.filterEveryone("Whitelisted Guild IDs:\n" + (currentWL.isEmpty() ? "None" :
-                "`" + currentWL.stream().map(String::valueOf).collect(Collectors.joining("`, `")) + "`")));
+        event.replySuccess(FormatUtil.filterEveryone("Whitelisted Guild IDs:\n" + (currentWL.isEmpty() ? "None" : "`" + currentWL.stream().map(String::valueOf).collect(Collectors.joining("`, `")) + "`")));
     }
 
-    private void handleAdd(CommandEvent event, String[] args)
-    {
-        if(args.length <= 1)
-        {
+    private void handleAdd(CommandEvent event, String[] args) {
+        if (args.length <= 1) {
             event.replyWarning(DESCRIPTION);
             return;
         }
+
         List<Long> guildIds = readIds(args);
-        if(guildIds == null)
-        {
+        if (guildIds == null) {
             event.replyWarning("Invalid Guild-ID(s) provided!");
             return;
         }
-        if(guildIds.size() > 1)
-        {
+
+        if (guildIds.size() > 1) {
             vortex.getDatabase().inviteWhitelist.addAllToWhitelist(event.getGuild(), guildIds);
-        }
-        else if(!vortex.getDatabase().inviteWhitelist.addToWhitelist(event.getGuild(), guildIds.get(0)))
-        {
+        } else if (!vortex.getDatabase().inviteWhitelist.addToWhitelist(event.getGuild(), guildIds.get(0))) {
             event.replyWarning("Given Guild was already whitelisted");
             return;
         }
+
         event.replySuccess("Whitelist has been modified");
     }
 
-    private void handleRemove(CommandEvent event, String[] args)
-    {
-        if(args.length <= 1)
-        {
+    private void handleRemove(CommandEvent event, String[] args) {
+        if (args.length <= 1) {
             event.replyWarning(DESCRIPTION);
             return;
         }
+
         List<Long> guildIds = readIds(args);
-        if(guildIds == null)
-        {
+        if (guildIds == null) {
             event.replyWarning("Invalid Guild-ID(s) provided!");
             return;
         }
-        if(guildIds.size() > 1)
-        {
+
+        if (guildIds.size() > 1) {
             vortex.getDatabase().inviteWhitelist.removeAllFromWhitelist(event.getGuild(), guildIds);
-        }
-        else if(!vortex.getDatabase().inviteWhitelist.removeFromWhitelist(event.getGuild(), guildIds.get(0)))
-        {
+        } else if (!vortex.getDatabase().inviteWhitelist.removeFromWhitelist(event.getGuild(), guildIds.get(0))) {
             event.replyWarning("Given Guild was not whitelisted");
             return;
         }
+
         event.replySuccess("Whitelist has been modified");
     }
 
-    private List<Long> readIds(String[] args)
-    {
+    private List<Long> readIds(String[] args) {
         List<Long> guildIds = new ArrayList<>(args.length - 1);
-        try
-        {
-            for(int i = 1; i < args.length; i++)
-            {
+        try {
+            for (int i = 1; i < args.length; i++) {
                 long parsedId = Long.parseUnsignedLong(args[i]);
-                if(parsedId < 10_000_000_000_000_000L) //plausibility check
+                if (parsedId < 10_000_000_000_000_000L) //plausibility check
                 {
                     return null;
                 }
+
                 guildIds.add(parsedId);
             }
-        }
-        catch(NumberFormatException ex)
-        {
+        } catch (NumberFormatException ex) {
             return null;
         }
+
         return guildIds;
     }
 }

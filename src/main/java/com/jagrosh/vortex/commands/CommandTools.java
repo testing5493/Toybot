@@ -7,42 +7,34 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.channel.Channel;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 
-import java.security.Permissions;
-import java.util.regex.Pattern;
-import java.util.Locale;
-
-public class CommandTools
-{
+public class CommandTools {
     public static final String COMMAND_NO_PERMS = "You don't have the perms to do that!";
     public static final String MOD_COMMAND_NO_PERMS = "You can't do that, silly!";
-    private CommandTools(){}
+
+    private CommandTools() {}
 
     /**
      * Checks if the user has permission to use tags. People may use tags if they meet any of the following criteria:
-     *             - Has the manage messages permission
-     *             - Is an RTC
-     *             - Has any perm in perms
+     * - Has the manage messages permission
+     * - Is an RTC
+     * - Has any perm in perms
+     *
      * @param vortex The vortex object
      * @param event The event
      * @param perms Optional perms that someone can also have
      * @return Returns true if the person has perms to use a general command, false if not
      */
-    public static boolean hasGeneralCommandPerms(Vortex vortex, CommandEvent event, Permission... perms)
-    {
+    public static boolean hasGeneralCommandPerms(Vortex vortex, CommandEvent event, Permission... perms) {
         return hasGeneralCommandPerms(vortex, event.getMember(), (event.getGuildChannel()), perms);
     }
 
-    public static boolean hasGeneralCommandPerms(Vortex vortex, SlashCommandEvent event, Permission... perms)
-    {
-        return hasGeneralCommandPerms(vortex, event.getMember(),  event.getGuildChannel(), perms);
+    public static boolean hasGeneralCommandPerms(Vortex vortex, SlashCommandEvent event, Permission... perms) {
+        return hasGeneralCommandPerms(vortex, event.getMember(), event.getGuildChannel(), perms);
     }
 
-    public static boolean hasGeneralCommandPerms(Vortex vortex, Member member, GuildChannel channel, Permission... perms)
-    {
+    public static boolean hasGeneralCommandPerms(Vortex vortex, Member member, GuildChannel channel, Permission... perms) {
         if (member == null) {
             return true; // Imples this is from DM
         }
@@ -51,19 +43,26 @@ public class CommandTools
         Role rtcRole = vortex.getDatabase().settings.getSettings(g).getRtcRole(g);
         Role modRole = vortex.getDatabase().settings.getSettings(g).getModeratorRole(g);
 
-        if (modRole != null && member.getRoles().contains(modRole))
+        if (modRole != null && member.getRoles().contains(modRole)) {
             return true;
-        if (rtcRole != null && member.getRoles().contains(rtcRole))
+        }
+
+        if (rtcRole != null && member.getRoles().contains(rtcRole)) {
             return true;
-        for (Permission perm: perms)
-            if (member.hasPermission(channel, perm))
+        }
+
+        for (Permission perm : perms) {
+            if (member.hasPermission(channel, perm)) {
                 return true;
+            }
+        }
 
         return false;
     }
 
     /**
      * Checks if a user provided string is to enable or disable something
+     *
      * @return true if said something is to be enabled, false if its to be disabled
      * @throws IllegalArgumentException If it could not be properly parsed
      */
@@ -84,20 +83,18 @@ public class CommandTools
 
     /**
      * Extracts a possible user ID from an argument of a command. This number may or may not be a valid ID.
+     *
      * @param str The argument
      * @return The possible user ID, -1 if no ID was found
      */
-    public static long getPossibleUserId(String str)
-    {
-        if (str.matches("<@!?\\d+>"))
+    public static long getPossibleUserId(String str) {
+        if (str.matches("<@!?\\d+>")) {
             str = str.replaceAll("\\D", "");
-
-        try
-        {
-            return Long.parseLong(str);
         }
-        catch (NumberFormatException e)
-        {
+
+        try {
+            return Long.parseLong(str);
+        } catch (NumberFormatException e) {
             return -1;
         }
     }

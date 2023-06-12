@@ -18,19 +18,15 @@ package com.jagrosh.vortex.commands.owner;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.vortex.Vortex;
-import com.jagrosh.vortex.commands.CommandExceptionListener;
 import com.jagrosh.vortex.commands.CommandExceptionListener.CommandErrorException;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class ReloadCmd extends Command
-{
+public class ReloadCmd extends Command {
     private final Vortex vortex;
-    
-    public ReloadCmd(Vortex vortex)
-    {
+
+    public ReloadCmd(Vortex vortex) {
         this.vortex = vortex;
         this.name = "reload";
         this.arguments = "<ref|safe|copy>";
@@ -41,24 +37,21 @@ public class ReloadCmd extends Command
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
-        switch(event.getArgs().toLowerCase())
-        {
-            case "ref":
+    protected void execute(CommandEvent event) {
+        switch (event.getArgs().toLowerCase()) {
+            case "ref" -> {
                 vortex.getAutoMod().loadReferralDomains();
                 event.replySuccess("Reloaded ref domains");
-                break;
-            case "safe":
+            }
+            case "safe" -> {
                 vortex.getAutoMod().loadSafeDomains();
                 event.replySuccess("Reloaded safe domains");
-                break;
-            case "copy":
+            }
+            case "copy" -> {
                 vortex.getAutoMod().loadCopypastas();
                 event.replySuccess("Reloaded copypastas");
-                break;
-            default:
-                throw new CommandErrorException("Invalid reload selection: `ref` `safe` `copy`");
+            }
+            default -> throw new CommandErrorException("Invalid reload selection: `ref` `safe` `copy`");
         }
     }
 }

@@ -17,19 +17,18 @@ package com.jagrosh.vortex;
 
 import com.jagrosh.vortex.automod.URLResolver;
 import com.typesafe.config.ConfigFactory;
-import java.util.List;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import java.util.List;
+
+import static org.junit.Assert.assertFalse;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class RedirectTest
-{
+public class RedirectTest {
     @Test
-    public void redirectTest()
-    {
+    public void redirectTest() {
         URLResolver resolver = new URLResolver.ActiveURLResolver(ConfigFactory.load());
         List<String> redir1 = resolver.findRedirects("https://tinyurl.com/yggtreehouse");
         System.out.println(redir1);

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License. Furthermore, I'm putting this sentence in all files because I messed up git and its not showing files as edited -\\_( :) )_/-
  -->
- 
+
 
 <configuration>
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -27,7 +27,7 @@
         </rollingPolicy>
         <encoder>
             <!-- author: Kaidan Gustave  -->
-            <pattern> 
+            <pattern>
                 %nopex[%d{HH:mm:ss}] [%level] [%logger{0}]: %msg%n%ex
             </pattern>
         </encoder>

@@ -30,12 +30,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Michaili K (mysteriouscursor+git@protonmail.com)
  */
-public class SlowmodeCmd extends ModCommand
-{
+public class SlowmodeCmd extends ModCommand {
     private final static int MAX_SLOWMODE = 21600;
 
-    public SlowmodeCmd(Vortex vortex)
-    {
+    public SlowmodeCmd(Vortex vortex) {
         super(vortex, Permission.MANAGE_CHANNEL);
         this.name = "slowmode";
         this.arguments = "[time or OFF] | [time to disable slowmode]";
@@ -44,85 +42,72 @@ public class SlowmodeCmd extends ModCommand
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
+    protected void execute(CommandEvent event) {
 
-        if(event.getArgs().isEmpty())
-        {
+        if (event.getArgs().isEmpty()) {
             int slowmodeDuration = vortex.getDatabase().tempslowmodes.timeUntilDisableSlowmode(event.getTextChannel());
             int slowmodeTime = event.getTextChannel().getSlowmode();
 
-            if(slowmodeTime <= 0)
-            {
+            if (slowmodeTime <= 0) {
                 event.reply("Slowmode is disabled.");
                 return;
             }
 
-            if(slowmodeDuration <= 0)
-                event.reply("Slowmode is enabled with 1 message every "+FormatUtil.secondsToTimeCompact(slowmodeTime)+".");
-            else
-                event.reply("Slowmode is enabled with 1 message every "+FormatUtil.secondsToTimeCompact(slowmodeTime) +
-                        " for "+FormatUtil.secondsToTimeCompact(slowmodeDuration)+".");
+            if (slowmodeDuration <= 0) {
+                event.reply("Slowmode is enabled with 1 message every " + FormatUtil.secondsToTimeCompact(slowmodeTime) + ".");
+            } else {
+                event.reply("Slowmode is enabled with 1 message every " + FormatUtil.secondsToTimeCompact(slowmodeTime) + " for " + FormatUtil.secondsToTimeCompact(slowmodeDuration) + ".");
+            }
+
             return;
         }
 
         String args = event.getArgs();
 
-        if(args.equals("0") || args.equalsIgnoreCase("off"))
-        {
+        if (args.equals("0") || args.equalsIgnoreCase("off")) {
             vortex.getDatabase().tempslowmodes.clearSlowmode(event.getTextChannel());
-            event.getTextChannel().getManager()
-                    .setSlowmode(0)
-                    .reason(LogUtil.auditReasonFormat(event.getMember(), "Disabled slowmode"))
-                    .queue();
+            event.getTextChannel().getManager().setSlowmode(0).reason(LogUtil.auditReasonFormat(event.getMember(), "Disabled slowmode")).queue();
             event.replySuccess("Disabled slowmode!");
             return;
         }
 
-        String[] split = args.split("\\|",2);
+        String[] split = args.split("\\|", 2);
 
         int slowmodeTime = OtherUtil.parseTime(split[0]);
-        if(slowmodeTime == -1)
-        {
+        if (slowmodeTime == -1) {
             event.replyError("Invalid slowmode time!");
             return;
         }
-        if(slowmodeTime > MAX_SLOWMODE)
-        {
+
+        if (slowmodeTime > MAX_SLOWMODE) {
             event.replyError("You can only enable slowmode for up to 6 hours!");
             return;
         }
-        if(slowmodeTime < -1)
-        {
+
+        if (slowmodeTime < -1) {
             event.replyError("Slowmode cannot use negative time!");
             return;
         }
 
         int slowmodeDuration = split.length == 1 ? 0 : OtherUtil.parseTime(split[1]);
-        if(slowmodeDuration == -1)
-        {
+        if (slowmodeDuration == -1) {
             event.replyError("Invalid slowmode duration time!");
             return;
         }
-        if(slowmodeDuration < -1)
-        {
+
+        if (slowmodeDuration < -1) {
             event.replyError("Slowmode duration cannot use negative time!");
             return;
         }
 
-        event.getTextChannel().getManager()
-                .setSlowmode(slowmodeTime)
-                .reason(LogUtil.auditReasonFormat(event.getMember(), slowmodeDuration/60, "Enabled slowmode"))
-                .queue(s ->
-                {
-                    if(slowmodeDuration <= 0) return;
-                    vortex.getThreadpool().schedule(
-                            () -> vortex.getDatabase().tempslowmodes.setSlowmode(event.getTextChannel(), Instant.now().plus(slowmodeDuration, ChronoUnit.SECONDS)),
-                            10, TimeUnit.SECONDS
-                    );
-                });
+        event.getTextChannel().getManager().setSlowmode(slowmodeTime).reason(LogUtil.auditReasonFormat(event.getMember(), slowmodeDuration / 60, "Enabled slowmode")).queue(s -> {
+            if (slowmodeDuration <= 0) {
+                return;
+            }
 
-        event.replySuccess("Enabled slowmode with 1 message every " + FormatUtil.secondsToTimeCompact(slowmodeTime) +
-                (slowmodeDuration > 0 ? " for "+FormatUtil.secondsToTimeCompact(slowmodeDuration) : "")+".");
+            vortex.getThreadpool().schedule(() -> vortex.getDatabase().tempslowmodes.setSlowmode(event.getTextChannel(), Instant.now().plus(slowmodeDuration, ChronoUnit.SECONDS)), 10, TimeUnit.SECONDS);
+        });
+
+        event.replySuccess("Enabled slowmode with 1 message every " + FormatUtil.secondsToTimeCompact(slowmodeTime) + (slowmodeDuration > 0 ? " for " + FormatUtil.secondsToTimeCompact(slowmodeDuration) : "") + ".");
     }
 }

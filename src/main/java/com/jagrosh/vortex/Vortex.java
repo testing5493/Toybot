@@ -18,59 +18,55 @@ package com.jagrosh.vortex;
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.WebhookClientBuilder;
 import com.jagrosh.jdautilities.command.Command;
-import com.jagrosh.jdautilities.command.SlashCommand;
-import com.jagrosh.vortex.commands.tools.LookupCmd;
-import com.jagrosh.vortex.commands.automod.*;
-import com.jagrosh.vortex.commands.general.*;
-import com.jagrosh.vortex.commands.moderation.*;
-import com.jagrosh.vortex.commands.tools.*;
-import com.jagrosh.vortex.commands.owner.*;
-import com.jagrosh.vortex.commands.settings.*;
-
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-
-import java.util.Arrays;
-import java.util.concurrent.Executors;
 import com.jagrosh.jdautilities.command.CommandClient;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
+import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 import com.jagrosh.vortex.automod.AutoMod;
 import com.jagrosh.vortex.commands.CommandExceptionListener;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import com.jagrosh.vortex.utils.BlockingSessionController;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.OnlineStatus;
-
-import com.jagrosh.vortex.utils.OtherUtil;
-import net.dv8tion.jda.api.entities.Activity;
+import com.jagrosh.vortex.commands.automod.*;
+import com.jagrosh.vortex.commands.general.*;
+import com.jagrosh.vortex.commands.moderation.*;
+import com.jagrosh.vortex.commands.owner.DebugCmd;
+import com.jagrosh.vortex.commands.owner.EvalCmd;
+import com.jagrosh.vortex.commands.owner.ReloadCmd;
+import com.jagrosh.vortex.commands.settings.*;
+import com.jagrosh.vortex.commands.tools.*;
 import com.jagrosh.vortex.database.Database;
 import com.jagrosh.vortex.logging.BasicLogger;
 import com.jagrosh.vortex.logging.MessageCache;
 import com.jagrosh.vortex.logging.ModLogger;
 import com.jagrosh.vortex.logging.TextUploader;
+import com.jagrosh.vortex.utils.BlockingSessionController;
 import com.jagrosh.vortex.utils.FormatUtil;
+import com.jagrosh.vortex.utils.OtherUtil;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-
-import net.dv8tion.jda.api.entities.emoji.Emoji;
-import net.dv8tion.jda.api.requests.GatewayIntent;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.OnlineStatus;
+import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.exceptions.PermissionException;
+import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.Compression;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Main class for Vortex
+ *
  * @author John Grosh (jagrosh)
  */
 @Slf4j
-public class Vortex
-{
+public class Vortex {
     public static final Config config;
     public final boolean developerMode;
     private final @Getter EventWaiter eventWaiter;
@@ -90,9 +86,7 @@ public class Vortex
         File configFile = new File(System.getProperty("config.file"));
         try {
             if (configFile.createNewFile()) {
-                InputStream inputStream = Thread.currentThread()
-                        .getContextClassLoader()
-                        .getResourceAsStream("reference.conf");
+                InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("reference.conf");
 
                 if (inputStream == null) {
                     log.error("Unable to load reference.conf in resources");
@@ -103,8 +97,7 @@ public class Vortex
                 BufferedWriter writer = new BufferedWriter(new FileWriter(configFile));
 
                 String line;
-                while ((line = reader.readLine()) != null)
-                {
+                while ((line = reader.readLine()) != null) {
                     writer.write(line + "\n");
                 }
 
@@ -146,7 +139,6 @@ public class Vortex
                 new UngravelCmd(this),
                 new UnmuteCmd(this),
                 new RaidCmd(this),
-                // new CheckCmd(this),
                 new WarnCmd(this),
                 new SlowmodeCmd(this),
 
@@ -189,18 +181,13 @@ public class Vortex
                 new EvalCmd(this),
                 new DebugCmd(this),
                 new ReloadCmd(this)
-                //new TransferCmd(this)
         };
 
-        SlashCommand[] slashCommands = Arrays.stream(commands)
-                .filter(command -> command instanceof SlashCommand)
-                .toArray(SlashCommand[]::new);
+        SlashCommand[] slashCommands = Arrays.stream(commands).filter(command -> command instanceof SlashCommand).toArray(SlashCommand[]::new);
         developerMode = config.getBoolean("developer-mode"); // TODO: Maybe make dev mode a bit better
         eventWaiter = new EventWaiter(Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "eventwaiter")), false);
         threadpool = Executors.newScheduledThreadPool(100, r -> new Thread(r, "vortex"));
-        database = new Database(config.getString("database.host"),
-                config.getString("database.username"),
-                config.getString("database.password"));
+        database = new Database(config.getString("database.host"), config.getString("database.username"), config.getString("database.password"));
         textUploader = new TextUploader(config.getStringList("upload-webhooks"));
         modLogger = new ModLogger(this);
         basicLogger = new BasicLogger(this, config);
@@ -208,11 +195,7 @@ public class Vortex
         logWebhook = new WebhookClientBuilder(config.getString("webhook-url")).build();
         autoMod = new AutoMod(this, config);
         listener = new CommandExceptionListener();
-        CommandClient client = new CommandClientBuilder()
-                .setPrefix(Constants.PREFIX)
-                .setActivity(Activity.watching("Toycat"))
-                .setOwnerId(Constants.OWNER_ID)
-                // .setServerInvite(Constants.SERVER_INVITE)
+        CommandClient client = new CommandClientBuilder().setPrefix(Constants.PREFIX).setActivity(Activity.watching("Toycat")).setOwnerId(Constants.OWNER_ID)
                 .setEmojis(Constants.SUCCESS, Constants.WARNING, Constants.ERROR)
                 .setLinkedCacheSize(0)
                 .setGuildSettingsManager(database.settings)
@@ -223,28 +206,29 @@ public class Vortex
                 .addSlashCommands(slashCommands)
                 .forceGuildOnly(developerMode ? config.getString("uploader.guild") : null) //  TODO: Maybe make not guild only
                 .setHelpConsumer(e -> OtherUtil.commandEventReplyDm(e, FormatUtil.formatHelp(e, this), m -> // TODO: Consider using "event.replyInDm(FormatUtil.formatHelp(event, this)" if that is newer/better
-                {
-                    if (e.isFromType(ChannelType.TEXT))
-                        try {
-                            e.getMessage().addReaction(Emoji.fromFormatted(Constants.HELP_REACTION)).queue(s -> {
-                            }, f -> {
-                            });
-                        } catch (PermissionException ignore) {
+                    {
+                        if (e.isFromType(ChannelType.TEXT)) {
+                            try {
+                                e.getMessage().addReaction(Emoji.fromFormatted(Constants.HELP_REACTION)).queue(s -> {}, f -> {});
+                            } catch (PermissionException ignore) {}
                         }
-                }, t -> e.replyWarning("Help cannot be sent because you are blocking Direct Messages.")))
-                .build();
+                    }, t -> e.replyWarning("Help cannot be sent because you are blocking Direct Messages."))).build();
         //MessageAction.setDefaultMentions(Arrays.asList(Message.MentionType.EMOTE, Message.MentionType.CHANNEL)); // TODO: Figure out what this does
-        jda = JDABuilder.create(config.getString("bot-token"), GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MODERATION, GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_PRESENCES)
-                .addEventListeners(new Listener(this), client, eventWaiter)
-                .setStatus(OnlineStatus.ONLINE)
-                .setActivity(Activity.playing("loading..."))
-                .setBulkDeleteSplittingEnabled(false)
-                .setRequestTimeoutRetry(true)
-                .setSessionController(new BlockingSessionController())
-                .setCompression(Compression.NONE)
-                .build();
-
-
+        jda = JDABuilder.create(config.getString("bot-token"), GatewayIntent.GUILD_MEMBERS,
+                                                                    GatewayIntent.GUILD_MESSAGE_REACTIONS,
+                                                                    GatewayIntent.GUILD_MESSAGES,
+                                                                    GatewayIntent.GUILD_MODERATION,
+                                                                    GatewayIntent.GUILD_VOICE_STATES,
+                                                                    GatewayIntent.MESSAGE_CONTENT,
+                                                                    GatewayIntent.GUILD_PRESENCES
+                         ).addEventListeners(new Listener(this), client, eventWaiter)
+                         .setStatus(OnlineStatus.ONLINE)
+                         .setActivity(Activity.playing("loading..."))
+                         .setBulkDeleteSplittingEnabled(false)
+                         .setRequestTimeoutRetry(true)
+                         .setSessionController(new BlockingSessionController())
+                         .setCompression(Compression.NONE)
+                         .build();
 
         modLogger.start();
     }
@@ -253,8 +237,7 @@ public class Vortex
      * @param args the command line arguments
      * @throws java.lang.Exception Any uncaught exception in the bot that may occur
      */
-    public static void main(String[] args) throws Exception
-    {
+    public static void main(String[] args) throws Exception {
         new Vortex();
     }
 }

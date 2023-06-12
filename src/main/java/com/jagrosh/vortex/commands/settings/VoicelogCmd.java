@@ -21,36 +21,32 @@ import com.jagrosh.vortex.commands.LogCommand;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class VoicelogCmd extends LogCommand
-{
-    public VoicelogCmd(Vortex vortex)
-    {
+public class VoicelogCmd extends LogCommand {
+    public VoicelogCmd(Vortex vortex) {
         super(vortex);
         this.name = "voicelog";
         this.help = "sets channel to log voice changes";
     }
 
     @Override
-    protected void showCurrentChannel(CommandEvent event)
-    {
+    protected void showCurrentChannel(CommandEvent event) {
         TextChannel tc = vortex.getDatabase().settings.getSettings(event.getGuild()).getVoiceLogChannel(event.getGuild());
-        if(tc==null)
+        if (tc == null) {
             event.replyWarning("Voice Logs are not currently enabled on the server. Please include a channel name.");
-        else
-            event.replySuccess("Voice Logs are currently being sent in "+tc.getAsMention()
-                    +(event.getSelfMember().hasPermission(tc, REQUIRED_PERMS) ? "" : "\n"+event.getClient().getWarning()+String.format(REQUIRED_ERROR, tc.getAsMention())));
+        } else {
+            event.replySuccess("Voice Logs are currently being sent in " + tc.getAsMention() + (event.getSelfMember().hasPermission(tc, REQUIRED_PERMS) ? "" : "\n" + event.getClient().getWarning() + String.format(REQUIRED_ERROR, tc.getAsMention())));
+        }
     }
 
     @Override
-    protected void setLogChannel(CommandEvent event, TextChannel tc)
-    {
+    protected void setLogChannel(CommandEvent event, TextChannel tc) {
         vortex.getDatabase().settings.setVoiceLogChannel(event.getGuild(), tc);
-        if(tc==null)
+        if (tc == null) {
             event.replySuccess("Voice Logs will not be sent");
-        else
-            event.replySuccess("Voice Logs will now be sent in "+tc.getAsMention());
+        } else {
+            event.replySuccess("Voice Logs will now be sent in " + tc.getAsMention());
+        }
     }
 }

@@ -19,40 +19,40 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- *
  * @author John Grosh (jagrosh)
  */
 @AllArgsConstructor
-public enum Action
-{
-    GRAVEL(    "graveled",    "\uD83E\uDD10", 18), // 🔇
-    TEMPGRAVEL("tempgraveled","\u23F2",       17), // ⏲
-    UNGRAVEL(  "ungraveled",  "\uD83D\uDD0A", 16), // 🔊
-    NORAIDMODE("",            "\uD83D\uDD13", 15), // 🔓
-    PARDON(    "pardoned",    "\uD83C\uDFF3", 14), // 🏳
-    RAIDMODE(  "",            "\uD83D\uDD12", 13), // 🔒
-    UNMUTE(    "unmuted",     "\uD83D\uDD0A", 11), // 🔊
-    UNBAN(     "unbanned",    "\uD83D\uDD27", 10), // 🔧
-    BAN(       "banned",      "\uD83D\uDD28",  9), // 🔨
-    TEMPBAN(   "tempbanned",  "\u23F2",        8), // ⏲
-    SOFTBAN(   "softbanned",  "\uD83C\uDF4C",  7), // 🍌
-    KICK(      "kicked",      "\uD83D\uDC62",  6), // 👢
-    MUTE(      "muted",       "\uD83D\uDD07",  5), // 🔇
-    TEMPMUTE(  "tempmuted",   "\uD83E\uDD10",  4), // 🤐
-    WARN(      "warned",      "\uD83D\uDDE3",  3), // 🗣
-    CLEAN(     "cleaned",     "\uD83D\uDDD1",  2), // 🗑
-    DELETE(    "deleted",     "\uD83D\uDDD1",  1), // 🗑
-    NONE(      "did not act", "\uD83D\uDE36",  0); // 😶
+public enum Action {
+    GRAVEL("graveled", "\uD83E\uDD10", 18), // 🔇
+    TEMPGRAVEL("tempgraveled", "\u23F2", 17), // ⏲
+    UNGRAVEL("ungraveled", "\uD83D\uDD0A", 16), // 🔊
+    NORAIDMODE("", "\uD83D\uDD13", 15), // 🔓
+    PARDON("pardoned", "\uD83C\uDFF3", 14), // 🏳
+    RAIDMODE("", "\uD83D\uDD12", 13), // 🔒
+    UNMUTE("unmuted", "\uD83D\uDD0A", 11), // 🔊
+    UNBAN("unbanned", "\uD83D\uDD27", 10), // 🔧
+    BAN("banned", "\uD83D\uDD28", 9), // 🔨
+    TEMPBAN("tempbanned", "\u23F2", 8), // ⏲
+    SOFTBAN("softbanned", "\uD83C\uDF4C", 7), // 🍌
+    KICK("kicked", "\uD83D\uDC62", 6), // 👢
+    MUTE("muted", "\uD83D\uDD07", 5), // 🔇
+    TEMPMUTE("tempmuted", "\uD83E\uDD10", 4), // 🤐
+    WARN("warned", "\uD83D\uDDE3", 3), // 🗣
+    CLEAN("cleaned", "\uD83D\uDDD1", 2), // 🗑
+    DELETE("deleted", "\uD83D\uDDD1", 1), // 🗑
+    NONE("did not act", "\uD83D\uDE36", 0); // 😶
 
     private final @Getter String verb;
     private final @Getter String emoji;
     private final @Getter int bit;
-    
-    public static Action fromBit(int bit)
-    {
-        for(Action a: values())
-            if(a.bit == bit)
+
+    public static Action fromBit(int bit) {
+        for (Action a : values()) {
+            if (a.bit == bit) {
                 return a;
+            }
+        }
+
         return null;
     }
 }

@@ -22,15 +22,12 @@ import com.jagrosh.vortex.Vortex;
 import net.dv8tion.jda.api.utils.TimeFormat;
 
 /**
- *
  * @author John Grosh (jagrosh)
  */
-public class DebugCmd extends Command
-{
+public class DebugCmd extends Command {
     private final Vortex vortex;
-    
-    public DebugCmd(Vortex vortex)
-    {
+
+    public DebugCmd(Vortex vortex) {
         this.vortex = vortex;
         this.name = "debug";
         this.help = "shows some debug stats";
@@ -38,18 +35,12 @@ public class DebugCmd extends Command
         this.guildOnly = false;
         this.hidden = true;
     }
-    
+
     @Override
-    protected void execute(CommandEvent event)
-    {
-        long totalMb = Runtime.getRuntime().totalMemory()/(1024*1024);
-        long usedMb = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/(1024*1024);
-        String sb = "**" + event.getSelfUser().getName() + "** statistics:"
-                + "\nLast Startup: " + TimeFormat.RELATIVE.format(Constants.STARTUP)
-                + "\nGuilds: **" + vortex.getJda().getGuildCache().size() + "**"
-                + "\nMemory: **" + usedMb + "**Mb / **" + totalMb + "**Mb"
-                + "\nGateway Ping: **" + vortex.getJda().getGatewayPing() + "**ms"
-                + "\nShard Connectivity: ```diff" + "\n```";
+    protected void execute(CommandEvent event) {
+        long totalMb = Runtime.getRuntime().totalMemory() / (1024 * 1024);
+        long usedMb = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024);
+        String sb = "**" + event.getSelfUser().getName() + "** statistics:" + "\nLast Startup: " + TimeFormat.RELATIVE.format(Constants.STARTUP) + "\nGuilds: **" + vortex.getJda().getGuildCache().size() + "**" + "\nMemory: **" + usedMb + "**Mb / **" + totalMb + "**Mb" + "\nGateway Ping: **" + vortex.getJda().getGatewayPing() + "**ms" + "\nShard Connectivity: ```diff" + "\n```";
         event.reply(sb.trim());
     }
 }

@@ -12,13 +12,11 @@ import net.dv8tion.jda.api.entities.Role;
 import java.util.LinkedList;
 import java.util.List;
 
-public class WarnCmd extends ModCommand
-{
-    public WarnCmd(Vortex vortex)
-    {
+public class WarnCmd extends ModCommand {
+    public WarnCmd(Vortex vortex) {
         super(vortex, Permission.MANAGE_ROLES);
         this.name = "warn";
-        this.aliases = new String[] {"warning"};
+        this.aliases = new String[]{"warning"};
         this.arguments = "<@users> [reason]";
         this.help = "warns users";
         this.botPermissions = new Permission[]{Permission.MANAGE_ROLES};
@@ -26,11 +24,9 @@ public class WarnCmd extends ModCommand
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
+    protected void execute(CommandEvent event) {
         ArgsUtil.ResolvedArgs args = ArgsUtil.resolve(event.getArgs(), event.getGuild());
-        if(args.isEmpty())
-        {
+        if (args.isEmpty()) {
             event.replyError("Please include at least one user to warn (@mention or ID)!");
             return;
         }
@@ -39,19 +35,18 @@ public class WarnCmd extends ModCommand
         StringBuilder builder = new StringBuilder();
         List<Member> toWarn = new LinkedList<>();
 
-        args.members.forEach(m ->
-        {
-            if(modrole!=null && m.getRoles().contains(modrole))
+        args.members.forEach(m -> {
+            if (modrole != null && m.getRoles().contains(modrole)) {
                 builder.append("\n").append(event.getClient().getError()).append(" I won't warn ").append(FormatUtil.formatUser(m.getUser())).append(" because they have the Moderator Role");
-            else
+            } else {
                 toWarn.add(m);
+            }
         });
 
         args.users.forEach(u -> builder.append("\n").append(event.getClient().getWarning()).append(" The user ").append(u.getAsMention()).append(" is not in this server."));
         args.ids.forEach(id -> builder.append("\n").append(event.getClient().getWarning()).append(" The user <@").append(id).append("> is not in this server."));
 
-        for (Member m : toWarn)
-        {
+        for (Member m : toWarn) {
             vortex.getDatabase().warnings.logCase(vortex, event.getGuild(), event.getAuthor().getIdLong(), m.getUser().getIdLong(), args.reason);
             String user = FormatUtil.formatUser(m.getUser());
             builder.append("\n").append(event.getClient().getSuccess()).append(" ").append(user).append(" was warned");
