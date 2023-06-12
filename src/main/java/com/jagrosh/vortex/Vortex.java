@@ -118,25 +118,69 @@ public class Vortex {
     public Vortex() throws Exception {
         Command[] commands = new Command[]{
                 // General
-                new AboutCmd(this), new PingCmd(this), new RoleinfoCmd(this), new ServerinfoCmd(this), new UserinfoCmd(this), new RatCmd(this),
+                new AboutCmd(this),
+                new PingCmd(this),
+                new RoleinfoCmd(this),
+                new ServerinfoCmd(this),
+                new UserinfoCmd(this),
+                new RatCmd(this),
 
                 // Moderation
-                new KickCmd(this), new BanCmd(this), new SoftbanCmd(this), new UnbanCmd(this), new ModlogsCmd(this), new CleanCmd(this), new VoicemoveCmd(this), new VoicekickCmd(this), new MuteCmd(this), new GravelCmd(this), new UngravelCmd(this), new UnmuteCmd(this), new RaidCmd(this),
-                // new CheckCmd(this),
-                new WarnCmd(this), new SlowmodeCmd(this),
+                new KickCmd(this),
+                new BanCmd(this),
+                new SoftbanCmd(this),
+                new UnbanCmd(this),
+                new ModlogsCmd(this),
+                new CleanCmd(this),
+                new VoicemoveCmd(this),
+                new VoicekickCmd(this),
+                new MuteCmd(this),
+                new GravelCmd(this),
+                new UngravelCmd(this),
+                new UnmuteCmd(this),
+                new RaidCmd(this),
+                new WarnCmd(this),
+                new SlowmodeCmd(this),
 
                 // Settings
-                new SetupCmd(this), new MessagelogCmd(this), new ModlogCmd(this), new ServerlogCmd(this), new VoicelogCmd(this), new AvatarlogCmd(this), new TimezoneCmd(this), new ModroleCmd(this), new PrefixCmd(this), new SettingsCmd(this), new AddTagCmd(this), new DelTagCmd(this),
+                new SetupCmd(this),
+                new MessagelogCmd(this),
+                new ModlogCmd(this),
+                new ServerlogCmd(this),
+                new VoicelogCmd(this),
+                new AvatarlogCmd(this),
+                new TimezoneCmd(this),
+                new ModroleCmd(this),
+                new PrefixCmd(this),
+                new SettingsCmd(this),
+                new AddTagCmd(this),
+                new DelTagCmd(this),
 
                 // Automoderation
-                new AntiinviteCmd(this), new MaxlinesCmd(this), new MaxmentionsCmd(this), new AntiduplicateCmd(this), new AutodehoistCmd(this), new FilterCmd(this), new ResolvelinksCmd(this), new AutoraidmodeCmd(this), new IgnoreCmd(this), new UnignoreCmd(this),
+                new AntiinviteCmd(this),
+                new MaxlinesCmd(this),
+                new MaxmentionsCmd(this),
+                new AntiduplicateCmd(this),
+                new AutodehoistCmd(this),
+                new FilterCmd(this),
+                new ResolvelinksCmd(this),
+                new AutoraidmodeCmd(this),
+                new IgnoreCmd(this),
+                new UnignoreCmd(this),
 
                 // Tools
-                new AnnounceCmd(), new AuditCmd(), new DehoistCmd(), new InvitepruneCmd(this), new LookupCmd(this), new TagCmd(this), new TagsCmd(this),
+                new AnnounceCmd(),
+                new AuditCmd(),
+                new DehoistCmd(),
+                new InvitepruneCmd(this),
+                new LookupCmd(this),
+                new TagCmd(this),
+                new TagsCmd(this),
 
                 // Owner
-                new EvalCmd(this), new DebugCmd(this), new ReloadCmd(this)
-                //new TransferCmd(this)
+                new EvalCmd(this),
+                new DebugCmd(this),
+                new ReloadCmd(this)
         };
 
         SlashCommand[] slashCommands = Arrays.stream(commands).filter(command -> command instanceof SlashCommand).toArray(SlashCommand[]::new);
@@ -152,21 +196,39 @@ public class Vortex {
         autoMod = new AutoMod(this, config);
         listener = new CommandExceptionListener();
         CommandClient client = new CommandClientBuilder().setPrefix(Constants.PREFIX).setActivity(Activity.watching("Toycat")).setOwnerId(Constants.OWNER_ID)
-                // .setServerInvite(Constants.SERVER_INVITE)
-                .setEmojis(Constants.SUCCESS, Constants.WARNING, Constants.ERROR).setLinkedCacheSize(0).setGuildSettingsManager(database.settings).setListener(listener).setScheduleExecutor(threadpool).setShutdownAutomatically(false).addCommands(commands).addSlashCommands(slashCommands).forceGuildOnly(developerMode ? config.getString("uploader.guild") : null) //  TODO: Maybe make not guild only
+                .setEmojis(Constants.SUCCESS, Constants.WARNING, Constants.ERROR)
+                .setLinkedCacheSize(0)
+                .setGuildSettingsManager(database.settings)
+                .setListener(listener)
+                .setScheduleExecutor(threadpool)
+                .setShutdownAutomatically(false)
+                .addCommands(commands)
+                .addSlashCommands(slashCommands)
+                .forceGuildOnly(developerMode ? config.getString("uploader.guild") : null) //  TODO: Maybe make not guild only
                 .setHelpConsumer(e -> OtherUtil.commandEventReplyDm(e, FormatUtil.formatHelp(e, this), m -> // TODO: Consider using "event.replyInDm(FormatUtil.formatHelp(event, this)" if that is newer/better
-                {
-                    if (e.isFromType(ChannelType.TEXT)) {
-                        try {
-                            e.getMessage().addReaction(Emoji.fromFormatted(Constants.HELP_REACTION)).queue(s -> {
-                            }, f -> {
-                            });
-                        } catch (PermissionException ignore) {
+                    {
+                        if (e.isFromType(ChannelType.TEXT)) {
+                            try {
+                                e.getMessage().addReaction(Emoji.fromFormatted(Constants.HELP_REACTION)).queue(s -> {}, f -> {});
+                            } catch (PermissionException ignore) {}
                         }
-                    }
-                }, t -> e.replyWarning("Help cannot be sent because you are blocking Direct Messages."))).build();
+                    }, t -> e.replyWarning("Help cannot be sent because you are blocking Direct Messages."))).build();
         //MessageAction.setDefaultMentions(Arrays.asList(Message.MentionType.EMOTE, Message.MentionType.CHANNEL)); // TODO: Figure out what this does
-        jda = JDABuilder.create(config.getString("bot-token"), GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MODERATION, GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_PRESENCES).addEventListeners(new Listener(this), client, eventWaiter).setStatus(OnlineStatus.ONLINE).setActivity(Activity.playing("loading...")).setBulkDeleteSplittingEnabled(false).setRequestTimeoutRetry(true).setSessionController(new BlockingSessionController()).setCompression(Compression.NONE).build();
+        jda = JDABuilder.create(config.getString("bot-token"), GatewayIntent.GUILD_MEMBERS,
+                                                                    GatewayIntent.GUILD_MESSAGE_REACTIONS,
+                                                                    GatewayIntent.GUILD_MESSAGES,
+                                                                    GatewayIntent.GUILD_MODERATION,
+                                                                    GatewayIntent.GUILD_VOICE_STATES,
+                                                                    GatewayIntent.MESSAGE_CONTENT,
+                                                                    GatewayIntent.GUILD_PRESENCES
+                         ).addEventListeners(new Listener(this), client, eventWaiter)
+                         .setStatus(OnlineStatus.ONLINE)
+                         .setActivity(Activity.playing("loading..."))
+                         .setBulkDeleteSplittingEnabled(false)
+                         .setRequestTimeoutRetry(true)
+                         .setSessionController(new BlockingSessionController())
+                         .setCompression(Compression.NONE)
+                         .build();
 
         modLogger.start();
     }
