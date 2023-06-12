@@ -15,32 +15,31 @@
  */
 package com.jagrosh.vortex.commands.general;
 
-import com.jagrosh.jdautilities.command.*;
-import com.jagrosh.jdautilities.commons.JDAUtilitiesInfo;
+import com.jagrosh.jdautilities.command.CommandClient;
+import com.jagrosh.jdautilities.command.CommandEvent;
+import com.jagrosh.jdautilities.command.SlashCommand;
+import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.jagrosh.vortex.Constants;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandTools;
 import com.jagrosh.vortex.utils.FormatUtil;
-import java.awt.Color;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDAInfo;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
+import java.awt.*;
+
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class AboutCmd extends SlashCommand
-{
+public class AboutCmd extends SlashCommand {
     private final Vortex vortex;
 
-    public AboutCmd(Vortex vortex)
-    {
+    public AboutCmd(Vortex vortex) {
         this.name = "about";
         this.help = "shows info about the bot";
         this.guildOnly = false;
@@ -57,11 +56,10 @@ public class AboutCmd extends SlashCommand
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
-        if (!CommandTools.hasGeneralCommandPerms(vortex, event, Permission.MESSAGE_MANAGE))
+    protected void execute(CommandEvent event) {
+        if (!CommandTools.hasGeneralCommandPerms(vortex, event, Permission.MESSAGE_MANAGE)) {
             return;
-
+        }
 
         event.reply(generateReply(event.getJDA(), event.getGuild(), event.getClient()));
     }
@@ -69,20 +67,20 @@ public class AboutCmd extends SlashCommand
     private MessageCreateData generateReply(JDA jda, Guild g, CommandClient commandClient) {
         ShardManager sm = jda.getShardManager();
         return new MessageCreateBuilder()
-                .setContent(Constants.VORTEX_EMOJI + " **All about Vortex** " + Constants.VORTEX_EMOJI)
                 .setEmbeds(new EmbedBuilder()
-                        .setColor(g==null ? Color.GRAY : g.getSelfMember().getColor())
-                        .setDescription("Hi! I'm Toybot!\n"
-                                + "I'm a modified version of [Vortex](https://github.com/jagrosh/Vortex) which was written in Java by [jagrosh#4824](https://github.com/jagrosh)\n"
-                                + "I was customised for this server by <@791520107939102730> with the help of <@384774787823828995>, <@523655829279342593> and <@105725338541101056> as well as some other contributers that can be found on [GitHub](https://github.com/ya64/Vortex)"
-                                + "Type `" + commandClient.getPrefix() + commandClient.getHelpWord() + "` for help and information.\n\n"
-                                + FormatUtil.helpLinks(jda, commandClient))
-                        .addField("Stats", sm.getShardsTotal()+ " Shards\n" + sm.getGuildCache().size() + " Servers", true)
-                        .addField("", sm.getUserCache().size() + " Users\n" + Math.round(sm.getAverageGatewayPing()) + "ms Avg Ping", true)
-                        .addField("", sm.getTextChannelCache().size() + " Text Channels\n" + sm.getVoiceChannelCache().size() + " Voice Channels", true)
-                        .setFooter("Last restart", null)
-                        .setTimestamp(commandClient.getStartTime())
-                        .build()
+                               .setColor(g == null ? Color.GRAY : g.getSelfMember().getColor())
+                               .setDescription(
+                                       "Hi! I'm Toybot!\n" +
+                                       "I'm a modified version of [Vortex](https://github.com/jagrosh/Vortex) which was written in Java by [jagrosh#4824](https://github.com/jagrosh)\n" +
+                                       "I was customised for this server by <@791520107939102730> with the help of <@384774787823828995>, <@523655829279342593> and <@105725338541101056> as well as some other contributers that can be found on [GitHub](https://github.com/ya64/Vortex)" +
+                                       "Type `" + commandClient.getPrefix() + commandClient.getHelpWord() + "` for help and information.\n\n" +
+                                       FormatUtil.helpLinks(jda, commandClient))
+                               .addField("Stats", sm.getShardsTotal() + " Shards\n" + sm.getGuildCache().size() + " Servers", true)
+                               .addField("", sm.getUserCache().size() + " Users\n" + Math.round(sm.getAverageGatewayPing()) + "ms Avg Ping", true)
+                               .addField("", sm.getTextChannelCache().size() + " Text Channels\n" + sm.getVoiceChannelCache().size() + " Voice Channels", true)
+                               .setFooter("Last restart", null)
+                               .setTimestamp(commandClient.getStartTime())
+                               .build()
                 ).build();
     }
 }

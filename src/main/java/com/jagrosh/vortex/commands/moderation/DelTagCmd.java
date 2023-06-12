@@ -5,10 +5,8 @@ import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.ModCommand;
 import net.dv8tion.jda.api.Permission;
 
-public class DelTagCmd extends ModCommand
-{
-    public DelTagCmd(Vortex vortex)
-    {
+public class DelTagCmd extends ModCommand {
+    public DelTagCmd(Vortex vortex) {
         super(vortex, Permission.MESSAGE_MANAGE);
         this.name = "deltag";
         this.arguments = "<tagName>";
@@ -17,8 +15,7 @@ public class DelTagCmd extends ModCommand
     }
 
     @Override
-    public void execute(CommandEvent event)
-    {
+    public void execute(CommandEvent event) {
         String tagName;
         try {
             tagName = event.getArgs().trim().toLowerCase().split(" ")[0];
@@ -27,9 +24,10 @@ public class DelTagCmd extends ModCommand
             return;
         }
 
-        if (vortex.getDatabase().tags.deleteTag(event.getGuild(), tagName))
-            event.reply("Successfully deleted the `"+tagName+"` tag");
-        else
-            event.reply("Oops! The tag `"+tagName+"` could not be found.");
+        if (vortex.getDatabase().tags.deleteTag(event.getGuild(), tagName)) {
+            event.reply("Successfully deleted the `" + tagName + "` tag");
+        } else {
+            event.reply("Oops! The tag `" + tagName + "` could not be found.");
+        }
     }
 }

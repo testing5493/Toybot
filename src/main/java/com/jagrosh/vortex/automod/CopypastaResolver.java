@@ -16,57 +16,56 @@
 package com.jagrosh.vortex.automod;
 
 import com.jagrosh.vortex.utils.OtherUtil;
+
 import java.util.HashMap;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class CopypastaResolver
-{
+public class CopypastaResolver {
     private final HashMap<String, String[]> copypastas = new HashMap<>();
-    
-    public void load()
-    {
+
+    public void load() {
         String[] lines = OtherUtil.readLines("copypastas");
-        if(lines.length!=0)
-        {
+        if (lines.length != 0) {
             copypastas.clear();
             String name;
             String[] words;
-            for(String line: lines)
-            {
+            for (String line : lines) {
                 name = line.substring(0, line.indexOf("||")).trim();
-                words = line.substring(line.indexOf("||")+2).trim().split("\\s+&&\\s+");
-                for(int i=0; i<words.length; i++)
+                words = line.substring(line.indexOf("||") + 2).trim().split("\\s+&&\\s+");
+                for (int i = 0; i < words.length; i++) {
                     words[i] = words[i].trim().toLowerCase();
+                }
+
                 copypastas.put(name, words);
             }
         }
     }
-    
-    public String getCopypasta(String message)
-    {
+
+    public String getCopypasta(String message) {
         String lower = message.toLowerCase();
         boolean contains;
         String[] words;
-        for(String name: copypastas.keySet())
-        {
+        for (String name : copypastas.keySet()) {
             words = copypastas.get(name);
-            if(words==null || words.length==0)
+            if (words == null || words.length == 0) {
                 continue;
+            }
+
             contains = true;
-            for(String word: words)
-            {
-                if(!lower.contains(word))
-                {
+            for (String word : words) {
+                if (!lower.contains(word)) {
                     contains = false;
                     break;
                 }
             }
-            if(contains)
+
+            if (contains) {
                 return name;
+            }
         }
+
         return null;
     }
 }

@@ -25,50 +25,43 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class CommandExceptionListener implements CommandListener
-{
+public class CommandExceptionListener implements CommandListener {
     private final Logger log = LoggerFactory.getLogger("Command");
     private final Usage usage = new Usage();
-    
+
     @Override
-    public void onCommandException(CommandEvent event, Command command, Throwable throwable)
-    {
-        if (throwable instanceof CommandErrorException)
+    public void onCommandException(CommandEvent event, Command command, Throwable throwable) {
+        if (throwable instanceof CommandErrorException) {
             event.replyError(FormatUtil.filterEveryone(throwable.getMessage()));
-        else if (throwable instanceof CommandWarningException)
+        } else if (throwable instanceof CommandWarningException) {
             event.replyWarning(FormatUtil.filterEveryone(throwable.getMessage()));
-        else
-            log.error("An exception occurred in a command: "+command, throwable);
+        } else {
+            log.error("An exception occurred in a command: " + command, throwable);
+        }
     }
-    
-    public static class CommandErrorException extends RuntimeException
-    {
-        public CommandErrorException(String message)
-        {
+
+    public static class CommandErrorException extends RuntimeException {
+        public CommandErrorException(String message) {
             super(message);
         }
     }
-    
-    public static class CommandWarningException extends RuntimeException
-    {
-        public CommandWarningException(String message)
-        {
+
+    public static class CommandWarningException extends RuntimeException {
+        public CommandWarningException(String message) {
             super(message);
         }
     }
 
     @Override
-    public void onCommand(CommandEvent event, Command command)
-    {
-        if (event.isFromType(ChannelType.TEXT))
+    public void onCommand(CommandEvent event, Command command) {
+        if (event.isFromType(ChannelType.TEXT)) {
             usage.increment(event.getGuild().getIdLong());
+        }
     }
-    
-    public Usage getUsage()
-    {
+
+    public Usage getUsage() {
         return usage;
     }
 }

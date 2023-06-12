@@ -18,40 +18,38 @@ package com.jagrosh.vortex.database.managers;
 import com.jagrosh.easysql.DataManager;
 import com.jagrosh.easysql.DatabaseConnector;
 import com.jagrosh.easysql.SQLColumn;
-import com.jagrosh.easysql.columns.*;
+import com.jagrosh.easysql.columns.LongColumn;
+import com.jagrosh.easysql.columns.StringColumn;
 import com.jagrosh.vortex.Constants;
 import com.jagrosh.vortex.automod.Filter;
 import com.jagrosh.vortex.utils.FixedCache;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed.Field;
-import org.json.JSONObject;
 
 /**
  * A database manager for storing a guilds bad words and very bad words filter.
  * The distinction between the two is that while messages that violate the bad word filter will be logged in
  * the regular modlogs, messages that violate the very bad words filter (eg., slurs opposed to normal curses),
  * will be logged to the important modlogs channel for attention from the mod team.
+ *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class FilterManager extends DataManager
-{
+public class FilterManager extends DataManager {
     private final static String SETTINGS_TITLE = "\uD83D\uDEAF Filters"; // 🚯
-    
-    public final static SQLColumn<Long> GUILD_ID = new LongColumn("GUILD_ID",false,0L);
+
+    public final static SQLColumn<Long> GUILD_ID = new LongColumn("GUILD_ID", false, 0L);
     public final static SQLColumn<String> BAD_WORDS = new StringColumn("BAD_WORDS", false, "", Filter.MAX_CONTENT_LENGTH);
     public final static SQLColumn<String> VERY_BAD_WORDS = new StringColumn("VERY_BAD_WORDS", false, "", Filter.MAX_CONTENT_LENGTH);
 
     private final FixedCache<Long, Filter> BAD_WORDS_CACHE = new FixedCache<>(Constants.DEFAULT_CACHE_SIZE);
     private final FixedCache<Long, Filter> VERY_BAD_WORDS_CACHE = new FixedCache<>(Constants.DEFAULT_CACHE_SIZE);
 
-    public FilterManager(DatabaseConnector connector)
-    {
+    public FilterManager(DatabaseConnector connector) {
         super(connector, "FILTERS");
     }
 
     @Override
-    protected String primaryKey()
-    {
+    protected String primaryKey() {
         return GUILD_ID.toString();
     }
 
@@ -66,6 +64,7 @@ public class FilterManager extends DataManager
                         return null;
                     }
                 }
+
                 return null;
             });
         }
@@ -84,6 +83,7 @@ public class FilterManager extends DataManager
                         return null;
                     }
                 }
+
                 return null;
             });
         }
@@ -91,28 +91,16 @@ public class FilterManager extends DataManager
         return filter;
     }
 
-    public Field getFiltersDisplay(Guild guild)
-    {
+    public Field getFiltersDisplay(Guild guild) {
         Filter badWordsFilter = getBadWordsFilter(guild.getIdLong());
         Filter veryBadWordsFilter = getVeryBadWordsFilter(guild.getIdLong());
         if (badWordsFilter == null && veryBadWordsFilter == null) {
             return null;
         }
 
-        String embedContent = String.format("**Bad Words:** %s%n**Very Bad Words:**%s",
-            badWordsFilter == null ? "_None_" : badWordsFilter.printContentEscaped(),
-            veryBadWordsFilter == null ? "_None_" : veryBadWordsFilter.printContentEscaped()
-        ).trim();
+        String embedContent = String.format("**Bad Words:** %s%n**Very Bad Words:**%s", badWordsFilter == null ? "_None_" : badWordsFilter.printContentEscaped(), veryBadWordsFilter == null ? "_None_" : veryBadWordsFilter.printContentEscaped()).trim();
 
         return new Field(SETTINGS_TITLE, embedContent, true);
-    }
-    
-    public JSONObject getFiltersJson(Guild guild) {
-        Filter badWordsFilter = getBadWordsFilter(guild.getIdLong());
-        Filter veryBadWordsFilter = getVeryBadWordsFilter(guild.getIdLong());
-        return new JSONObject()
-                .put("badWords", badWordsFilter == null ? JSONObject.NULL : badWordsFilter.printContent())
-                .put("veryBadWords", badWordsFilter == null ? JSONObject.NULL : veryBadWordsFilter.printContent());
     }
 
     public void updateBadWordFilter(Guild guild, Filter filter) {

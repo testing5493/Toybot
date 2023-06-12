@@ -16,60 +16,62 @@
 package com.jagrosh.vortex.logging;
 
 import com.jagrosh.vortex.utils.FixedCache;
+import lombok.Getter;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.ISnowflake;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.Message.Attachment;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.sharding.ShardManager;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.entities.Message.Attachment;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.sharding.ShardManager;
-import lombok.Getter;
-
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class MessageCache
-{
+public class MessageCache {
     private final static int SIZE = 1000;
-    private final HashMap<Long,FixedCache<Long,CachedMessage>> cache = new HashMap<>();
-    
-    public CachedMessage putMessage(Message m)
-    {
-        if(!cache.containsKey(m.getGuild().getIdLong()))
+    private final HashMap<Long, FixedCache<Long, CachedMessage>> cache = new HashMap<>();
+
+    public CachedMessage putMessage(Message m) {
+        if (!cache.containsKey(m.getGuild().getIdLong())) {
             cache.put(m.getGuild().getIdLong(), new FixedCache<>(SIZE));
+        }
+
         return cache.get(m.getGuild().getIdLong()).put(m.getIdLong(), new CachedMessage(m));
     }
-    
-    public CachedMessage pullMessage(Guild guild, long messageId)
-    {
-        if(!cache.containsKey(guild.getIdLong()))
+
+    public CachedMessage pullMessage(Guild guild, long messageId) {
+        if (!cache.containsKey(guild.getIdLong())) {
             return null;
+        }
+
         return cache.get(guild.getIdLong()).pull(messageId);
     }
-    
-    public List<CachedMessage> getMessages(Guild guild, Predicate<CachedMessage> predicate)
-    {
-        if(!cache.containsKey(guild.getIdLong()))
+
+    public List<CachedMessage> getMessages(Guild guild, Predicate<CachedMessage> predicate) {
+        if (!cache.containsKey(guild.getIdLong())) {
             return Collections.EMPTY_LIST;
+        }
+
         return cache.get(guild.getIdLong()).getValues().stream().filter(predicate).collect(Collectors.toList());
     }
 
-    public static class CachedMessage implements ISnowflake
-    {
+    public static class CachedMessage implements ISnowflake {
         private final String content;
         private final @Getter String username;
         private final @Getter String discriminator;
         private final long id, author, channel, guild;
         private final List<Attachment> attachments;
-        
-        private CachedMessage(Message message)
-        {
+
+        private CachedMessage(Message message) {
             content = message.getContentRaw();
             id = message.getIdLong();
             author = message.getAuthor().getIdLong();
@@ -79,72 +81,71 @@ public class MessageCache
             guild = message.isFromGuild() ? message.getGuild().getIdLong() : 0L;
             attachments = message.getAttachments();
         }
-        
-        public String getContentRaw()
-        {
+
+        public String getContentRaw() {
             return content;
         }
-        
-        public List<Attachment> getAttachments()
-        {
+
+        public List<Attachment> getAttachments() {
             return attachments;
         }
-        
-        public User getAuthor(JDA jda)
-        {
+
+        public User getAuthor(JDA jda) {
             return jda.getUserById(author);
         }
 
-        public User getAuthor(ShardManager shardManager)
-        {
+        public User getAuthor(ShardManager shardManager) {
             return shardManager.getUserById(author);
         }
 
-        public long getAuthorId()
-        {
+        public long getAuthorId() {
             return author;
         }
-        
-        public TextChannel getTextChannel(JDA jda)
-        {
-            if (guild == 0L)
+
+        public TextChannel getTextChannel(JDA jda) {
+            if (guild == 0L) {
                 return null;
+            }
+
             Guild g = jda.getGuildById(guild);
-            if (g == null)
+            if (g == null) {
                 return null;
+            }
+
             return g.getTextChannelById(channel);
         }
 
-        public TextChannel getTextChannel(ShardManager shardManager)
-        {
-            if (guild == 0L)
+        public TextChannel getTextChannel(ShardManager shardManager) {
+            if (guild == 0L) {
                 return null;
+            }
+
             Guild g = shardManager.getGuildById(guild);
-            if (g == null)
+            if (g == null) {
                 return null;
+            }
+
             return g.getTextChannelById(channel);
         }
-        
-        public long getTextChannelId()
-        {
+
+        public long getTextChannelId() {
             return channel;
         }
-        
-        public TextChannel getTextChannel(Guild guild)
-        {
+
+        public TextChannel getTextChannel(Guild guild) {
             return guild.getTextChannelById(channel);
         }
-        
-        public Guild getGuild(JDA jda)
-        {
-            if (guild == 0L)
+
+        public Guild getGuild(JDA jda) {
+            if (guild == 0L) {
                 return null;
+            }
+
             return jda.getGuildById(guild);
         }
 
         @Override
-        public long getIdLong()
-        {
+        public long getIdLong() {
             return id;
         }
     }

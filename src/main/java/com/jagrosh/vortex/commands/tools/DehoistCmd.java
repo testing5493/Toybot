@@ -22,13 +22,10 @@ import com.jagrosh.vortex.utils.OtherUtil;
 import net.dv8tion.jda.api.Permission;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class DehoistCmd extends Command
-{
-    public DehoistCmd()
-    {
+public class DehoistCmd extends Command {
+    public DehoistCmd() {
         this.name = "dehoist";
         this.arguments = "[symbol]";
         this.help = "modifies users' nicknames to prevent using ascii characters as a hoist";
@@ -38,27 +35,32 @@ public class DehoistCmd extends Command
         this.guildOnly = true;
         this.cooldown = 10;
     }
-    
+
     @Override
-    protected void execute(CommandEvent event)
-    {
+    protected void execute(CommandEvent event) {
         char symbol;
-        if(event.getArgs().isEmpty())
+        if (event.getArgs().isEmpty()) {
             symbol = OtherUtil.DEHOIST_ORIGINAL[0];
-        else if(event.getArgs().length()==1)
+        } else if (event.getArgs().length() == 1) {
             symbol = event.getArgs().charAt(0);
-        else
-            throw new CommandErrorException("Provided symbol must be one character of the following: "+OtherUtil.DEHOIST_JOINED);
+        } else {
+            throw new CommandErrorException("Provided symbol must be one character of the following: " + OtherUtil.DEHOIST_JOINED);
+        }
+
         boolean allowed = false;
-        for(char c: OtherUtil.DEHOIST_ORIGINAL)
-            if(c==symbol)
+        for (char c : OtherUtil.DEHOIST_ORIGINAL) {
+            if (c == symbol) {
                 allowed = true;
-        if(!allowed)
-            throw new CommandErrorException("Provided symbol must be one character of the following: "+OtherUtil.DEHOIST_JOINED);
-        
+            }
+        }
+
+        if (!allowed) {
+            throw new CommandErrorException("Provided symbol must be one character of the following: " + OtherUtil.DEHOIST_JOINED);
+        }
+
         long count = event.getGuild().getMembers().stream().filter(m -> OtherUtil.dehoist(m, symbol)).count();
-        
-        event.replySuccess("Dehoisting `"+count+"` members with names starting with `"+symbol+"` or higher.");
+
+        event.replySuccess("Dehoisting `" + count + "` members with names starting with `" + symbol + "` or higher.");
     }
-    
+
 }

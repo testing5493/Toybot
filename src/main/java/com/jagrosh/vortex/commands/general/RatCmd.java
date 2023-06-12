@@ -5,8 +5,6 @@ import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.utils.OtherUtil;
 
-import java.util.Random;
-
 public class RatCmd extends Command {
     private final Vortex vortex;
 
@@ -21,8 +19,6 @@ public class RatCmd extends Command {
     @Override
     protected void execute(CommandEvent event) {
         String[] rats = OtherUtil.readLines("rats");
-        Random rand = new Random();
-        int rnd = rand.nextInt(rats.length);
-        event.reply(rats[rnd]);
+        event.reply(rats[(int) (Math.random() * rats.length)]);
     }
 }

@@ -5,39 +5,32 @@ import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.ModCommand;
 import net.dv8tion.jda.api.Permission;
 
-public class AddTagCmd extends ModCommand
-{
-    public AddTagCmd(Vortex vortex)
-    {
+public class AddTagCmd extends ModCommand {
+    public AddTagCmd(Vortex vortex) {
         super(vortex, Permission.MESSAGE_MANAGE);
         this.name = "addtag";
-        this.aliases = new String[] {"edittag"};
+        this.aliases = new String[]{"edittag"};
         this.arguments = "<tagName> <tagValue>";
         this.help = "adds a tag";
         this.guildOnly = true;
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
+    protected void execute(CommandEvent event) {
         String args = event.getArgs().trim();
         String[] argsArray = args.split(" ");
         String tagName;
         String tagValue;
 
-        try
-        {
+        try {
             tagName = argsArray[0];
-        }
-        catch(IndexOutOfBoundsException e)
-        {
+        } catch (IndexOutOfBoundsException e) {
             event.reply("Please enter a tag name to create");
             return;
         }
 
         tagValue = args.substring(argsArray[0].length() + 1);
-        if (tagValue.isEmpty())
-        {
+        if (tagValue.isEmpty()) {
             event.reply("Please enter a value for the tag");
             return;
         }

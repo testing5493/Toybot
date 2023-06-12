@@ -23,59 +23,62 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public abstract class ModCommand extends Command
-{
+public abstract class ModCommand extends Command {
     protected final Vortex vortex;
-    
-    public ModCommand(Vortex vortex, Permission... altPerms)
-    {
+
+    public ModCommand(Vortex vortex, Permission... altPerms) {
         this.vortex = vortex;
         this.guildOnly = true;
-        this.category = new Category("Moderation", event ->
-        {
-            if(!event.getChannelType().isGuild())
-            {
+        this.category = new Category("Moderation", event -> {
+            if (!event.getChannelType().isGuild()) {
                 event.replyError("This command is not available in Direct Messages!");
                 return false;
             }
+
             Role modrole = vortex.getDatabase().settings.getSettings(event.getGuild()).getModeratorRole(event.getGuild());
-            if(modrole!=null && event.getMember().getRoles().contains(modrole))
+            if (modrole != null && event.getMember().getRoles().contains(modrole)) {
                 return true;
-            
+            }
+
             boolean missingPerms = false;
-            for(Permission altPerm: altPerms)
-            {
-                if(altPerm.isText())
-                {
-                    if(!event.getMember().hasPermission(event.getTextChannel(), altPerm))
+            for (Permission altPerm : altPerms) {
+                if (altPerm.isText()) {
+                    if (!event.getMember().hasPermission(event.getTextChannel(), altPerm)) {
                         missingPerms = true;
-                }
-                else
-                {
-                    if(!event.getMember().hasPermission(altPerm))
+                    }
+                } else {
+                    if (!event.getMember().hasPermission(altPerm)) {
                         missingPerms = true;
+                    }
                 }
             }
-            if(!missingPerms)
+
+            if (!missingPerms) {
                 return true;
-            if(event.getMember().getRoles().isEmpty())
+            }
+
+            if (event.getMember().getRoles().isEmpty()) {
                 event.getMessage().addReaction(Emoji.fromFormatted(Constants.ERROR_REACTION)).queue();
-            else
-                event.replyError("You must have the following permissions to use that: "+listPerms(altPerms));
+            } else {
+                event.replyError("You must have the following permissions to use that: " + listPerms(altPerms));
+            }
+
             return false;
         });
     }
-    
-    private static String listPerms(Permission... perms)
-    {
-        if(perms.length==0)
+
+    private static String listPerms(Permission... perms) {
+        if (perms.length == 0) {
             return "";
+        }
+
         StringBuilder sb = new StringBuilder(perms[0].getName());
-        for(int i=1; i<perms.length; i++)
+        for (int i = 1; i < perms.length; i++) {
             sb.append(", ").append(perms[i].getName());
+        }
+
         return sb.toString();
     }
 }

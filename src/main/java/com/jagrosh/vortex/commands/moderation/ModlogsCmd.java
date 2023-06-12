@@ -10,14 +10,10 @@ import com.jagrosh.vortex.utils.FormatUtil;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 
-import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.List;
 
-public class ModlogsCmd extends ModCommand
-{
-    public ModlogsCmd(Vortex vortex)
-    {
+public class ModlogsCmd extends ModCommand {
+    public ModlogsCmd(Vortex vortex) {
         super(vortex, Permission.MANAGE_ROLES);
         this.name = "modlogs";
         this.arguments = "<@user>";
@@ -26,24 +22,18 @@ public class ModlogsCmd extends ModCommand
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
-        if (event.getArgs().equalsIgnoreCase("help"))
-        {
+    protected void execute(CommandEvent event) {
+        if (event.getArgs().equalsIgnoreCase("help")) {
             event.replySuccess("This command is used to see a user's modlogs for the current server. Please mention a user or use a user ID to check their modlogs.");
             return;
         }
 
         long id = CommandTools.getPossibleUserId(event.getArgs().trim());
 
-        if (id == -1)
-        {
-            if (event.getArgs().trim().isEmpty())
-            {
+        if (id == -1) {
+            if (event.getArgs().trim().isEmpty()) {
                 id = event.getAuthor().getIdLong();
-            }
-            else
-            {
+            } else {
                 event.reply("Please mention someone or enter a valid user ID");
                 return;
             }
@@ -53,8 +43,7 @@ public class ModlogsCmd extends ModCommand
 
         int size = modlogs.size();
 
-        if (size == 0)
-        {
+        if (size == 0) {
             event.reply("Could not find any modlogs for that user");
             return;
         }
@@ -64,32 +53,19 @@ public class ModlogsCmd extends ModCommand
             embeds[i] = new EmbedBuilder();
         }
 
-        if (event.getJDA().getUserById(id) != null)
-            embeds[0].setTitle(
-                String.format("%d modlog%s found for %s#%s (%d)",
-                    size,
-                    size == 1 ? "" : "s",
-                    event.getJDA().getUserById(id).getName(),
-                    event.getJDA().getUserById(id).getDiscriminator(),
-                    id
-                )
-            );
-        else
-            embeds[0].setTitle(
-                String.format("%d modlog%s found for %d",
-                    size,
-                    size == 1 ? "" : "s",
-                    id
-                )
-            );
+        if (event.getJDA().getUserById(id) != null) {
+            embeds[0].setTitle(String.format("%d modlog%s found for %s#%s (%d)", size, size == 1 ? "" : "s", event.getJDA().getUserById(id).getName(), event.getJDA().getUserById(id).getDiscriminator(), id));
+        } else {
+            embeds[0].setTitle(String.format("%d modlog%s found for %d", size, size == 1 ? "" : "s", id));
+        }
 
-        for (int i = modlogs.size() - 1; i >= 0; i--)
-        {
+        for (int i = modlogs.size() - 1; i >= 0; i--) {
             Modlog modlog = modlogs.get(i);
             embeds[i / 25].addField("Case: " + modlog.getId(), FormatUtil.formatModlogCase(vortex, event.getGuild(), modlog), false);
         }
 
-        for (EmbedBuilder embed : embeds)
+        for (EmbedBuilder embed : embeds) {
             event.reply(embed.build());
+        }
     }
 }

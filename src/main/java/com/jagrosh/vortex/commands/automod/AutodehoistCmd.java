@@ -17,21 +17,18 @@ package com.jagrosh.vortex.commands.automod;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
-import net.dv8tion.jda.api.Permission;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener;
 import com.jagrosh.vortex.utils.OtherUtil;
+import net.dv8tion.jda.api.Permission;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class AutodehoistCmd extends Command
-{
+public class AutodehoistCmd extends Command {
     private final Vortex vortex;
-    
-    public AutodehoistCmd(Vortex vortex)
-    {
+
+    public AutodehoistCmd(Vortex vortex) {
         this.vortex = vortex;
         this.name = "autodehoist";
         this.guildOnly = true;
@@ -43,29 +40,34 @@ public class AutodehoistCmd extends Command
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
-        if(event.getArgs().isEmpty())
+    protected void execute(CommandEvent event) {
+        if (event.getArgs().isEmpty()) {
             throw new CommandExceptionListener.CommandErrorException("Please provide a valid dehoist character, or OFF");
-        else if(event.getArgs().equalsIgnoreCase("none") || event.getArgs().equalsIgnoreCase("off"))
-        {
-            vortex.getDatabase().automod.setDehoistChar(event.getGuild(), (char)0);
+        } else if (event.getArgs().equalsIgnoreCase("none") || event.getArgs().equalsIgnoreCase("off")) {
+            vortex.getDatabase().automod.setDehoistChar(event.getGuild(), (char) 0);
             event.replySuccess("No action will be taken on name hoisting.");
             return;
         }
+
         char symbol;
-        if(event.getArgs().length()==1)
+        if (event.getArgs().length() == 1) {
             symbol = event.getArgs().charAt(0);
-        else
-            throw new CommandExceptionListener.CommandErrorException("Provided symbol must be one character of the following: "+OtherUtil.DEHOIST_JOINED);
+        } else {
+            throw new CommandExceptionListener.CommandErrorException("Provided symbol must be one character of the following: " + OtherUtil.DEHOIST_JOINED);
+        }
+
         boolean allowed = false;
-        for(char c: OtherUtil.DEHOIST_ORIGINAL)
-            if(c==symbol)
+        for (char c : OtherUtil.DEHOIST_ORIGINAL) {
+            if (c == symbol) {
                 allowed = true;
-        if(!allowed)
-            throw new CommandExceptionListener.CommandErrorException("Provided symbol must be one character of the following: "+OtherUtil.DEHOIST_JOINED);
-        
+            }
+        }
+
+        if (!allowed) {
+            throw new CommandExceptionListener.CommandErrorException("Provided symbol must be one character of the following: " + OtherUtil.DEHOIST_JOINED);
+        }
+
         vortex.getDatabase().automod.setDehoistChar(event.getGuild(), symbol);
-        event.replySuccess("Users will now be dehoisted if their effective name starts with `"+symbol+"` or higher.");
+        event.replySuccess("Users will now be dehoisted if their effective name starts with `" + symbol + "` or higher.");
     }
 }

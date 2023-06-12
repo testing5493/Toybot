@@ -21,25 +21,23 @@ import com.jagrosh.jdautilities.menu.ButtonMenu;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener.CommandErrorException;
 import com.jagrosh.vortex.commands.CommandExceptionListener.CommandWarningException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Invite;
 
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class InvitepruneCmd extends Command
-{
+public class InvitepruneCmd extends Command {
     private final static String CANCEL = "\u274C"; // ❌
     private final static String CONFIRM = "\u2611"; // ☑
-    
+
     private final Vortex vortex;
-    
-    public InvitepruneCmd(Vortex vortex)
-    {
+
+    public InvitepruneCmd(Vortex vortex) {
         this.vortex = vortex;
         this.name = "inviteprune";
         this.arguments = "[max uses]";
@@ -48,55 +46,47 @@ public class InvitepruneCmd extends Command
         this.userPermissions = new Permission[]{Permission.MANAGE_SERVER};
         this.botPermissions = new Permission[]{Permission.MANAGE_SERVER};
         this.guildOnly = true;
-        this.cooldown = 60*5; // 5 minute cooldown for safety
+        this.cooldown = 60 * 5; // 5 minute cooldown for safety
     }
-    
+
     @Override
-    protected void execute(CommandEvent event)
-    {
+    protected void execute(CommandEvent event) {
         int uses;
-        if(event.getArgs().isEmpty())
+        if (event.getArgs().isEmpty()) {
             uses = 1;
-        else try
-        {
-            uses = Integer.parseInt(event.getArgs());
+        } else {
+            try {
+                uses = Integer.parseInt(event.getArgs());
+            } catch (NumberFormatException ex) {
+                throw new CommandErrorException("`" + event.getArgs() + "` is not a valid integer!");
+            }
         }
-        catch(NumberFormatException ex)
-        {
-            throw new CommandErrorException("`"+event.getArgs()+"` is not a valid integer!");
-        }
-        if(uses<0 || uses>50)
+
+        if (uses < 0 || uses > 50) {
             throw new CommandWarningException("Maximum uses must be at least 0 and no larger than 50");
-        if(uses>10)
-            waitForConfirmation(event, "This will delete all invites with "+uses+" or fewer uses.", () -> pruneInvites(uses, event));
-        else
+        }
+
+        if (uses > 10) {
+            waitForConfirmation(event, "This will delete all invites with " + uses + " or fewer uses.", () -> pruneInvites(uses, event));
+        } else {
             pruneInvites(uses, event);
+        }
     }
-    
-    private void pruneInvites(int uses, CommandEvent event)
-    {
+
+    private void pruneInvites(int uses, CommandEvent event) {
         event.getChannel().sendTyping().queue();
-        event.getGuild().retrieveInvites().queue(list ->
-        {
-            List<Invite> toPrune = list.stream().filter(i -> i.getInviter()!=null && !i.getInviter().isBot() && i.getUses()<=uses).collect(Collectors.toList());
+        event.getGuild().retrieveInvites().queue(list -> {
+            List<Invite> toPrune = list.stream().filter(i -> i.getInviter() != null && !i.getInviter().isBot() && i.getUses() <= uses).collect(Collectors.toList());
             toPrune.forEach(i -> i.delete().queue());
-            event.replySuccess("Deleting `"+toPrune.size()+"` invites with `"+uses+"` or fewer uses.");
+            event.replySuccess("Deleting `" + toPrune.size() + "` invites with `" + uses + "` or fewer uses.");
         });
     }
-    
-    private void waitForConfirmation(CommandEvent event, String message, Runnable confirm)
-    {
-        new ButtonMenu.Builder()
-                .setChoices(CONFIRM, CANCEL)
-                .setEventWaiter(vortex.getEventWaiter())
-                .setTimeout(1, TimeUnit.MINUTES)
-                .setText(event.getClient().getWarning()+" "+message+"\n\n"+CONFIRM+" Continue\n"+CANCEL+" Cancel")
-                .setFinalAction(m -> m.delete().queue(s->{}, f->{}))
-                .setUsers(event.getAuthor())
-                .setAction(re ->
-                {
-                    if(re.getName().equals(CONFIRM))
-                        confirm.run();
-                }).build().display(event.getChannel());
+
+    private void waitForConfirmation(CommandEvent event, String message, Runnable confirm) {
+        new ButtonMenu.Builder().setChoices(CONFIRM, CANCEL).setEventWaiter(vortex.getEventWaiter()).setTimeout(1, TimeUnit.MINUTES).setText(event.getClient().getWarning() + " " + message + "\n\n" + CONFIRM + " Continue\n" + CANCEL + " Cancel").setFinalAction(m -> m.delete().queue(s -> {}, f -> {})).setUsers(event.getAuthor()).setAction(re -> {
+            if (re.getName().equals(CONFIRM)) {
+                confirm.run();
+            }
+        }).build().display(event.getChannel());
     }
 }

@@ -22,25 +22,20 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class Usage
-{
-    private final HashMap<Long,Integer> map = new HashMap<>();
-    
-    public void increment(long key)
-    {
+public class Usage {
+    private final HashMap<Long, Integer> map = new HashMap<>();
+
+    public void increment(long key) {
         map.put(key, map.getOrDefault(key, 0) + 1);
     }
-    
-    public Map<Long,Integer> getMap()
-    {
+
+    public Map<Long, Integer> getMap() {
         return map;
     }
-    
-    public List<Entry<Long,Integer>> higher(int val)
-    {
+
+    public List<Entry<Long, Integer>> higher(int val) {
         return map.entrySet().stream().filter(e -> e.getValue() >= val).collect(Collectors.toList());
     }
 }

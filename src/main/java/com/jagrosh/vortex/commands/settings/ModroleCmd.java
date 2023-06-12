@@ -20,20 +20,18 @@ import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.jdautilities.commons.utils.FinderUtil;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.utils.FormatUtil;
-import java.util.List;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Role;
 
+import java.util.List;
+
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class ModroleCmd extends Command
-{
+public class ModroleCmd extends Command {
     private final Vortex vortex;
-    
-    public ModroleCmd(Vortex vortex)
-    {
+
+    public ModroleCmd(Vortex vortex) {
         this.vortex = vortex;
         this.name = "modrole";
         this.help = "sets the moderator role";
@@ -45,30 +43,24 @@ public class ModroleCmd extends Command
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
-        if(event.getArgs().isEmpty())
-        {
+    protected void execute(CommandEvent event) {
+        if (event.getArgs().isEmpty()) {
             event.replyError("Please include the name of a role to use as the Moderator role. Members with this role will be able to use all Moderation commands.");
             return;
-        }
-        
-        else if(event.getArgs().equalsIgnoreCase("none") || event.getArgs().equalsIgnoreCase("off"))
-        {
+        } else if (event.getArgs().equalsIgnoreCase("none") || event.getArgs().equalsIgnoreCase("off")) {
             vortex.getDatabase().settings.setModeratorRole(event.getGuild(), null);
             event.replySuccess("Moderation commands can now only be used by members that can perform the actions manually.");
             return;
         }
-        
+
         List<Role> roles = FinderUtil.findRoles(event.getArgs(), event.getGuild());
-        if(roles.isEmpty())
-            event.replyError("No roles found called `"+event.getArgs()+"`");
-        else if (roles.size()==1)
-        {
+        if (roles.isEmpty()) {
+            event.replyError("No roles found called `" + event.getArgs() + "`");
+        } else if (roles.size() == 1) {
             vortex.getDatabase().settings.setModeratorRole(event.getGuild(), roles.get(0));
-            event.replySuccess("Users with the `"+roles.get(0).getName()+"` role can now use all Moderation commands.");
-        }
-        else
+            event.replySuccess("Users with the `" + roles.get(0).getName() + "` role can now use all Moderation commands.");
+        } else {
             event.replyWarning(FormatUtil.listOfRoles(roles, event.getArgs()));
+        }
     }
 }

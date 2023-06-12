@@ -15,22 +15,20 @@
  */
 package com.jagrosh.vortex.commands.owner;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.vortex.Vortex;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+
 /**
- *
  * @author John Grosh (jagrosh)
  */
-public class EvalCmd extends Command
-{
+public class EvalCmd extends Command {
     private final Vortex vortex;
-    
-    public EvalCmd(Vortex vortex)
-    {
+
+    public EvalCmd(Vortex vortex) {
         this.vortex = vortex;
         this.name = "eval";
         this.help = "evaluates nashorn code";
@@ -38,13 +36,11 @@ public class EvalCmd extends Command
         this.guildOnly = false;
         this.hidden = true;
     }
-    
+
     @Override
-    protected void execute(CommandEvent event) 
-    {
+    protected void execute(CommandEvent event) {
         event.getChannel().sendTyping().queue();
-        event.async(() ->
-        {
+        event.async(() -> {
             ScriptEngine se = new ScriptEngineManager().getEngineByName("Nashorn");
             se.put("bot", vortex);
             se.put("event", event);
@@ -52,15 +48,12 @@ public class EvalCmd extends Command
             se.put("guild", event.getGuild());
             se.put("channel", event.getChannel());
             String args = event.getArgs().replaceAll("([^(]+?)\\s*->", "function($1)");
-            try
-            {
-                event.replySuccess("Evaluated Successfully:\n```\n"+se.eval(args)+" ```");
-            } 
-            catch(Exception e)
-            {
-                event.replyError("An exception was thrown:\n```\n"+e+" ```");
+            try {
+                event.replySuccess("Evaluated Successfully:\n```\n" + se.eval(args) + " ```");
+            } catch (Exception e) {
+                event.replyError("An exception was thrown:\n```\n" + e + " ```");
             }
         });
     }
-    
+
 }

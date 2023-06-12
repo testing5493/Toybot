@@ -15,29 +15,27 @@
  */
 package com.jagrosh.vortex.commands.moderation;
 
-import java.util.List;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener.CommandErrorException;
 import com.jagrosh.vortex.commands.ModCommand;
-import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Role;
 import com.jagrosh.vortex.utils.ArgsUtil;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.LogUtil;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Role;
+
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
- *
  * @author John Grosh (jagrosh)
  */
-public class MuteCmd extends ModCommand
-{
-    public MuteCmd(Vortex vortex)
-    {
+public class MuteCmd extends ModCommand {
+    public MuteCmd(Vortex vortex) {
         super(vortex, Permission.MANAGE_ROLES);
         this.name = "mute";
         this.arguments = "<@users> [time] [reason]";
@@ -47,94 +45,95 @@ public class MuteCmd extends ModCommand
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
+    protected void execute(CommandEvent event) {
         Role muteRole = vortex.getDatabase().settings.getSettings(event.getGuild()).getMutedRole(event.getGuild());
-        if(muteRole == null)
-        {
+        if (muteRole == null) {
             event.replyError("No Muted role exists!");
             return;
         }
-        if(!event.getMember().canInteract(muteRole))
-        {
-            event.replyError("You do not have permissions to assign the '"+muteRole.getName()+"' role!");
+
+        if (!event.getMember().canInteract(muteRole)) {
+            event.replyError("You do not have permissions to assign the '" + muteRole.getName() + "' role!");
             return;
         }
-        if(!event.getSelfMember().canInteract(muteRole))
-        {
-            event.reply(event.getClient().getError()+" I do not have permissions to assign the '"+muteRole.getName()+"' role!");
+
+        if (!event.getSelfMember().canInteract(muteRole)) {
+            event.reply(event.getClient().getError() + " I do not have permissions to assign the '" + muteRole.getName() + "' role!");
             return;
         }
-        
+
         ArgsUtil.ResolvedArgs args = ArgsUtil.resolve(event.getArgs(), true, event.getGuild());
-        if(args.isEmpty())
-        {
+        if (args.isEmpty()) {
             event.replyError("Please include at least one user to mute (@mention or ID)!");
             return;
         }
+
         int minutes;
-        if(args.time < -1)
+        if (args.time < -1) {
             throw new CommandErrorException("Timed mutes cannot be negative time!");
-        else if(args.time == 0)
+        } else if (args.time == 0) {
             minutes = 0;
-        else if(args.time > 60)
-            minutes = (int)Math.round(args.time/60.0);
-        else
+        } else if (args.time > 60) {
+            minutes = (int) Math.round(args.time / 60.0);
+        } else {
             minutes = 0;
+        }
+
         String reason = LogUtil.auditReasonFormat(event.getMember(), minutes, args.reason);
         Role modrole = vortex.getDatabase().settings.getSettings(event.getGuild()).getModeratorRole(event.getGuild());
         StringBuilder builder = new StringBuilder();
         List<Member> toMute = new LinkedList<>();
-        
-        args.members.forEach(m -> 
-        {
-            if(!event.getMember().canInteract(m))
+
+        args.members.forEach(m -> {
+            if (!event.getMember().canInteract(m)) {
                 builder.append("\n").append(event.getClient().getError()).append(" You do not have permission to mute ").append(FormatUtil.formatUser(m.getUser()));
-            else if(!event.getSelfMember().canInteract(m))
+            } else if (!event.getSelfMember().canInteract(m)) {
                 builder.append("\n").append(event.getClient().getError()).append(" I am unable to mute ").append(FormatUtil.formatUser(m.getUser()));
-            else if(m.getRoles().contains(muteRole))
+            } else if (m.getRoles().contains(muteRole)) {
                 builder.append("\n").append(event.getClient().getError()).append(" ").append(FormatUtil.formatUser(m.getUser())).append(" is already muted!");
-            else if(modrole!=null && m.getRoles().contains(modrole))
+            } else if (modrole != null && m.getRoles().contains(modrole)) {
                 builder.append("\n").append(event.getClient().getError()).append(" I won't mute ").append(FormatUtil.formatUser(m.getUser())).append(" because they have the Moderator Role");
-            else
+            } else {
                 toMute.add(m);
+            }
         });
-        
+
         args.unresolved.forEach(un -> builder.append("\n").append(event.getClient().getWarning()).append(" Could not resolve `").append(un).append("` to a member"));
-        
+
         args.users.forEach(u -> builder.append("\n").append(event.getClient().getWarning()).append(" The user ").append(u.getAsMention()).append(" is not in this server."));
-        
+
         args.ids.forEach(id -> builder.append("\n").append(event.getClient().getWarning()).append(" The user <@").append(id).append("> is not in this server."));
-        
-        if(toMute.isEmpty())
-        {
+
+        if (toMute.isEmpty()) {
             event.reply(builder.toString());
             return;
         }
-        
-        if(toMute.size() > 5)
+
+        if (toMute.size() > 5) {
             event.reactSuccess();
-        
+        }
+
         Instant unmuteTime = Instant.now().plus(minutes, ChronoUnit.MINUTES);
-        String time = minutes==0 ? "" : " for "+FormatUtil.secondsToTimeCompact(minutes*60);
-        for(int i=0; i<toMute.size(); i++)
-        {
+        String time = minutes == 0 ? "" : " for " + FormatUtil.secondsToTimeCompact(minutes * 60);
+        for (int i = 0; i < toMute.size(); i++) {
             Member m = toMute.get(i);
-            boolean last = i+1 == toMute.size();
-            event.getGuild().addRoleToMember(m, muteRole).reason(reason).queue(success ->
-            {
+            boolean last = i + 1 == toMute.size();
+            event.getGuild().addRoleToMember(m, muteRole).reason(reason).queue(success -> {
                 builder.append("\n").append(event.getClient().getSuccess()).append(" Successfully muted ").append(FormatUtil.formatUser(m.getUser())).append(time);
-                if(minutes>0)
+                if (minutes > 0) {
                     vortex.getDatabase().tempmutes.overrideMute(event.getGuild(), m.getUser().getIdLong(), event.getAuthor().getIdLong(), unmuteTime, args.reason);
-                else
+                } else {
                     vortex.getDatabase().tempmutes.overrideMute(event.getGuild(), m.getUser().getIdLong(), event.getAuthor().getIdLong(), Instant.MAX, args.reason);
-                if(last)
+                }
+
+                if (last) {
                     event.reply(builder.toString());
-            }, failure -> 
-            {
+                }
+            }, failure -> {
                 builder.append("\n").append(event.getClient().getError()).append(" Failed to mute ").append(m.getUser().getAsMention());
-                if(last)
+                if (last) {
                     event.reply(builder.toString());
+                }
             });
         }
     }

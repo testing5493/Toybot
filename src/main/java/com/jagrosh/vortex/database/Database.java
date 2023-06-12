@@ -18,6 +18,8 @@ package com.jagrosh.vortex.database;
 import com.jagrosh.easysql.DatabaseConnector;
 import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.database.managers.*;
+import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.ResultSet;
@@ -27,11 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class Database extends DatabaseConnector
-{
+public class Database extends DatabaseConnector {
     public final AutomodManager automod; // automod settings
     public final GuildSettingsDataManager settings; // logs and other settings
     public final IgnoreManager ignores; // ignored roles and channels
@@ -48,86 +48,35 @@ public class Database extends DatabaseConnector
     private static final List<CurrentId> idCache = new ArrayList<>(1);
     private static ModlogManager[] managers = null;
 
-    private static class CurrentId
-    {
+    private static class CurrentId {
         private final long guildId;
         private int id;
 
-        private CurrentId(long guildId, int id)
-        {
+        private CurrentId(long guildId, int id) {
             this.id = id;
             this.guildId = guildId;
         }
 
         @Override
-        public boolean equals(Object obj)
-        {
+        public boolean equals(Object obj) {
             return obj instanceof CurrentId && guildId == ((CurrentId) obj).guildId && id == ((CurrentId) obj).id;
         }
     }
 
-    public static class Modlog implements Comparable<Modlog>
-    {
-        private final long modId, saviorId, userId;
-        private final int id;
-        private final Action type;
-        private final String reason;
-        private final Instant finnish, start;
+    @Value
+    @RequiredArgsConstructor
+    public static class Modlog implements Comparable<Modlog> {
+        long userId, modId;
+        Action type;
+        int id;
+        String reason;
+        Instant finnish;
+        Instant start;
+        long saviorId;
 
-        public Modlog(long userId, long modId, Action type, int id, String reason, Instant start)
-        {
-            this.userId = userId;
-            this.modId = modId;
-            this.type = type;
-            this.id = id;
-            this.reason = reason;
-            this.finnish = null;
-            this.start = start;
-            this.saviorId = -1;
+        public Modlog(long userId, long modId, Action type, int id, String reason, Instant start) {
+            this(userId, modId, type, id, reason, null, start, -1L);
         }
-
-        public Modlog(long userId, long modId, Action type, int id, String reason, Instant finnish, Instant start, long saviorId)
-        {
-            this.userId = userId;
-            this.modId = modId;
-            this.type = type;
-            this.id = id;
-            this.reason = reason;
-            this.finnish = finnish;
-            this.start = start;
-            this.saviorId = saviorId;
-        }
-
-        public long getUserId()
-        {
-            return userId;
-        }
-
-        public long getModId()
-        {
-            return modId;
-        }
-
-        public long getSaviorId() { return saviorId; }
-
-        public Action getType()
-        {
-            return type;
-        }
-
-        public int getId()
-        {
-            return id;
-        }
-
-        public String getReason()
-        {
-            return reason;
-        }
-
-        public Instant getFinnish() { return finnish;}
-
-        public Instant getStart() { return start; }
 
         @Override
         public int compareTo(@NotNull Modlog m) {
@@ -135,10 +84,9 @@ public class Database extends DatabaseConnector
         }
     }
 
-    public Database(String host, String user, String pass) throws Exception
-    {
+    public Database(String host, String user, String pass) throws Exception {
         super(host, user, pass);
-        
+
         automod = new AutomodManager(this);
         settings = new GuildSettingsDataManager(this);
         ignores = new IgnoreManager(this);
@@ -153,27 +101,30 @@ public class Database extends DatabaseConnector
         warnings = new WarningManager(this);
         kicks = new KickingManager(this);
 
-        managers = new ModlogManager[] {tempmutes, gravels, warnings, tempbans, kicks};
+        managers = new ModlogManager[]{tempmutes, gravels, warnings, tempbans, kicks};
         init();
     }
 
-    public static synchronized int genNewId(long guildId)
-    {
-        for (CurrentId currentId: idCache)
-            if (currentId.guildId == guildId)
+    public static synchronized int genNewId(long guildId) {
+        for (CurrentId currentId : idCache) {
+            if (currentId.guildId == guildId) {
                 return ++currentId.id;
+            }
+        }
 
         int id = -1;
-        for (ModlogManager manager : managers)
+        for (ModlogManager manager : managers) {
             id = Math.max(id, manager.getMaxId(guildId));
+        }
 
         if (id == -1) {
             CurrentId toBeAdded = new CurrentId(guildId, id);
-            for (int i = 0; i < idCache.size(); i++)
+            for (int i = 0; i < idCache.size(); i++) {
                 if (idCache.get(i).equals(toBeAdded)) {
                     idCache.remove(i);
                     break;
                 }
+            }
         }
 
         idCache.add(new CurrentId(guildId, ++id));
@@ -186,17 +137,19 @@ public class Database extends DatabaseConnector
         return param;
     }
 
-    public static List<Modlog> getAllModlogs(long guildId, long userId)
-    {
+    public static List<Modlog> getAllModlogs(long guildId, long userId) {
         List<Modlog> modlogs = new ArrayList<>();
-        for (ModlogManager manager: managers)
+        for (ModlogManager manager : managers) {
             modlogs.addAll(manager.getModlogs(guildId, userId));
+        }
+
         modlogs.sort(Database.Modlog::compareTo);
         return modlogs;
     }
 
     /**
      * Updates a reason
+     *
      * @param guildId Guild Id
      * @param caseId Case Id
      * @param reason New Reason
@@ -205,27 +158,27 @@ public class Database extends DatabaseConnector
     public static String updateReason(long guildId, int caseId, String reason) {
         for (ModlogManager manager : managers) {
             String oldReason = manager.updateReason(guildId, caseId, reason);
-            if (oldReason != null)
+            if (oldReason != null) {
                 return oldReason;
+            }
         }
+
         return null;
     }
 
-    public static Modlog deleteModlog(long guildId, int caseId)
-    {
-        for (ModlogManager manager: managers)
-        {
+    public static Modlog deleteModlog(long guildId, int caseId) {
+        for (ModlogManager manager : managers) {
             Modlog modlog = manager.deleteCase(guildId, caseId);
-            if (modlog != null)
+            if (modlog != null) {
                 return modlog;
+            }
         }
 
         return null;
     }
 
     public static boolean deleteRow(ResultSet rs) throws SQLException {
-        if (rs.next())
-        {
+        if (rs.next()) {
             rs.deleteRow();
             return true;
         }

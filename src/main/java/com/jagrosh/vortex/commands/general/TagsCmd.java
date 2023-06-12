@@ -11,12 +11,10 @@ import net.dv8tion.jda.api.entities.Guild;
 
 import java.util.List;
 
-public class TagsCmd extends SlashCommand
-{
+public class TagsCmd extends SlashCommand {
     private final Vortex vortex;
 
-    public TagsCmd(Vortex vortex)
-    {
+    public TagsCmd(Vortex vortex) {
         this.name = "tags";
         this.arguments = "";
         this.help = "lists all tags";
