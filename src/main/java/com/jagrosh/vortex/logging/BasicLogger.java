@@ -189,6 +189,10 @@ public class BasicLogger {
     }
 
     public void logNameChange(UserUpdateDiscriminatorEvent event) {
+        if (event.getNewDiscriminator().equals(event.getOldDiscriminator())) { // Weird bug
+            return;
+        }
+
         OffsetDateTime now = OffsetDateTime.now();
         User user = event.getUser();
         event.getUser().getMutualGuilds().stream().map(guild -> vortex.getDatabase().settings.getSettings(guild).getServerLogChannel(guild)).filter(Objects::nonNull).forEachOrdered(tc -> {
