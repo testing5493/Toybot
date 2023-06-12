@@ -18,8 +18,8 @@ class TagManager {
      * Updates the value of a tag
      *
      * @param guildId The ID of the tags guild
-     * @param name    The unique name of the tag
-     * @param value   The value of the tag
+     * @param name The unique name of the tag
+     * @param value The value of the tag
      * @return True if successfully updated, false if something went wrong
      */
     public boolean update(long guildId, String name, String value) {
@@ -30,7 +30,7 @@ class TagManager {
      * Deletes a tag
      *
      * @param guildId The ID of the tags guild
-     * @param name    The unique name of the tag
+     * @param name The unique name of the tag
      * @return True if successfully deleted, false if something went wrong
      */
     public boolean delete(long guildId, String name) {

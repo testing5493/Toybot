@@ -2,9 +2,10 @@ package com.jagrosh.vortex.hibernate.api;
 
 import com.jagrosh.vortex.hibernate.entities.ModLog;
 import com.jagrosh.vortex.hibernate.entities.TimedLog;
+import jakarta.persistence.PersistenceException;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Session;
 
-import javax.persistence.PersistenceException;
 import java.time.Instant;
 
 /**
@@ -26,9 +27,8 @@ class ModlogManager {
      * @return A Modlog object, or {@code null} if no log was found
      */
     public ModLog getCase(long guildId, int caseId) throws PersistenceException {
-        database.doTransaction(session -> {
-            ModLog modlog = new ModLog();
-           session.get(ModLog.class, modlog);
+        return database.doTransaction(session -> {
+            return getModLog0(session, guildId, caseId);
         });
     }
 
@@ -39,13 +39,19 @@ class ModlogManager {
      *
      * @param deletingModId The ID of the moderator deleting the log
      * @param guildId The ID of the guild
-     * @param caseId  The case ID to delete
+     * @param caseId The case ID to delete
      * @return A {@link ModLog} object representing the deleted case, or {@code null} if the case was not found
      * @throws PersistenceException If something went wrong while deleting the case
      */
     public ModLog deleteCase(long deletingModId, long guildId, int caseId) throws PersistenceException {
         database.doTransaction(session -> {
+            ModLog modLog = getModLog0(session, guildId, caseId);
+            if (modLog == null) {
+                return null;
+            }
 
+            session.remove(modLog);
+            return null;
         });
     }
 
@@ -84,7 +90,7 @@ class ModlogManager {
      * @param reason The reason for the kick, or {@code null} if no reason was specified
      * @throws PersistenceException if something went wrong while logging the kick
      */
-    public void logKick(long guildId,long userId, long punishingModId, Instant punishingTime, String reason) throws PersistenceException {
+    public void logKick(long guildId, long userId, long punishingModId, Instant punishingTime, String reason) throws PersistenceException {
 
     }
 
@@ -167,5 +173,12 @@ class ModlogManager {
      */
     public void logUnmute(long guildId, long userId, long pardoningModId, Instant pardoningTime) {
 
+    }
+
+    private ModLog getModLog0(Session session, long guildId, int caseId) {
+        return session.createQuery("select m from ModLog m where m.guildId = :guildId and m.caseId = :caseId", ModLog.class)
+                .setParameter("guildId", guildId)
+                .setParameter("caseId", caseId)
+                .getSingleResult();
     }
 }

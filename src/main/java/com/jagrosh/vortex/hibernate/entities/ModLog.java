@@ -1,10 +1,10 @@
 package com.jagrosh.vortex.hibernate.entities;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-
-import lombok.AllArgsConstructor;
+import com.jagrosh.vortex.hibernate.internal.ModLogId;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,34 +13,47 @@ import lombok.NoArgsConstructor;
  * Each object represents a modlog case, which goes on a users record. For example, if a user gets banned a {@link BanLog}
  * will be added to the Database.
  */
-@Entity @Data
-@AllArgsConstructor
+@Entity
+@Data
+@IdClass(ModLogId.class)
 @NoArgsConstructor
 public class ModLog {
-    /** The guild's ID **/
-    @Id @Column(name = "GUILD_ID")
-    protected long guildId;
+    /**
+     * The guild's ID
+     **/
+    @Id
+    @Column(name = "GUILD_ID")
+    private long guildId;
 
-    /** The modlog case ID, which will always be an Integer greater than 0 */
-    @Id @Column(name = "CASE_ID")
-    protected int caseId;
+    /**
+     * The modlog case ID, which will always be an Integer greater than 0
+     */
+    @Id
+    @Column(name = "CASE_ID")
+    private int caseId;
 
-    /** The ID of the user being punished */
+    /**
+     * The ID of the user being punished
+     */
     @Column(name = "USER_ID")
-    protected long userId;
+    private long userId;
 
-    /** The ID of the mod that punished the user */
+    /**
+     * The ID of the mod that punished the user
+     */
     @Column(name = "PUNISHING_MOD_ID")
-    protected long punishingModId;
+    private long punishingModId;
 
-    /** The unix timestamp of the punishments starting time, or when the punishment was logged */
+    /**
+     * The unix timestamp of the punishments starting time, or when the punishment was logged
+     */
     @Column(name = "PUNISHMENT_TIME")
-    protected long punishmentTime;
+    private long punishmentTime;
 
     /**
      * The reason for the log, as specified by the punishing mod. This value can be edited by other mods
      * and can be set to null to indicate that no reason was specified
      */
     @Column(name = "REASON")
-    protected String reason;
+    private String reason;
 }
