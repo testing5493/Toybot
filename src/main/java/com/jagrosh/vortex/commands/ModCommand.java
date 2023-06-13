@@ -42,43 +42,19 @@ public abstract class ModCommand extends Command {
                 return true;
             }
 
-            boolean missingPerms = false;
             for (Permission altPerm : altPerms) {
-                if (altPerm.isText()) {
-                    if (!event.getMember().hasPermission(event.getTextChannel(), altPerm)) {
-                        missingPerms = true;
+                if (altPerm.isChannel()) {
+                    if (event.getMember().hasPermission(event.getGuildChannel(), altPerm)) {
+                        return true;
                     }
                 } else {
-                    if (!event.getMember().hasPermission(altPerm)) {
-                        missingPerms = true;
+                    if (event.getMember().hasPermission(altPerm)) {
+                        return true;
                     }
                 }
             }
 
-            if (!missingPerms) {
-                return true;
-            }
-
-            if (event.getMember().getRoles().isEmpty()) {
-                event.getMessage().addReaction(Emoji.fromFormatted(Constants.ERROR_REACTION)).queue();
-            } else {
-                event.replyError("You must have the following permissions to use that: " + listPerms(altPerms));
-            }
-
             return false;
         });
-    }
-
-    private static String listPerms(Permission... perms) {
-        if (perms.length == 0) {
-            return "";
-        }
-
-        StringBuilder sb = new StringBuilder(perms[0].getName());
-        for (int i = 1; i < perms.length; i++) {
-            sb.append(", ").append(perms[i].getName());
-        }
-
-        return sb.toString();
     }
 }

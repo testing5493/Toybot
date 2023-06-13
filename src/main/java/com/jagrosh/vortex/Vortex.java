@@ -149,7 +149,6 @@ public class Vortex {
                 new ServerlogCmd(this),
                 new VoicelogCmd(this),
                 new AvatarlogCmd(this),
-                new TimezoneCmd(this),
                 new ModroleCmd(this),
                 new PrefixCmd(this),
                 new SettingsCmd(this),

@@ -27,7 +27,10 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.attribute.IGuildChannelContainer;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import net.dv8tion.jda.api.utils.cache.SnowflakeCacheView;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
@@ -66,21 +69,21 @@ public class AboutCmd extends SlashCommand {
 
     private MessageCreateData generateReply(JDA jda, Guild g, CommandClient commandClient) {
         ShardManager sm = jda.getShardManager();
-        return new MessageCreateBuilder()
-                .setEmbeds(new EmbedBuilder()
+        SnowflakeCacheView<User> users = sm == null ? jda.getUserCache() : sm.getUserCache();
+        double ping = sm == null ? jda.getGatewayPing() : sm.getAverageGatewayPing();
+        IGuildChannelContainer gcc = sm == null ? jda : sm;
+
+        return MessageCreateData.fromEmbeds(new EmbedBuilder()
                                .setColor(g == null ? Color.GRAY : g.getSelfMember().getColor())
+                               .setTitle("Hi, I'm Toybot!")
                                .setDescription(
-                                       "Hi! I'm Toybot!\n" +
-                                       "I'm a modified version of [Vortex](https://github.com/jagrosh/Vortex) which was written in Java by [jagrosh#4824](https://github.com/jagrosh)\n" +
-                                       "I was customised for this server by <@791520107939102730> with the help of <@384774787823828995>, <@523655829279342593> and <@105725338541101056> as well as some other contributers that can be found on [GitHub](https://github.com/ya64/Vortex)" +
-                                       "Type `" + commandClient.getPrefix() + commandClient.getHelpWord() + "` for help and information.\n\n" +
-                                       FormatUtil.helpLinks(jda, commandClient))
-                               .addField("Stats", sm.getShardsTotal() + " Shards\n" + sm.getGuildCache().size() + " Servers", true)
-                               .addField("", sm.getUserCache().size() + " Users\n" + Math.round(sm.getAverageGatewayPing()) + "ms Avg Ping", true)
-                               .addField("", sm.getTextChannelCache().size() + " Text Channels\n" + sm.getVoiceChannelCache().size() + " Voice Channels", true)
+                                       "I'm a modified version of [Vortex](https://github.com/jagrosh/Vortex) that was customised for this server by <@791520107939102730> with the help of <@372268045927972864>, <@384774787823828995>, <@523655829279342593> and <@105725338541101056>, as well as other contributers who can be found on [GitHub](https://github.com/ya64/Vortex). " +
+                                       "Type `" + commandClient.getPrefix() + commandClient.getHelpWord() + "` for help and information.\n\n")
+                               .addField("", users.size() + " Users\n" + Math.round(ping) + "ms Ping", true)
+                               .addField("", gcc.getTextChannelCache().size() + " Text Channels\n" + gcc.getVoiceChannelCache().size() + " Voice Channels", true)
                                .setFooter("Last restart", null)
                                .setTimestamp(commandClient.getStartTime())
                                .build()
-                ).build();
+                );
     }
 }

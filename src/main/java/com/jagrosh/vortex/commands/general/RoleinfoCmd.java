@@ -40,8 +40,6 @@ import java.util.Objects;
  * @author John Grosh (jagrosh)
  */
 public class RoleinfoCmd extends SlashCommand {
-    private final static String LINESTART = "\u25AB"; // ▫
-    private final static String ROLE_EMOJI = "\uD83C\uDFAD"; // 🎭
     private final Vortex vortex;
 
     public RoleinfoCmd(Vortex vortex) {
@@ -62,7 +60,6 @@ public class RoleinfoCmd extends SlashCommand {
         }
 
         event.reply(getRoleInfoEmbed(event.getOption("role").getAsRole())).queue();
-
     }
 
     @Override
@@ -71,14 +68,12 @@ public class RoleinfoCmd extends SlashCommand {
             return;
         }
 
-        Role role;
         if (event.getArgs().isEmpty()) {
             throw new CommandErrorException("Please provide the name of a role!");
         } else {
             List<Role> found = FinderUtil.findRoles(event.getArgs(), event.getGuild());
             if (found.isEmpty()) {
                 event.replyError("I couldn't find the role you were looking for!");
-                return;
             } else if (found.size() > 1) {
                 event.replyWarning(FormatUtil.filterEveryone(FormatUtil.listOfRoles(found, event.getArgs())));
             } else {
