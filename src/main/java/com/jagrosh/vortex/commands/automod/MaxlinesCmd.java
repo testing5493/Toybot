@@ -17,21 +17,17 @@ package com.jagrosh.vortex.commands.automod;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
-import net.dv8tion.jda.api.Permission;
 import com.jagrosh.vortex.Vortex;
-import com.jagrosh.vortex.commands.CommandExceptionListener;
 import com.jagrosh.vortex.utils.FormatUtil;
+import net.dv8tion.jda.api.Permission;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class MaxlinesCmd extends Command
-{
+public class MaxlinesCmd extends Command {
     private final Vortex vortex;
-    
-    public MaxlinesCmd(Vortex vortex)
-    {
+
+    public MaxlinesCmd(Vortex vortex) {
         this.vortex = vortex;
         this.name = "maxlines";
         this.guildOnly = true;
@@ -43,35 +39,31 @@ public class MaxlinesCmd extends Command
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
-        if(event.getArgs().isEmpty())
-        {
+    protected void execute(CommandEvent event) {
+        if (event.getArgs().isEmpty()) {
             event.replyError("Please provide a maximum number of newlines allowed!");
             return;
         }
+
         int maxlines;
-        try
-        {
+        try {
             maxlines = Integer.parseInt(event.getArgs());
-        }
-        catch(NumberFormatException ex)
-        {
-            if(event.getArgs().equalsIgnoreCase("none") || event.getArgs().equalsIgnoreCase("off"))
+        } catch (NumberFormatException ex) {
+            if (event.getArgs().equalsIgnoreCase("none") || event.getArgs().equalsIgnoreCase("off")) {
                 maxlines = 0;
-            else
-            {
-                event.replyError(FormatUtil.filterEveryone("`"+event.getArgs()+"` is not a valid integer!"));
+            } else {
+                event.replyError(FormatUtil.filterEveryone("`" + event.getArgs() + "` is not a valid integer!"));
                 return;
             }
         }
+
         vortex.getDatabase().automod.setMaxLines(event.getGuild(), maxlines);
-        if(maxlines <= 0)
+        if (maxlines <= 0) {
             event.replySuccess("There is now no maximum line limit.");
-        else if (maxlines == 1)
+        } else if (maxlines == 1) {
             event.replyError("Maximum lines must be greater than 1!");
-        else
-            event.replySuccess("Messages longer than `"+maxlines+"` lines will now be automatically deleted, "
-                + "and users will receive strikes for every additional multiple of up to `"+maxlines+"` lines.");
+        } else {
+            event.replySuccess("Messages longer than `" + maxlines + "` lines will now be automatically deleted, " + "and users will receive strikes for every additional multiple of up to `" + maxlines + "` lines.");
+        }
     }
 }

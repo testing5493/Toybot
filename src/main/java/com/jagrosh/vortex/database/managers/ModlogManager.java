@@ -10,6 +10,7 @@ import java.util.List;
 public interface ModlogManager {
     /**
      * Gets the maximum case ID in the case
+     *
      * @param guildId Guild ID
      * @return The maximum id
      */
@@ -17,6 +18,7 @@ public interface ModlogManager {
 
     /**
      * Updates a reason of a specific modlog
+     *
      * @param guildId Guild ID
      * @param caseId Case ID
      * @param reason The new reason
@@ -26,6 +28,7 @@ public interface ModlogManager {
 
     /**
      * Deletes a case
+     *
      * @param guildId Guild ID
      * @param caseId Case ID
      * @return A modlog object of the deleted modlog if the code was successfull, null if it couldn't be deleted or was not found
@@ -35,6 +38,7 @@ public interface ModlogManager {
 
     /**
      * Returns a list of modlogs for a specific user
+     *
      * @param guildId Guild ID
      * @param userId User Id
      * @return A list of all modlogs for the user that the manager is in charge of.

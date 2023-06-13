@@ -15,28 +15,26 @@
  */
 package com.jagrosh.vortex.commands.moderation;
 
-import java.util.LinkedList;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener.CommandErrorException;
 import com.jagrosh.vortex.commands.ModCommand;
-import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Member;
 import com.jagrosh.vortex.utils.ArgsUtil;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.LogUtil;
-import java.util.List;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 
+import java.util.LinkedList;
+import java.util.List;
+
 /**
- *
  * @author John Grosh (jagrosh)
  */
-public class VoicekickCmd extends ModCommand
-{
-    public VoicekickCmd(Vortex vortex)
-    {
+public class VoicekickCmd extends ModCommand {
+    public VoicekickCmd(Vortex vortex) {
         super(vortex, Permission.VOICE_MOVE_OTHERS);
         this.name = "voicekick";
         this.aliases = new String[]{"vckick"};
@@ -47,65 +45,62 @@ public class VoicekickCmd extends ModCommand
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
-        if(!event.getSelfMember().hasPermission(Permission.VOICE_MOVE_OTHERS, Permission.VOICE_CONNECT))
+    protected void execute(CommandEvent event) {
+        if (!event.getSelfMember().hasPermission(Permission.VOICE_MOVE_OTHERS, Permission.VOICE_CONNECT)) {
             throw new CommandErrorException("I need permission to connect to voice channels and move members to do that!");
+        }
+
         ArgsUtil.ResolvedArgs args = ArgsUtil.resolve(event.getArgs(), event.getGuild());
-        if(args.isEmpty())
-        {
+        if (args.isEmpty()) {
             event.replyError("Please include at least one user to kick from voice (@mention or ID)!");
             return;
         }
+
         String reason = LogUtil.auditReasonFormat(event.getMember(), args.reason);
         Role modrole = vortex.getDatabase().settings.getSettings(event.getGuild()).getModeratorRole(event.getGuild());
         StringBuilder builder = new StringBuilder();
         List<Member> toKick = new LinkedList<>();
-        
-        args.members.forEach(m -> 
-        {
-            if(!event.getMember().canInteract(m))
+
+        args.members.forEach(m -> {
+            if (!event.getMember().canInteract(m)) {
                 builder.append("\n").append(event.getClient().getError()).append(" You do not have permission to voicekick ").append(FormatUtil.formatUser(m.getUser()));
-            else if(!event.getSelfMember().canInteract(m))
+            } else if (!event.getSelfMember().canInteract(m)) {
                 builder.append("\n").append(event.getClient().getError()).append(" I am unable to voicekick ").append(FormatUtil.formatUser(m.getUser()));
-            else if(m.getVoiceState() == null || !m.getVoiceState().inAudioChannel())
+            } else if (m.getVoiceState() == null || !m.getVoiceState().inAudioChannel()) {
                 builder.append("\n").append(event.getClient().getWarning()).append(" ").append(FormatUtil.formatUser(m.getUser())).append(" is not in a voice channel!");
-            else if(modrole!=null && m.getRoles().contains(modrole))
+            } else if (modrole != null && m.getRoles().contains(modrole)) {
                 builder.append("\n").append(event.getClient().getError()).append(" I won't voicekick ").append(FormatUtil.formatUser(m.getUser())).append(" because they have the Moderator Role");
-            else
+            } else {
                 toKick.add(m);
+            }
         });
-        
+
         args.unresolved.forEach(un -> builder.append("\n").append(event.getClient().getWarning()).append(" Could not resolve `").append(un).append("` to a member"));
-        
+
         args.users.forEach(u -> builder.append("\n").append(event.getClient().getWarning()).append("The user ").append(FormatUtil.formatUser(u)).append(" is not in this server."));
-        
+
         args.ids.forEach(id -> builder.append("\n").append(event.getClient().getWarning()).append("The user <@").append(id).append("> is not in this server."));
-        
-        if(toKick.isEmpty())
-        {
+
+        if (toKick.isEmpty()) {
             event.reply(builder.toString());
             return;
         }
-        
-        if(toKick.size() > 5)
+
+        if (toKick.size() > 5) {
             event.reactSuccess();
-        
+        }
+
         // do this async because its a nightmare to do it sync
-        event.async(() -> 
-        {
+        event.async(() -> {
             VoiceChannel vc;
-            try
-            {
-                vc = event.getGuild().createVoiceChannel("Voice Kick Channel")
-                    .setParent(toKick.get(0).getVoiceState().getChannel().getParentCategory()).reason(reason).complete();
-            }
-            catch(Exception ex)
-            {
+            try {
+                vc = event.getGuild().createVoiceChannel("Voice Kick Channel").setParent(toKick.get(0).getVoiceState().getChannel().getParentCategory()).reason(reason).complete();
+            } catch (Exception ex) {
                 builder.append("\n").append(event.getClient().getError()).append(" Failed to create a voice kick channel.");
                 event.reply(builder.toString());
                 return;
             }
+
             for (Member m : toKick) {
                 try {
                     event.getGuild().moveVoiceMember(m, vc).complete();
@@ -114,14 +109,13 @@ public class VoicekickCmd extends ModCommand
                     builder.append("\n").append(event.getClient().getError()).append(" Failed to move ").append(FormatUtil.formatUser(m.getUser())).append(" to the voice kick channel.");
                 }
             }
-            try
-            {
+
+            try {
                 vc.delete().reason(reason).complete();
-            }
-            catch(Exception ex)
-            {
+            } catch (Exception ex) {
                 builder.append("\n").append(event.getClient().getError()).append(" Failed to delete the temporary voice channel.");
             }
+
             event.reply(builder.toString());
         });
     }

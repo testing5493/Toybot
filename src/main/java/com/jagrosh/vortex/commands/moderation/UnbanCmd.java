@@ -18,23 +18,21 @@ package com.jagrosh.vortex.commands.moderation;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.ModCommand;
-import net.dv8tion.jda.api.Permission;
 import com.jagrosh.vortex.utils.ArgsUtil;
 import com.jagrosh.vortex.utils.ArgsUtil.ResolvedArgs;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.LogUtil;
-import java.util.LinkedList;
-import java.util.List;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild.Ban;
 
+import java.util.LinkedList;
+import java.util.List;
+
 /**
- *
  * @author John Grosh (jagrosh)
  */
-public class UnbanCmd extends ModCommand
-{
-    public UnbanCmd(Vortex vortex)
-    {
+public class UnbanCmd extends ModCommand {
+    public UnbanCmd(Vortex vortex) {
         super(vortex, Permission.BAN_MEMBERS);
         this.name = "unban";
         this.arguments = "<@users> [reason]";
@@ -44,63 +42,60 @@ public class UnbanCmd extends ModCommand
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
+    protected void execute(CommandEvent event) {
         ResolvedArgs args = ArgsUtil.resolve(event.getArgs(), event.getGuild());
-        if(args.isEmpty())
-        {
+        if (args.isEmpty()) {
             event.replyError("Please include at least one user to unban (@mention or ID)!");
             return;
         }
+
         String reason = LogUtil.auditReasonFormat(event.getMember(), args.reason);
         StringBuilder builder = new StringBuilder();
-        
-        event.getGuild().retrieveBanList().queue(list ->
-        {
+
+        event.getGuild().retrieveBanList().queue(list -> {
             List<Ban> toUnban = new LinkedList<>();
             args.members.forEach(m -> args.users.add(m.getUser()));
-            args.users.forEach(u -> 
-            {
-                Ban ban = list.stream().filter(b -> b.getUser().getIdLong()==u.getIdLong()).findFirst().orElse(null);
-                if(ban==null)
+            args.users.forEach(u -> {
+                Ban ban = list.stream().filter(b -> b.getUser().getIdLong() == u.getIdLong()).findFirst().orElse(null);
+                if (ban == null) {
                     builder.append("\n").append(event.getClient().getError()).append(" ").append(FormatUtil.formatUser(u)).append(" is not banned!");
-                else
+                } else {
                     toUnban.add(ban);
+                }
             });
-            args.ids.forEach(id -> 
-            {
-                Ban ban = list.stream().filter(b -> b.getUser().getIdLong()==id).findFirst().orElse(null);
-                if(ban==null)
+            args.ids.forEach(id -> {
+                Ban ban = list.stream().filter(b -> b.getUser().getIdLong() == id).findFirst().orElse(null);
+                if (ban == null) {
                     builder.append("\n").append(event.getClient().getError()).append(" <@").append(id).append("> is not banned!");
-                else
+                } else {
                     toUnban.add(ban);
+                }
             });
             args.unresolved.forEach(un -> builder.append("\n").append(event.getClient().getWarning()).append(" Could not resolve `").append(un).append("` to a user ID"));
-            
-            if(toUnban.isEmpty())
-            {
+
+            if (toUnban.isEmpty()) {
                 event.reply(builder.toString());
                 return;
             }
-            
-            if(toUnban.size() > 5)
+
+            if (toUnban.size() > 5) {
                 event.reactSuccess();
-            
-            for(int i=0; i<toUnban.size(); i++)
-            {
+            }
+
+            for (int i = 0; i < toUnban.size(); i++) {
                 Ban ban = toUnban.get(i);
-                boolean last = i+1 == toUnban.size();
-                event.getGuild().unban(ban.getUser()).reason(reason).queue(success ->
-                {
+                boolean last = i + 1 == toUnban.size();
+                event.getGuild().unban(ban.getUser()).reason(reason).queue(success -> {
                     vortex.getDatabase().tempbans.clearBan(vortex, event.getGuild(), ban.getUser().getIdLong(), event.getAuthor().getIdLong());
                     builder.append("\n").append(event.getClient().getSuccess()).append(" Successfully unbanned ").append(FormatUtil.formatUser(ban.getUser()));
-                    if(last)
+                    if (last) {
                         event.reply(builder.toString());
-                }, f -> 
-                {
+                    }
+                }, f -> {
                     builder.append("\n").append(event.getClient().getError()).append(" Failed to unban ").append(FormatUtil.formatUser(ban.getUser()));
-                    if(last)
+                    if (last) {
                         event.reply(builder.toString());
+                    }
                 });
             }
 

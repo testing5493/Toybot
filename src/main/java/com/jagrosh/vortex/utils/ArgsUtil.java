@@ -15,40 +15,30 @@
  */
 package com.jagrosh.vortex.utils;
 
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.User;
-
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class ArgsUtil
-{
+public class ArgsUtil {
     private final static Pattern MENTION = Pattern.compile("^<@!?(\\d{17,20})>");
     private final static Pattern BROKEN_MENTION = Pattern.compile("^@(\\S.{0,30}\\S)#(\\d{4})");
     private final static Pattern ID = Pattern.compile("^(\\d{17,20})");
     private final static String TIME_REGEX = "(?is)^((\\s*-?\\s*\\d+\\s*(d(ays?)?|h((ou)?rs?)?|m(in(ute)?s?)?|s(ec(ond)?s?)?)\\s*,?\\s*(and)?)*).*";
-    
-    public static ResolvedArgs resolve(String args, Guild guild)
-    {
+
+    public static ResolvedArgs resolve(String args, Guild guild) {
         return resolve(args, false, guild);
     }
-    
-    public static ResolvedArgs resolve(String args, boolean allowTime, Guild guild)
-    {
+
+    public static ResolvedArgs resolve(String args, boolean allowTime, Guild guild) {
         Set<Member> members = new LinkedHashSet<>();
         Set<User> users = new LinkedHashSet<>();
         Set<Long> ids = new LinkedHashSet<>();
@@ -57,83 +47,86 @@ public class ArgsUtil
         User u;
         long i;
         boolean found = true;
-        while(!args.isEmpty() && found)
-        {
+        while (!args.isEmpty() && found) {
             found = false;
             mat = MENTION.matcher(args);
-            if(mat.find())
-            {
+            if (mat.find()) {
                 i = Long.parseLong(mat.group(1));
                 u = guild.getJDA().getUserById(i);
-                if(u==null)
+                if (u == null) {
                     ids.add(i);
-                else if(guild.isMember(u))
+                } else if (guild.isMember(u)) {
                     members.add(guild.getMember(u));
-                else
+                } else {
                     users.add(u);
+                }
+
                 args = args.substring(mat.group().length()).trim();
                 found = true;
                 continue;
             }
+
             mat = BROKEN_MENTION.matcher(args);
-            if(mat.find())
-            {
-                for(User user: guild.getJDA().getUserCache().asList())
-                {
-                    if(user.getName().equals(mat.group(1)) && user.getDiscriminator().equals(mat.group(2)))
-                    {
-                        if(guild.isMember(user))
+            if (mat.find()) {
+                for (User user : guild.getJDA().getUserCache().asList()) {
+                    if (user.getName().equals(mat.group(1)) && user.getDiscriminator().equals(mat.group(2))) {
+                        if (guild.isMember(user)) {
                             members.add(guild.getMember(user));
-                        else
+                        } else {
                             users.add(user);
+                        }
+
                         found = true;
                         break;
                     }
                 }
+
                 args = args.substring(mat.group().length()).trim();
-                if(found)
+                if (found) {
                     continue;
+                }
+
                 unresolved.add(FormatUtil.filterEveryone(mat.group()));
                 found = true;
                 continue;
             }
+
             mat = ID.matcher(args);
-            if(mat.find())
-            {
-                try
-                {
+            if (mat.find()) {
+                try {
                     i = Long.parseLong(mat.group(1));
-                }catch(NumberFormatException ex)
-                {
+                } catch (NumberFormatException ex) {
                     i = 0;
                 }
+
                 u = guild.getJDA().getUserById(i);
-                if(u==null)
+                if (u == null) {
                     ids.add(i);
-                else if(guild.isMember(u))
+                } else if (guild.isMember(u)) {
                     members.add(guild.getMember(u));
-                else
+                } else {
                     users.add(u);
+                }
+
                 args = args.substring(mat.group().length()).trim();
                 found = true;
             }
         }
+
         int time = -1;
-        if(allowTime)
-        {
+        if (allowTime) {
             String timeString = args.replaceAll(TIME_REGEX, "$1");
-            if(!timeString.isEmpty())
-            {
+            if (!timeString.isEmpty()) {
                 args = args.substring(timeString.length()).trim();
                 time = OtherUtil.parseTime(timeString);
             }
         }
+
         return new ResolvedArgs(members, users, ids, unresolved, time, args);
     }
 
     @Data
-    public static class ResolvedArgs
-    {
+    public static class ResolvedArgs {
         public final Set<Member> members;
         public final Set<User> users;
         public final Set<Long> ids;
@@ -141,8 +134,7 @@ public class ArgsUtil
         public final int time;
         public final String reason;
 
-        public boolean isEmpty()
-        {
+        public boolean isEmpty() {
             return members.isEmpty() && users.isEmpty() && ids.isEmpty() && unresolved.isEmpty();
         }
     }

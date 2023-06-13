@@ -15,26 +15,24 @@
  */
 package com.jagrosh.vortex.commands.moderation;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.jdautilities.commons.utils.FinderUtil;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.ModCommand;
+import com.jagrosh.vortex.utils.FormatUtil;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
-import com.jagrosh.vortex.utils.FormatUtil;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 /**
- *
  * @author John Grosh (jagrosh)
  */
-public class VoicemoveCmd extends ModCommand
-{
-    public VoicemoveCmd(Vortex vortex)
-    {
+public class VoicemoveCmd extends ModCommand {
+    public VoicemoveCmd(Vortex vortex) {
         super(vortex, Permission.VOICE_MOVE_OTHERS);
         this.name = "voicemove";
         this.aliases = new String[]{"magnet"};
@@ -42,70 +40,62 @@ public class VoicemoveCmd extends ModCommand
         this.arguments = "[channel]";
         this.guildOnly = true;
     }
-    
+
     @Override
-    protected void execute(CommandEvent event)
-    {
-        if(event.getGuild().getSelfMember().getVoiceState().inAudioChannel())
-        {
+    protected void execute(CommandEvent event) {
+        if (event.getGuild().getSelfMember().getVoiceState().inAudioChannel()) {
             event.replyWarning("I am already in a voice channel; move me to drag all users.");
             return;
         }
-        if(event.getArgs().isEmpty() && !event.getMember().getVoiceState().inAudioChannel())
-        {
+
+        if (event.getArgs().isEmpty() && !event.getMember().getVoiceState().inAudioChannel()) {
             event.replyError("You must be in or specify a voice channel to move users from!");
             return;
         }
+
         AudioChannel vc;
-        if(!event.getArgs().isEmpty())
-        {
+        if (!event.getArgs().isEmpty()) {
             List<VoiceChannel> list = FinderUtil.findVoiceChannels(event.getArgs(), event.getGuild());
-            if(list.isEmpty())
-            {
-                event.replyError("No voice channel found matching `"+event.getArgs()+"`!");
+            if (list.isEmpty()) {
+                event.replyError("No voice channel found matching `" + event.getArgs() + "`!");
                 return;
             }
-            if(list.size()>1)
-            {
+
+            if (list.size() > 1) {
                 event.replyWarning(FormatUtil.filterEveryone(FormatUtil.listOfVoice(list, event.getArgs())));
                 return;
             }
+
             vc = list.get(0);
-        }
-        else
-        {
+        } else {
             vc = event.getMember().getVoiceState().getChannel();
         }
-        if(!event.getMember().hasPermission(Permission.VOICE_MOVE_OTHERS))
-        {
-            event.replyError("You don't have permission to move users out of **"+vc.getName()+"**!");
+
+        if (!event.getMember().hasPermission(Permission.VOICE_MOVE_OTHERS)) {
+            event.replyError("You don't have permission to move users out of **" + vc.getName() + "**!");
             return;
         }
-        if(!event.getSelfMember().hasPermission(Permission.VOICE_MOVE_OTHERS))
-        {
-            event.replyError("I don't have permission to move users out of **"+vc.getName()+"**!");
+
+        if (!event.getSelfMember().hasPermission(Permission.VOICE_MOVE_OTHERS)) {
+            event.replyError("I don't have permission to move users out of **" + vc.getName() + "**!");
             return;
         }
-        try 
-        {
+
+        try {
             event.getGuild().getAudioManager().openAudioConnection(vc);
-        }
-        catch(Exception e) 
-        {
-            event.replyWarning(FormatUtil.filterEveryone("I could not connect to **"+vc.getName()+"**"));
+        } catch (Exception e) {
+            event.replyWarning(FormatUtil.filterEveryone("I could not connect to **" + vc.getName() + "**"));
             return;
         }
-        vortex.getEventWaiter().waitForEvent(GuildVoiceUpdateEvent.class,
-                (GuildVoiceUpdateEvent e) ->
-                    e.getGuild().equals(event.getGuild()) && e.getMember().equals(event.getGuild().getSelfMember()) && e.getChannelJoined() != null && e.getChannelLeft() != null,
-                (GuildVoiceUpdateEvent e) -> {
-                    event.getGuild().getAudioManager().closeAudioConnection();
-                    e.getChannelLeft().getMembers().stream().forEach(m -> event.getGuild().moveVoiceMember(m, e.getChannelJoined()).queue());
-                }, 1, TimeUnit.MINUTES, () -> {
-                    event.getGuild().getAudioManager().closeAudioConnection();
-                    event.replyWarning("You waited too long, "+event.getMember().getAsMention());
-                });
+
+        vortex.getEventWaiter().waitForEvent(GuildVoiceUpdateEvent.class, (GuildVoiceUpdateEvent e) -> e.getGuild().equals(event.getGuild()) && e.getMember().equals(event.getGuild().getSelfMember()) && e.getChannelJoined() != null && e.getChannelLeft() != null, (GuildVoiceUpdateEvent e) -> {
+            event.getGuild().getAudioManager().closeAudioConnection();
+            e.getChannelLeft().getMembers().stream().forEach(m -> event.getGuild().moveVoiceMember(m, e.getChannelJoined()).queue());
+        }, 1, TimeUnit.MINUTES, () -> {
+            event.getGuild().getAudioManager().closeAudioConnection();
+            event.replyWarning("You waited too long, " + event.getMember().getAsMention());
+        });
         event.reply("\uD83C\uDF9B Now, move me and I'll drag users to a new voice channel."); // 🎛
     }
-    
+
 }

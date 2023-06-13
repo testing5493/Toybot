@@ -17,22 +17,18 @@ package com.jagrosh.vortex.commands.automod;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
-import com.jagrosh.vortex.Constants;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandTools;
 import net.dv8tion.jda.api.Permission;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class ResolvelinksCmd extends Command
-{
+public class ResolvelinksCmd extends Command {
     private final Vortex vortex;
     private final static String DESCRIPTION = "When link resolving is enabled, all links will be checked for redirects when performing automod functions.";
-    
-    public ResolvelinksCmd(Vortex vortex)
-    {
+
+    public ResolvelinksCmd(Vortex vortex) {
         this.vortex = vortex;
         this.name = "resolvelinks";
         this.guildOnly = true;
@@ -43,15 +39,13 @@ public class ResolvelinksCmd extends Command
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
-        try
-        {
+    protected void execute(CommandEvent event) {
+        try {
             boolean enabled = CommandTools.parseEnabledDisabled(event.getArgs());
             vortex.getDatabase().automod.setResolveUrls(event.getGuild(), enabled);
             event.replySuccess("Link Resolving has been turned `" + (enabled ? "ON" : "OFF") + "`");
         } catch (IllegalArgumentException e) {
-            event.replyWarning(DESCRIPTION+"\nValid options are `ON` and `OFF`");
+            event.replyWarning(DESCRIPTION + "\nValid options are `ON` and `OFF`");
         }
     }
 }

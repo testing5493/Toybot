@@ -18,40 +18,35 @@ package com.jagrosh.vortex.commands.settings;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.LogCommand;
-import com.jagrosh.vortex.database.managers.PremiumManager;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class AvatarlogCmd extends LogCommand
-{
-    public AvatarlogCmd(Vortex vortex)
-    {
+public class AvatarlogCmd extends LogCommand {
+    public AvatarlogCmd(Vortex vortex) {
         super(vortex);
         this.name = "avatarlog";
         this.help = "sets channel to log avatar changes";
     }
 
     @Override
-    protected void showCurrentChannel(CommandEvent event)
-    {
+    protected void showCurrentChannel(CommandEvent event) {
         TextChannel tc = vortex.getDatabase().settings.getSettings(event.getGuild()).getAvatarLogChannel(event.getGuild());
-        if(tc==null)
+        if (tc == null) {
             event.replyWarning("Avatar Logs are not currently enabled on the server. Please include a channel name.");
-        else
-            event.replySuccess("Avatar Logs are currently being sent in "+tc.getAsMention()
-                    +(event.getSelfMember().hasPermission(tc, REQUIRED_PERMS) ? "" : "\n"+event.getClient().getWarning()+String.format(REQUIRED_ERROR, tc.getAsMention())));
+        } else {
+            event.replySuccess("Avatar Logs are currently being sent in " + tc.getAsMention() + (event.getSelfMember().hasPermission(tc, REQUIRED_PERMS) ? "" : "\n" + event.getClient().getWarning() + String.format(REQUIRED_ERROR, tc.getAsMention())));
+        }
     }
 
     @Override
-    protected void setLogChannel(CommandEvent event, TextChannel tc)
-    {
+    protected void setLogChannel(CommandEvent event, TextChannel tc) {
         vortex.getDatabase().settings.setAvatarLogChannel(event.getGuild(), tc);
-        if(tc==null)
+        if (tc == null) {
             event.replySuccess("Avatar Logs will not be sent");
-        else
-            event.replySuccess("Avatar Logs will now be sent in "+tc.getAsMention());
+        } else {
+            event.replySuccess("Avatar Logs will now be sent in " + tc.getAsMention());
+        }
     }
 }

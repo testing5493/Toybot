@@ -1,7 +1,5 @@
-
 package com.jagrosh.vortex.commands.general;
 
-import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
@@ -9,9 +7,6 @@ import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandTools;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 
 
 public class PingCmd extends SlashCommand {
@@ -31,7 +26,6 @@ public class PingCmd extends SlashCommand {
             return;
         }
 
-
         long time0 = System.currentTimeMillis();
         slashCommandEvent.reply("Ping: ...").queue(hook -> {
             hook.editOriginal(calculatePing(slashCommandEvent.getJDA(), time0)).queue();
@@ -40,8 +34,9 @@ public class PingCmd extends SlashCommand {
 
     @Override
     protected void execute(CommandEvent event) {
-        if (!CommandTools.hasGeneralCommandPerms(vortex, event, Permission.MESSAGE_MANAGE))
+        if (!CommandTools.hasGeneralCommandPerms(vortex, event, Permission.MESSAGE_MANAGE)) {
             return;
+        }
 
         long time0 = System.currentTimeMillis();
         event.reply("Ping: ...", (m) -> {

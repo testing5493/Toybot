@@ -20,23 +20,20 @@ import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.vortex.Constants;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener;
-import net.dv8tion.jda.api.Permission;
 import com.jagrosh.vortex.database.managers.AutomodManager;
+import net.dv8tion.jda.api.Permission;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class MaxmentionsCmd extends Command
-{
+public class MaxmentionsCmd extends Command {
     private final Vortex vortex;
-    
-    public MaxmentionsCmd(Vortex vortex)
-    {
+
+    public MaxmentionsCmd(Vortex vortex) {
         this.vortex = vortex;
         this.guildOnly = true;
         this.name = "maxmentions";
-        this.aliases = new String[]{"antimention","maxmention","mentionmax","mentionsmax"};
+        this.aliases = new String[]{"antimention", "maxmention", "mentionmax", "mentionsmax"};
         this.category = new Category("AutoMod");
         this.arguments = "<number | OFF>";
         this.help = "sets max mentions a user can send";
@@ -45,39 +42,31 @@ public class MaxmentionsCmd extends Command
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
-        if(event.getArgs().equalsIgnoreCase("off") || event.getArgs().equalsIgnoreCase("none"))
-        {
+    protected void execute(CommandEvent event) {
+        if (event.getArgs().equalsIgnoreCase("off") || event.getArgs().equalsIgnoreCase("none")) {
             vortex.getDatabase().automod.disableMaxMentions(event.getGuild());
             event.replySuccess("Anti-Mention has been disabled.");
             return;
-        }
-        else if(event.getArgs().isEmpty())
-        {
+        } else if (event.getArgs().isEmpty()) {
             event.replyError("Please include an integer value or `OFF`");
             return;
         }
-        try
-        {
+
+        try {
             short num = Short.parseShort(event.getArgs());
-            if(num < AutomodManager.MENTION_MINIMUM)
-                throw new CommandExceptionListener.CommandErrorException("Maximum mentions must be at least `"+AutomodManager.MENTION_MINIMUM+"`");
+            if (num < AutomodManager.MENTION_MINIMUM) {
+                throw new CommandExceptionListener.CommandErrorException("Maximum mentions must be at least `" + AutomodManager.MENTION_MINIMUM + "`");
+            }
+
             vortex.getDatabase().automod.setMaxMentions(event.getGuild(), num);
-            event.replySuccess("Set the maximum allowed mentions to **"+num+"** users. Messages containing more than **"
-                    +num+"** mentions will be deleted."
-                    + "\n\nTo set the maximum allowed role mentions, use `"+Constants.PREFIX+name+" "+children[0].getName()+" "+children[0].getArguments()+"`");
-        }
-        catch(NumberFormatException e)
-        {
-            event.replyError("`<maximum>` must be a valid integer at least `"+AutomodManager.MENTION_MINIMUM+"`");
+            event.replySuccess("Set the maximum allowed mentions to **" + num + "** users. Messages containing more than **" + num + "** mentions will be deleted." + "\n\nTo set the maximum allowed role mentions, use `" + Constants.PREFIX + name + " " + children[0].getName() + " " + children[0].getArguments() + "`");
+        } catch (NumberFormatException e) {
+            event.replyError("`<maximum>` must be a valid integer at least `" + AutomodManager.MENTION_MINIMUM + "`");
         }
     }
-    
-    private class AntirolementionCmd extends Command
-    {
-        public AntirolementionCmd()
-        {
+
+    private class AntirolementionCmd extends Command {
+        public AntirolementionCmd() {
             this.guildOnly = true;
             this.name = "roles";
             this.aliases = new String[]{"role"};
@@ -86,32 +75,30 @@ public class MaxmentionsCmd extends Command
             this.help = "sets maximum number of unique role mentions a user can send";
             this.userPermissions = new Permission[]{Permission.MANAGE_SERVER};
         }
-        
+
         @Override
-        protected void execute(CommandEvent event)
-        {
-            if(event.getArgs().equalsIgnoreCase("off") || event.getArgs().equalsIgnoreCase("none"))
-            {
+        protected void execute(CommandEvent event) {
+            if (event.getArgs().equalsIgnoreCase("off") || event.getArgs().equalsIgnoreCase("none")) {
                 vortex.getDatabase().automod.setMaxRoleMentions(event.getGuild(), 0);
                 event.replySuccess("Anti-Mention for Role mentions has been disabled.");
                 return;
             }
-            if(event.getArgs().isEmpty())
-            {
+
+            if (event.getArgs().isEmpty()) {
                 event.replyError("Please include an integer value or `OFF`");
                 return;
             }
-            try
-            {
+
+            try {
                 short num = Short.parseShort(event.getArgs());
-                if(num<AutomodManager.ROLE_MENTION_MINIMUM)
-                    throw new CommandExceptionListener.CommandErrorException("Maximum role mentions must be at least `"+AutomodManager.ROLE_MENTION_MINIMUM+"`");
+                if (num < AutomodManager.ROLE_MENTION_MINIMUM) {
+                    throw new CommandExceptionListener.CommandErrorException("Maximum role mentions must be at least `" + AutomodManager.ROLE_MENTION_MINIMUM + "`");
+                }
+
                 vortex.getDatabase().automod.setMaxRoleMentions(event.getGuild(), num);
-                event.replySuccess("Set the maximum allowed role mentions to **"+num+"** roles.");
-            }
-            catch(NumberFormatException e)
-            {
-                event.replyError("`<maximum>` must be a valid integer at least `"+AutomodManager.ROLE_MENTION_MINIMUM+"`");
+                event.replySuccess("Set the maximum allowed role mentions to **" + num + "** roles.");
+            } catch (NumberFormatException e) {
+                event.replyError("`<maximum>` must be a valid integer at least `" + AutomodManager.ROLE_MENTION_MINIMUM + "`");
             }
         }
     }

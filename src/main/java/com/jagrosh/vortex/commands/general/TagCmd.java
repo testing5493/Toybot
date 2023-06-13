@@ -1,6 +1,5 @@
 package com.jagrosh.vortex.commands.general;
 
-import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
@@ -13,8 +12,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
 import java.util.Collections;
 
-public class TagCmd extends SlashCommand
-{
+public class TagCmd extends SlashCommand {
     private final Vortex vortex;
 
     public TagCmd(Vortex vortex) {
@@ -43,10 +41,10 @@ public class TagCmd extends SlashCommand
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
-        if (!CommandTools.hasGeneralCommandPerms(vortex, event, Permission.MESSAGE_MANAGE))
+    protected void execute(CommandEvent event) {
+        if (!CommandTools.hasGeneralCommandPerms(vortex, event, Permission.MESSAGE_MANAGE)) {
             return;
+        }
 
         String tagValue = getTag(event.getGuild(), event.getArgs().trim().split(" ")[0]);
         if (tagValue != null) {

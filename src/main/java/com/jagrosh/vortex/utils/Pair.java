@@ -21,8 +21,7 @@ import lombok.Data;
  * @author John Grosh (john.a.grosh@gmail.com)
  */
 @Data
-public class Pair<K,V>
-{
+public class Pair<K, V> {
     private final K key;
     private final V value;
 }

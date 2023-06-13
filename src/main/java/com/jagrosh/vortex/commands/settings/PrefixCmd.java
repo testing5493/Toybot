@@ -22,15 +22,12 @@ import com.jagrosh.vortex.database.managers.GuildSettingsDataManager;
 import net.dv8tion.jda.api.Permission;
 
 /**
- *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class PrefixCmd extends Command
-{
+public class PrefixCmd extends Command {
     private final Vortex vortex;
-    
-    public PrefixCmd(Vortex vortex)
-    {
+
+    public PrefixCmd(Vortex vortex) {
         this.vortex = vortex;
         this.name = "prefix";
         this.help = "sets the server prefix";
@@ -41,29 +38,24 @@ public class PrefixCmd extends Command
     }
 
     @Override
-    protected void execute(CommandEvent event)
-    {
-        if(event.getArgs().isEmpty())
-        {
-            event.replyError("Please include a prefix. The server's current prefix can be seen via the `"+event.getClient().getPrefix()+"settings` command");
+    protected void execute(CommandEvent event) {
+        if (event.getArgs().isEmpty()) {
+            event.replyError("Please include a prefix. The server's current prefix can be seen via the `" + event.getClient().getPrefix() + "settings` command");
             return;
         }
-        
-        if(event.getArgs().equalsIgnoreCase("none"))
-        {
+
+        if (event.getArgs().equalsIgnoreCase("none")) {
             vortex.getDatabase().settings.setPrefix(event.getGuild(), null);
             event.replySuccess("The server prefix has been reset.");
             return;
         }
-        
-        if(event.getArgs().length()>GuildSettingsDataManager.PREFIX_MAX_LENGTH)
-        {
-            event.replySuccess("Prefixes cannot be longer than `"+GuildSettingsDataManager.PREFIX_MAX_LENGTH+"` characters.");
+
+        if (event.getArgs().length() > GuildSettingsDataManager.PREFIX_MAX_LENGTH) {
+            event.replySuccess("Prefixes cannot be longer than `" + GuildSettingsDataManager.PREFIX_MAX_LENGTH + "` characters.");
             return;
         }
-        
+
         vortex.getDatabase().settings.setPrefix(event.getGuild(), event.getArgs());
-        event.replySuccess("The server prefix has been set to `"+event.getArgs()+"`\n"
-                + "Note that the default prefix (`"+event.getClient().getPrefix()+"`) cannot be removed and will work in addition to the custom prefix.");
+        event.replySuccess("The server prefix has been set to `" + event.getArgs() + "`\n" + "Note that the default prefix (`" + event.getClient().getPrefix() + "`) cannot be removed and will work in addition to the custom prefix.");
     }
 }

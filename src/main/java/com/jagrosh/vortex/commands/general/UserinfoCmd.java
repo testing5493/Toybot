@@ -20,20 +20,10 @@ import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.jagrosh.jdautilities.commons.utils.FinderUtil;
 import com.jagrosh.vortex.Constants;
+import com.jagrosh.vortex.Emoji;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandTools;
-import com.jagrosh.vortex.Emoji;
 import com.jagrosh.vortex.utils.FormatUtil;
-
-import java.time.OffsetDateTime;
-
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
-
 import com.jagrosh.vortex.utils.ToycatPallete;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
@@ -45,8 +35,18 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.utils.TimeFormat;
 
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
 /**
- *
  * @author John Grosh (jagrosh)
  */
 public class UserinfoCmd extends SlashCommand {
@@ -54,7 +54,7 @@ public class UserinfoCmd extends SlashCommand {
 
     public UserinfoCmd(Vortex vortex) {
         this.name = "whois";
-        this.aliases = new String[]{"user","uinfo","memberinfo","userinfo","whothis","newphonewhothis"};
+        this.aliases = new String[]{"user", "uinfo", "memberinfo", "userinfo", "whothis", "newphonewhothis"};
         this.help = "shows info on a member";
         this.arguments = "[user]";
         this.guildOnly = true;
@@ -74,7 +74,8 @@ public class UserinfoCmd extends SlashCommand {
         if (event.getGuild() != null) {
             try {
                 m = event.getGuild().retrieveMember(u).complete();
-            } catch (ErrorResponseException ignore) {}
+            } catch (ErrorResponseException ignore) {
+            }
         }
 
         event.replyEmbeds(generateInfoEmbed(u, m)).queue();
@@ -82,8 +83,9 @@ public class UserinfoCmd extends SlashCommand {
 
     @Override
     protected void execute(CommandEvent event) {
-        if (!CommandTools.hasGeneralCommandPerms(vortex, event, Permission.MESSAGE_MANAGE))
+        if (!CommandTools.hasGeneralCommandPerms(vortex, event, Permission.MESSAGE_MANAGE)) {
             return;
+        }
 
         JDA jda = event.getJDA();
         String args = event.getArgs();
@@ -104,7 +106,7 @@ public class UserinfoCmd extends SlashCommand {
                 //TODO: Implement maybe
             }
         } else if (QUERY.matches(FinderUtil.FULL_USER_REF.pattern())) {
-            Matcher tagMatcher =  FinderUtil.FULL_USER_REF.matcher(event.getArgs());
+            Matcher tagMatcher = FinderUtil.FULL_USER_REF.matcher(event.getArgs());
             String username = tagMatcher.group(1);
             String discrim = tagMatcher.group(2);
 
@@ -114,8 +116,8 @@ public class UserinfoCmd extends SlashCommand {
 
             u = jda.getUserByTag(tagMatcher.group(1), tagMatcher.group(2));
         } else {
-            List<User>   users   = jda.getUsers();
-            List<User>   potentialUsers   = matchName(users, QUERY, User::getName, null);
+            List<User> users = jda.getUsers();
+            List<User> potentialUsers = matchName(users, QUERY, User::getName, null);
 
 
             boolean mulitpleFound = false;
@@ -159,11 +161,10 @@ public class UserinfoCmd extends SlashCommand {
 
         event.reply(generateInfoEmbed(u, m));
     }
-    
-    private static String statusToEmote(OnlineStatus status, List<Activity> activities)
-    {
+
+    private static String statusToEmote(OnlineStatus status, List<Activity> activities) {
         for (Activity activity : activities) {
-            if  (activity != null && activity.getType() == Activity.ActivityType.STREAMING && Activity.isValidStreamingUrl(activity.getUrl())) {
+            if (activity != null && activity.getType() == Activity.ActivityType.STREAMING && Activity.isValidStreamingUrl(activity.getUrl())) {
                 return "<:streaming:313956277132853248>";
             }
         }
@@ -177,9 +178,8 @@ public class UserinfoCmd extends SlashCommand {
             default -> "";
         };
     }
-    
-    private static String formatActivity(Activity activity)
-    {
+
+    private static String formatActivity(Activity activity) {
         if (activity.getType() == Activity.ActivityType.STREAMING) {
             return "Streaming [*" + activity.getName() + "*](" + activity.getUrl() + ")";
         } else {
@@ -190,7 +190,7 @@ public class UserinfoCmd extends SlashCommand {
                 default -> "Playing";
             };
 
-            return activity.getType() == Activity.ActivityType.CUSTOM_STATUS ? activity.getName() : verb +" *"+activity.getName()+"*";
+            return activity.getType() == Activity.ActivityType.CUSTOM_STATUS ? activity.getName() : verb + " *" + activity.getName() + "*";
         }
     }
 
@@ -206,33 +206,29 @@ public class UserinfoCmd extends SlashCommand {
             if (discrim != 0) {
                 username = u.getAsTag();
             }
-        } catch (NumberFormatException ignore) {}
+        } catch (NumberFormatException ignore) {
+        }
 
         StringBuilder badges = new StringBuilder();
         if (u.isBot()) { //TODO: Show a seperate badge for system accounts
-            badges.append(u.getFlags().contains(User.UserFlag.VERIFIED_BOT) ? Constants.VERIFIED_BOT : Constants.BOT);
+            badges.append(u.getFlags().contains(User.UserFlag.VERIFIED_BOT) ? Emoji.VERIFIED_BOT : Emoji.BOT);
         }
 
-        badges.append((m != null && m.isOwner()) ? Constants.SERVER_OWNER : "")
-                     .append(u.getFlags().contains(User.UserFlag.STAFF) ? Constants.DISCORD_STAFF : "")
-                     .append(u.getFlags().contains(User.UserFlag.PARTNER) ? Constants.PARTNERED_USER : "")
-        .append(m != null && OffsetDateTime.now().minusWeeks(1).isBefore(m.getTimeJoined()) ? Constants.NEW_MEMBER : "");
+        badges.append((m != null && m.isOwner()) ? Emoji.SERVER_OWNER : "").append(u.getFlags().contains(User.UserFlag.STAFF) ? Emoji.DISCORD_STAFF : "").append(u.getFlags().contains(User.UserFlag.PARTNER) ? Emoji.PARTNERED_USER : "").append(m != null && OffsetDateTime.now().minusWeeks(1).isBefore(m.getTimeJoined()) ? Emoji.NEW_MEMBER : "");
 
         for (User.UserFlag flag : u.getFlags()) {
-            badges.append(
-                switch (flag) {
-                    case EARLY_SUPPORTER -> Constants.EARLY_NITRO_SUB;
-                    case ACTIVE_DEVELOPER -> Constants.ACTIVE_DEVELOPER;
-                    case HYPESQUAD_BALANCE -> Constants.HYPESQUAD_BALANCE;
-                    case HYPESQUAD_BRAVERY -> Constants.HYPESQUAD_BRAVERY;
-                    case HYPESQUAD_BRILLIANCE -> Constants.HYPESQUAD_BRILIANCE;
-                    case HYPESQUAD -> Constants.HYPESQUAD_EVENTS;
-                    case BUG_HUNTER_LEVEL_1 -> Constants.BUG_HUNTER_LEVEL_1;
-                    case BUG_HUNTER_LEVEL_2 -> Constants.BUG_HUNTER_LEVEL_2;
-                    case CERTIFIED_MODERATOR -> Constants.MODERATOR_ALUMNI;
-                    default -> "";
-                }
-            );
+            badges.append(switch (flag) {
+                case EARLY_SUPPORTER -> Emoji.EARLY_NITRO_SUB;
+                case ACTIVE_DEVELOPER -> Emoji.ACTIVE_DEVELOPER;
+                case HYPESQUAD_BALANCE -> Emoji.HYPESQUAD_BALANCE;
+                case HYPESQUAD_BRAVERY -> Emoji.HYPESQUAD_BRAVERY;
+                case HYPESQUAD_BRILLIANCE -> Emoji.HYPESQUAD_BRILIANCE;
+                case HYPESQUAD -> Emoji.HYPESQUAD_EVENTS;
+                case BUG_HUNTER_LEVEL_1 -> Emoji.BUG_HUNTER_LEVEL_1;
+                case BUG_HUNTER_LEVEL_2 -> Emoji.BUG_HUNTER_LEVEL_2;
+                case CERTIFIED_MODERATOR -> Emoji.MODERATOR_ALUMNI;
+                default -> "";
+            });
         }
 
         List<String> formattedActivities = new ArrayList<>();
@@ -247,14 +243,10 @@ public class UserinfoCmd extends SlashCommand {
         EmbedBuilder builder = new EmbedBuilder();
         builder.getDescriptionBuilder().append(FormatUtil.formatList(formattedActivities, ", "));
 
-        builder.setTitle(String.format("Showing Info For %s %s", username, badges))
-                .setColor((m != null && m.getColor() != null) ? m.getColor() : ToycatPallete.DEFAULT_ROLE_WHITE)
-                .setThumbnail(m == null ? u.getEffectiveAvatarUrl() : m.getEffectiveAvatarUrl())
-                .addField("ID", u.getId(), true)
-                .addField("Created At", TimeFormat.DATE_TIME_SHORT.format(u.getTimeCreated()), true);
+        builder.setTitle(String.format("Showing Info For %s %s", username, badges)).setColor((m != null && m.getColor() != null) ? m.getColor() : ToycatPallete.DEFAULT_ROLE_WHITE).setThumbnail(m == null ? u.getEffectiveAvatarUrl() : m.getEffectiveAvatarUrl()).addField("ID", u.getId(), true).addField("Created At", TimeFormat.DATE_TIME_SHORT.format(u.getTimeCreated()), true);
 
         if (m != null) {
-               builder.addField("Joined At", TimeFormat.DATE_TIME_SHORT.format(m.getTimeJoined()), true);
+            builder.addField("Joined At", TimeFormat.DATE_TIME_SHORT.format(m.getTimeJoined()), true);
         }
 
         builder.addField("Images", getIconURLList(m, u, p), true);
@@ -262,24 +254,24 @@ public class UserinfoCmd extends SlashCommand {
         StringBuilder statusBuilder = new StringBuilder();
         if (m != null) {
             switch (m.getOnlineStatus(ClientType.DESKTOP)) {
-                case ONLINE -> statusBuilder.append(Constants.DESKTOP_ONLINE);
-                case IDLE -> statusBuilder.append(Constants.DESKTOP_IDLE);
-                case DO_NOT_DISTURB -> statusBuilder.append(Constants.DESKTOP_DND);
-                case OFFLINE, INVISIBLE -> statusBuilder.append(Constants.DESKTOP_OFFLINE);
+                case ONLINE -> statusBuilder.append(Emoji.DESKTOP_ONLINE);
+                case IDLE -> statusBuilder.append(Emoji.DESKTOP_IDLE);
+                case DO_NOT_DISTURB -> statusBuilder.append(Emoji.DESKTOP_DND);
+                case OFFLINE, INVISIBLE -> statusBuilder.append(Emoji.DESKTOP_OFFLINE);
             }
 
             switch (m.getOnlineStatus(ClientType.MOBILE)) {
-                case ONLINE -> statusBuilder.append(Constants.MOBILE_ONLINE);
-                case IDLE -> statusBuilder.append(Constants.MOBILE_IDLE);
-                case DO_NOT_DISTURB -> statusBuilder.append(Constants.MOBILE_DND);
-                case OFFLINE, INVISIBLE -> statusBuilder.append(Constants.MOBILE_OFFLINE);
+                case ONLINE -> statusBuilder.append(Emoji.MOBILE_ONLINE);
+                case IDLE -> statusBuilder.append(Emoji.MOBILE_IDLE);
+                case DO_NOT_DISTURB -> statusBuilder.append(Emoji.MOBILE_DND);
+                case OFFLINE, INVISIBLE -> statusBuilder.append(Emoji.MOBILE_OFFLINE);
             }
 
             switch (m.getOnlineStatus(ClientType.WEB)) {
-                case ONLINE -> statusBuilder.append(Constants.BROWSER_ONLINE);
-                case IDLE -> statusBuilder.append(Constants.BROWSER_IDLE);
-                case DO_NOT_DISTURB -> statusBuilder.append(Constants.BROWSER_DND);
-                case OFFLINE, INVISIBLE -> statusBuilder.append(Constants.BROWSER_OFFLINE);
+                case ONLINE -> statusBuilder.append(Emoji.BROWSER_ONLINE);
+                case IDLE -> statusBuilder.append(Emoji.BROWSER_IDLE);
+                case DO_NOT_DISTURB -> statusBuilder.append(Emoji.BROWSER_DND);
+                case OFFLINE, INVISIBLE -> statusBuilder.append(Emoji.BROWSER_OFFLINE);
             }
         }
 
@@ -317,7 +309,6 @@ public class UserinfoCmd extends SlashCommand {
         return ibuilder.toString();
     }
 
-
     // TODO: Double check this works properly because I written this while very tired
     private static <T> List<T> matchName(List<T> objs, String name, Function<T, String> nameMap, Predicate<T> initialFilter) {
         String desymboled = desymbol(name);
@@ -329,9 +320,7 @@ public class UserinfoCmd extends SlashCommand {
             stream = stream.filter(initialFilter);
         }
 
-        List<InterimName<T>> filtered = stream.map(t -> new InterimName<T>(t, nameMap.apply(t), !symbolHeavy ? desymbol(nameMap.apply(t)) : null))
-                                              .filter(iName -> containsName.test(symbolHeavy ? iName.name() : iName.desymboled()))
-                                              .toList();
+        List<InterimName<T>> filtered = stream.map(t -> new InterimName<T>(t, nameMap.apply(t), !symbolHeavy ? desymbol(nameMap.apply(t)) : null)).filter(iName -> containsName.test(symbolHeavy ? iName.name() : iName.desymboled())).toList();
 
         if (filtered.size() <= 1) {
             return toTList(filtered);
