@@ -1,6 +1,8 @@
 package com.jagrosh.vortex.hibernate.entities;
 
+import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
@@ -10,4 +12,6 @@ import lombok.NoArgsConstructor;
 @Table(name = "WARNINGS")
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
+@Entity
+@Data
 public class WarnLog extends ModLog {}

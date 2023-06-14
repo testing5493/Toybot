@@ -51,12 +51,12 @@ public final class Database {
             transaction.commit();
             return t;
         } catch (HibernateException e) {
+            log.error("An exception occurred while executing a database query", e);
+            throw new PersistenceException(e);
+        } finally {
             if (transaction != null) {
                 transaction.rollback();
             }
-
-            log.error("An exception occurred while executing a database query", e);
-            throw new PersistenceException(e);
         }
     }
 
@@ -74,12 +74,12 @@ public final class Database {
             consumer.accept(session);
             transaction.commit();
         } catch (HibernateException e) {
+            log.error("An exception occurred while executing a database query", e);
+            throw new PersistenceException(e);
+        } finally {
             if (transaction != null) {
                 transaction.rollback();
             }
-
-            log.error("An exception occurred while executing a database query", e);
-            throw new PersistenceException(e);
         }
     }
 }

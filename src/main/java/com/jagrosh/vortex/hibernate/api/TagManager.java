@@ -1,6 +1,7 @@
 package com.jagrosh.vortex.hibernate.api;
 
 import com.jagrosh.vortex.hibernate.entities.Tag;
+import com.jagrosh.vortex.hibernate.internal.TagId;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -15,15 +16,37 @@ class TagManager {
     }
 
     /**
-     * Updates the value of a tag
+     * Creates or updates the value of a tag
      *
      * @param guildId The ID of the tags guild
      * @param name The unique name of the tag
      * @param value The value of the tag
-     * @return True if successfully updated, false if something went wrong
+     * @return The old value, or null if the tag was just created
+     * @throws IllegalArgumentException If the name is blank or null
      */
-    public boolean update(long guildId, String name, String value) {
-        return database.doTransaction(session -> session.update(new Tag(guildId, name, value)));
+    public String update(long guildId, String name, String value) throws IllegalArgumentException {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Name must be supplied");
+        }
+
+        TagId tagId = new TagId(guildId, name);
+        return database.doTransaction(session -> {
+            String oldValue;
+            Tag tag = session.get(Tag.class, tagId);
+            if (tag != null) {
+                oldValue = tag.getValue();
+                tag.setValue(value);
+            } else {
+                oldValue = null;
+                tag = new Tag();
+                tag.setGuildId(guildId);
+                tag.setName(name);
+                tag.setValue(value);
+            }
+
+            session.merge(tag);
+            return oldValue;
+        });
     }
 
     /**
@@ -31,9 +54,19 @@ class TagManager {
      *
      * @param guildId The ID of the tags guild
      * @param name The unique name of the tag
-     * @return True if successfully deleted, false if something went wrong
+     * @return The old value, or null if the tag doesn't exist
      */
-    public boolean delete(long guildId, String name) {
-        return database.doTransaction(session -> session.delete(new Tag(guildId, name, null)));
+    public String delete(long guildId, String name) {
+        TagId tagId = new TagId(guildId, name);
+        return database.doTransaction(session -> {
+            Tag tag = session.get(Tag.class, tagId);
+            if (tag == null) {
+                return null;
+            }
+
+            String value = tag.getValue();
+            session.remove(tag);
+            return value;
+        });
     }
 }

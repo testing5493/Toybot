@@ -1,9 +1,7 @@
 package com.jagrosh.vortex.hibernate.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.jagrosh.vortex.hibernate.internal.TagId;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,6 +12,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "TAGS")
 @Data
+@IdClass(TagId.class)
 @NoArgsConstructor
 public class Tag {
     /**
