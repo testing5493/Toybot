@@ -1,7 +1,6 @@
 package com.jagrosh.vortex.commands.moderation;
 
 import com.jagrosh.jdautilities.command.CommandEvent;
-import com.jagrosh.vortex.Emoji;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandTools;
 import com.jagrosh.vortex.commands.ModCommand;
@@ -10,6 +9,7 @@ import com.jagrosh.vortex.database.Database.Modlog;
 import com.jagrosh.vortex.utils.FormatUtil;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.User;
 
 import java.util.List;
 
@@ -30,7 +30,6 @@ public class ModlogsCmd extends ModCommand {
         }
 
         long id = CommandTools.getPossibleUserId(event.getArgs().trim());
-
         if (id == -1) {
             if (event.getArgs().trim().isEmpty()) {
                 id = event.getAuthor().getIdLong();
@@ -41,9 +40,7 @@ public class ModlogsCmd extends ModCommand {
         }
 
         List<Modlog> modlogs = Database.getAllModlogs(event.getGuild().getIdLong(), id);
-
         int size = modlogs.size();
-
         if (size == 0) {
             event.reply("Could not find any modlogs for that user");
             return;
@@ -54,15 +51,20 @@ public class ModlogsCmd extends ModCommand {
             embeds[i] = new EmbedBuilder();
         }
 
-        if (event.getJDA().getUserById(id) != null) {
-            embeds[0].setAuthor(String.format("%d modlog%s found for %s#%s (%d)", size, size == 1 ? "" : "s", event.getJDA().getUserById(id).getName(), event.getJDA().getUserById(id).getDiscriminator(), id), null, String.format(event.getJDA().getUserById(id).getEffectiveAvatarUrl()));
+        User u = event.getJDA().getUserById(id);
+        if (u == null) {
+            u = event.getJDA().retrieveUserById(id).complete();
+        }
+
+        if (u != null) {
+            embeds[0].setAuthor(String.format("%d modlog%s found for %s", size, size == 1 ? "" : "s", FormatUtil.formatFullUser(u)), null, u.getEffectiveAvatarUrl());
         } else {
             embeds[0].setAuthor(String.format("%d modlog%s found for %d", size, size == 1 ? "" : "s", id));
         }
 
         for (int i = modlogs.size() - 1; i >= 0; i--) {
             Modlog modlog = modlogs.get(i);
-            embeds[i / 25].addField(Emoji.LOGS.GRAVEL.NEUTRAL + " Case: " + modlog.getId(), FormatUtil.formatModlogCase(vortex, event.getGuild(), modlog), false);
+            embeds[i / 25].addField(modlog.getType().getEmoji().neutralEmoji() + " Case: " + modlog.getId(), FormatUtil.formatModlogCase(vortex, event.getGuild(), modlog), false);
         }
 
         for (EmbedBuilder embed : embeds) {
