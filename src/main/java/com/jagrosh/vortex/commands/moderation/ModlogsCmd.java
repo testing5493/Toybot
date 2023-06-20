@@ -56,7 +56,7 @@ public class ModlogsCmd extends ModCommand {
         if (event.getJDA().getUserById(id) != null) {
             embeds[0].setAuthor(String.format("%d modlog%s found for %s#%s (%d)", size, size == 1 ? "" : "s", event.getJDA().getUserById(id).getName(), event.getJDA().getUserById(id).getDiscriminator(), id), null, String.format(event.getJDA().getUserById(id).getEffectiveAvatarUrl()));
         } else {
-            embeds[0].setTitle(String.format("%d modlog%s found for %d", size, size == 1 ? "" : "s", id));
+            embeds[0].setAuthor(String.format("%d modlog%s found for %d", size, size == 1 ? "" : "s", id));
         }
 
         for (int i = modlogs.size() - 1; i >= 0; i--) {
