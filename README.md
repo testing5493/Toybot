@@ -1,6 +1,5 @@
 # Vortex
  ![GitHub license](https://img.shields.io/github/license/ya64/Toybot)
-[![Jagrosh's Patreon](https://img.shields.io/badge/Donate-Patreon-orange.svg)](https://www.patreon.com/jagrosh)
 
 
 ## Toybot
