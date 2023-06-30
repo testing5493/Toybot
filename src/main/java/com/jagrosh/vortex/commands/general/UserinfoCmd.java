@@ -208,8 +208,9 @@ public class UserinfoCmd extends SlashCommand {
         username = discrim == 0 ? "@" + username : u.getAsTag();
 
         StringBuilder badges = new StringBuilder();
+
         if (u.isBot()) {
-            badges.append(" ");
+            badges.append(' ');
             if (u.getIdLong() == Constants.CLYDE_AI_ID) {
                 badges.append(Emoji.VERIFIED_AI);
             } else if (u.getIdLong() == Constants.DISCORD_SYSTEM_ID) {
@@ -221,7 +222,10 @@ public class UserinfoCmd extends SlashCommand {
             }
         }
 
-        badges.append((m != null && m.isOwner()) ? Emoji.SERVER_OWNER : "").append(u.getFlags().contains(User.UserFlag.STAFF) ? Emoji.DISCORD_STAFF : "").append(u.getFlags().contains(User.UserFlag.PARTNER) ? Emoji.PARTNERED_USER : "").append(m != null && OffsetDateTime.now().minusWeeks(1).isBefore(m.getTimeJoined()) ? Emoji.NEW_MEMBER : "");
+        badges.append((m != null && m.isOwner()) ? Emoji.SERVER_OWNER : "")
+              .append(u.getFlags().contains(User.UserFlag.STAFF) ? Emoji.DISCORD_STAFF : "")
+              .append(u.getFlags().contains(User.UserFlag.PARTNER) ? Emoji.PARTNERED_USER : "")
+              .append(m != null && OffsetDateTime.now().minusWeeks(1).isBefore(m.getTimeJoined()) ? Emoji.NEW_MEMBER : "");
 
         for (User.UserFlag flag : u.getFlags()) {
             badges.append(switch (flag) {
