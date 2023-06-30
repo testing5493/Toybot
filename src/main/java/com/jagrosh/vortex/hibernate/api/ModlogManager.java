@@ -3,14 +3,10 @@ package com.jagrosh.vortex.hibernate.api;
 import com.jagrosh.vortex.hibernate.entities.*;
 import com.jagrosh.vortex.hibernate.internal.ModLogId;
 import jakarta.persistence.PersistenceException;
-import jakarta.persistence.Query;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Session;
 
-import java.time.Instant;
+import java.util.NoSuchElementException;
 
 /**
  * A collection of {@link Database} methods that are in charge of dealing with modlogs
@@ -162,9 +158,9 @@ class ModlogManager {
      * @throws PersistenceException if something went wrong while logging the mute
      */
     public int logMute(long guildId, long userId, long punishingModId, long punishingTime, long pardoningTime, String reason) throws PersistenceException {
-        MuteLog banLog = new MuteLog();
-        populate(banLog, guildId, userId, punishingModId, punishingTime, pardoningTime, reason);
-        return logPunish(banLog);
+        MuteLog muteLog = new MuteLog();
+        populate(muteLog, guildId, userId, punishingModId, punishingTime, pardoningTime, reason);
+        return logPunish(muteLog);
     }
 
     /**
@@ -175,8 +171,8 @@ class ModlogManager {
      * @param pardoningModId The ID of the unbanning mod
      * @param pardoningTime The time the user was unbanned
      */
-    public void logUnban(long guildId, long userId, long pardoningModId, long pardoningTime) {
-
+    public BanLog logUnban(long guildId, long userId, long pardoningModId, long pardoningTime) {
+        return logPardon(BanLog.class, guildId, userId, pardoningModId, pardoningTime);
     }
 
     /**
@@ -187,8 +183,8 @@ class ModlogManager {
      * @param pardoningModId The ID of the ungraveling mod
      * @param pardoningTime The time the user was ungraveled
      */
-    public void logUngravel(long guildId, long userId, long pardoningModId, long pardoningTime) {
-
+    public GravelLog logUngravel(long guildId, long userId, long pardoningModId, long pardoningTime) {
+        return logPardon(GravelLog.class, guildId, userId, pardoningModId, pardoningTime);
     }
 
     /**
@@ -199,8 +195,8 @@ class ModlogManager {
      * @param pardoningModId The ID of the unmuting mod
      * @param pardoningTime The time the user was unmuted
      */
-    public void logUnmute(long guildId, long userId, long pardoningModId, long pardoningTime) {
-
+    public MuteLog logUnmute(long guildId, long userId, long pardoningModId, long pardoningTime) {
+        return logPardon(MuteLog.class, guildId, userId, pardoningModId, pardoningTime);
     }
 
     private void populate(ModLog modLog, long guildId, long userId, long punishingModId, long punishingTime, String reason) {
@@ -227,14 +223,23 @@ class ModlogManager {
         return database.doTransaction(session -> (ModLog) session.save(modLog)).getCaseId();
     }
 
-    private <T extends TimedLog> boolean logPardon(Class<T> clazz, long guildId, long pardoningModId, long pardoningTime) {
-        database.doTransaction(session -> {
-                CriteriaBuilder cb = session.getCriteriaBuilder();
-                CriteriaQuery<T> q = cb.createQuery(clazz);
-                Root<T> root = q.from(clazz);
-                // Todo: Optimise?
-                q.select(root).where(cb.and(cb.equal(root.get("guildId"), guildId))).orderBy(cb.desc(root.get("caseId"))).sin
-            return null;
+    private <T extends TimedLog> T logPardon(Class<T> clazz, long guildId, long userId, long pardoningModId, long pardoningTime) {
+        return database.doTransaction(session -> {
+            try {
+                T modLog = session.createQuery("select t from TimedLog t where type(t) = :type and t.guildId = :guildId and t.userId = :userId and t.pardoningModId = 0", clazz)
+                                  .setParameter("type", clazz.getName())
+                                  .setParameter("guildId", guildId)
+                                  .setParameter("userId", userId)
+                                  .getSingleResult();
+
+                modLog.setPardoningModId(pardoningModId);
+                modLog.setPardoningTime(pardoningTime);
+                session.merge(modLog);
+
+                return modLog;
+            } catch (NoSuchElementException e) {
+                return null;
+            }
         });
     }
 }

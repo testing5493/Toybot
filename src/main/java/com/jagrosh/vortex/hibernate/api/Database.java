@@ -1,7 +1,6 @@
 package com.jagrosh.vortex.hibernate.api;
 
 import com.jagrosh.vortex.hibernate.entities.*;
-import jakarta.persistence.PersistenceException;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
@@ -9,6 +8,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 
+import jakarta.persistence.PersistenceException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -28,7 +28,15 @@ public final class Database {
 
     public Database() {
         try {
-            SESSION_FACTORY = new Configuration().configure().addClass(BanLog.class).addClass(GravelLog.class).addClass(KickLog.class).addClass(MuteLog.class).addClass(WarnLog.class).addClass(Tag.class).buildSessionFactory();
+            SESSION_FACTORY = new Configuration()
+                    .configure()
+                    .addClass(BanLog.class)
+                    .addClass(GravelLog.class)
+                    .addClass(KickLog.class)
+                    .addClass(MuteLog.class)
+                    .addClass(WarnLog.class)
+                    .addClass(Tag.class)
+                    .buildSessionFactory();
         } catch (Throwable e) {
             log.error("Could not initialise the Database", e);
             throw new ExceptionInInitializerError(e);
@@ -43,14 +51,14 @@ public final class Database {
      *
      * @throws PersistenceException If something goes wrong while interacting with the database
      */
-    <T> T doTransaction(Function<Session, T> function) {
+    <T> T doTransaction(Function<Session, T> function) throws PersistenceException {
         Transaction transaction = null;
         try (Session session = SESSION_FACTORY.openSession()) {
             transaction = session.beginTransaction();
             T t = function.apply(session);
             transaction.commit();
             return t;
-        } catch (HibernateException e) {
+        } catch (Exception e) {
             log.error("An exception occurred while executing a database query", e);
             throw new PersistenceException(e);
         } finally {
@@ -67,13 +75,13 @@ public final class Database {
      *
      * @throws PersistenceException If something goes wrong while interacting with the database
      */
-    void doTransaction(Consumer<Session> consumer) {
+    void doTransaction(Consumer<Session> consumer) throws PersistenceException {
         Transaction transaction = null;
         try (Session session = SESSION_FACTORY.openSession()) {
             transaction = session.beginTransaction();
             consumer.accept(session);
             transaction.commit();
-        } catch (HibernateException e) {
+        } catch (Exception e) {
             log.error("An exception occurred while executing a database query", e);
             throw new PersistenceException(e);
         } finally {

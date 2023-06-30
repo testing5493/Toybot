@@ -1,6 +1,7 @@
 package com.jagrosh.vortex.hibernate.entities;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
  * are represented by {@link BanLog}, {@link GravelLog}, and {@link MuteLog} respectively.
  */
 @Data
+@Entity
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class TimedLog extends ModLog {
