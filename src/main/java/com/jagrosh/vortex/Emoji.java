@@ -32,6 +32,8 @@ public class Emoji {
     public final static String ACTIVE_DEVELOPER     = "<:active_developer:1109963459929587713>";
     public final static String BOT                  = "<:bot_1:1117663424873246810><:bot_2:1117663423631728670>";
     public final static String VERIFIED_BOT         = "<:verified_bot_1:1117663419961720832><:verified_bot_2:1117663426534182972><:verified_bot_3:1117663422432157837>";
+    public final static String VERIFIED_SYSTEM      = "<:verified_bot_1:1117663419961720832><:verified_system_2:1124218464421281865><:verified_system_3:1124218463494357012><:verified_system_4:1124218461296533566>";
+    public final static String VERIFIED_AI          = "<:verified_ai_1:1124218416853696533><:verified_ai_2:1124218414362280006>";
     public final static String VERIFIED_EARLY_DEV   = "<:verified_developer:1109962363316215860>";
     public final static String BUG_HUNTER_LEVEL_1   = "<:bug_hunter1:1109963458356727851>";
     public final static String BUG_HUNTER_LEVEL_2   = "<:bug_hunter2:1109963456414756915>";
