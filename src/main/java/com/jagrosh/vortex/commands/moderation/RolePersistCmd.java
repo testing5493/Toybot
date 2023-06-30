@@ -1,7 +1,5 @@
 package com.jagrosh.vortex.commands.moderation;
 
-import com.jagrosh.jdautilities.command.CommandEvent;
-import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener;
@@ -19,7 +17,6 @@ import net.dv8tion.jda.api.entities.Role;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.logging.Level;
 
 // TODO: Abstract this so sealing is unneccessary
 @Log

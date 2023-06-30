@@ -36,6 +36,7 @@ public class Constants {
     public final static long CLYDE_AI_ID = 1081004946872352958L;
     public final static long CLYDE_HOOK_ID = 1;
     public final static long DISCORD_SYSTEM_ID = 643945264868098049L;
+    public final static long DISCORD_COMMUNITY_UPDATES_ID = 669627189624307712L;
     public final static String DONATION_LINK = "https://patreon.com/jagrosh";
 
     public final static class Wiki {

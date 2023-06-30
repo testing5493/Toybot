@@ -78,7 +78,7 @@ public class SlowmodeCmd extends ModCommand {
 
         String message = switch (split.length) {
             case 0 -> execute(tc, mod, null, null);
-            case 1 -> execute(tc, mod, null, split[0]);
+            case 1 -> execute(tc, mod, split[0], null);
             default -> execute(tc, mod, split[0], split[1]);
         };
 
@@ -88,7 +88,7 @@ public class SlowmodeCmd extends ModCommand {
 
     private String execute(TextChannel tc, Member mod, String timeString, String durString) {
         timeString = timeString == null ? "" : timeString.toLowerCase().trim();
-        durString  = durString  == null ? "" : timeString.toLowerCase().trim();
+        durString  = durString  == null ? "" : durString.toLowerCase().trim();
 
         if (timeString.isBlank() && durString.isBlank()) {
             int slowmodeDuration = vortex.getDatabase().tempslowmodes.timeUntilDisableSlowmode(tc);

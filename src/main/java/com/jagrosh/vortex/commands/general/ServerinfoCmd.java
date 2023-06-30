@@ -15,7 +15,6 @@
  */
 package com.jagrosh.vortex.commands.general;
 
-import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.HybridEvent;
 import com.jagrosh.vortex.utils.FormatUtil;
