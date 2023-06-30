@@ -15,116 +15,69 @@
  */
 package com.jagrosh.vortex.commands.moderation;
 
-import com.jagrosh.jdautilities.command.CommandEvent;
+import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener.CommandErrorException;
-import com.jagrosh.vortex.commands.ModCommand;
-import com.jagrosh.vortex.utils.ArgsUtil;
-import com.jagrosh.vortex.utils.ArgsUtil.ResolvedArgs;
+import com.jagrosh.vortex.commands.HybridEvent;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.LogUtil;
+import com.jagrosh.vortex.utils.OtherUtil;
+import lombok.extern.java.Log;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.*;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author John Grosh (jagrosh)
  */
-public class BanCmd extends ModCommand {
-    protected int daysToDelete = 0;
-
+@Log
+public class BanCmd extends PunishmentCmd {
     public BanCmd(Vortex vortex) {
-        super(vortex, Permission.BAN_MEMBERS);
+        super(vortex, Action.BAN, true, Permission.BAN_MEMBERS);
         this.name = "ban";
-        // this.aliases = new String[]{"hackban", "forceban"};
-        this.arguments = "<@users> [time] [reason]";
-        this.help = "bans users";
+        this.help = "ban user";
         this.botPermissions = new Permission[]{Permission.BAN_MEMBERS};
-        this.guildOnly = true;
     }
 
     @Override
-    protected void execute(CommandEvent event) {
-        ResolvedArgs args = ArgsUtil.resolve(event.getArgs(), true, event.getGuild());
-        if (args.isEmpty()) {
-            event.replyError("Please include at least one user to ban (@mention or ID)!");
-            return;
+    protected void execute(HybridEvent event, long toBanId, int min, String reason) {
+        Guild g = event.getGuild();
+        Member mod = event.getMember();
+        Member toBanMember = OtherUtil.getMemberCacheElseRetrieve(g, toBanId);
+
+        Role modrole = vortex.getDatabase().settings.getSettings(g).getModeratorRole(g);
+
+
+        if (!g.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
+            throw new CommandErrorException("I do not have any roles with permissions to ban users.");
         }
 
-        int minutes;
-        if (args.time < -1) {
-            throw new CommandErrorException("Timed bans cannot be negative time!");
-        } else if (args.time == 0) {
-            minutes = 0;
-        } else if (args.time > 60) {
-            minutes = (int) Math.round(args.time / 60.0);
-        } else {
-            minutes = 0;
-        }
-
-        String reason = LogUtil.auditReasonFormat(event.getMember(), minutes, args.reason);
-        Role modrole = vortex.getDatabase().settings.getSettings(event.getGuild()).getModeratorRole(event.getGuild());
-        StringBuilder builder = new StringBuilder();
-        List<Long> ids = new ArrayList<>(args.ids);
-
-        args.members.forEach(m -> {
-            if (m.isOwner()) {
-                event.reply("Successfully banned <@" + m.getUser().getIdLong() + ">");
+        if (toBanMember != null) {
+            if (toBanMember.getUser().isBot()) {
+                event.reply("Nice try bitslayn");
+            } if (toBanMember.isOwner()) {
+                event.reply(FormatUtil.formatUserMention(toBanId) + " was banned");
                 return;
+            } else if (!mod.canInteract(toBanMember)) {
+                throw new CommandErrorException("You do not have permission to ban " + FormatUtil.formatUserMention(toBanId));
+            } else if (!g.getSelfMember().canInteract(toBanMember)) {
+                throw new CommandErrorException("I am unable to ban " + FormatUtil.formatUserMention(toBanId));
+            } else if (modrole != null && toBanMember.getRoles().contains(modrole)) {
+                throw new CommandErrorException("I won't ban " + FormatUtil.formatUserMention(toBanId) + " because they are a mod");
             }
-
-            if (!event.getMember().canInteract(m)) {
-                builder.append("\n").append(event.getClient().getError()).append(" You do not have permission to ban ").append(FormatUtil.formatUser(m.getUser()));
-            } else if (!event.getSelfMember().canInteract(m)) {
-                builder.append("\n").append(event.getClient().getError()).append(" I am unable to ban ").append(FormatUtil.formatUser(m.getUser()));
-            } else if (modrole != null && m.getRoles().contains(modrole)) {
-                builder.append("\n").append(event.getClient().getError()).append(" I won't ban ").append(FormatUtil.formatUser(m.getUser())).append(" because they have the Moderator Role");
-            } else {
-                ids.add(m.getUser().getIdLong());
-            }
-        });
-        args.unresolved.forEach(un -> builder.append("\n").append(event.getClient().getWarning()).append(" Could not resolve `").append(un).append("` to a user ID"));
-
-        args.users.forEach(u -> ids.add(u.getIdLong()));
-
-        if (ids.isEmpty()) {
-            event.reply(builder.toString());
-            return;
         }
 
-        if (ids.size() > 5) {
-            event.reactSuccess();
-        }
-
-        Instant unbanTime = Instant.now().plus(minutes, ChronoUnit.MINUTES);
-        String time = minutes == 0 ? "" : " for " + FormatUtil.secondsToTimeCompact(minutes * 60);
-        for (int i = 0; i < ids.size(); i++) {
-            long uid = ids.get(i);
-            String id = Long.toString(uid);
-            boolean last = i + 1 == ids.size();
-            event.getGuild().ban(User.fromId(id), daysToDelete, TimeUnit.DAYS).reason(reason).queue(success -> {
-                builder.append("\n").append(event.getClient().getSuccess()).append(" Successfully banned <@").append(id).append(">").append(time);
-                if (minutes > 0) {
-                    vortex.getDatabase().tempbans.setBan(vortex, event.getGuild(), uid, event.getAuthor().getIdLong(), unbanTime, args.reason);
-                } else {
-                    vortex.getDatabase().tempbans.setBan(vortex, event.getGuild(), uid, event.getAuthor().getIdLong(), Instant.MAX, args.reason);
-                }
-
-                if (last) {
-                    event.reply(builder.toString());
-                }
-            }, failure -> {
-                builder.append("\n").append(event.getClient().getError()).append(" Failed to ban <@").append(id).append(">");
-                if (last) {
-                    event.reply(builder.toString());
-                }
-            });
-        }
+        Instant unbanTime = min == -1 ? Instant.MAX : Instant.now().plus(min, ChronoUnit.MINUTES);
+        g.ban(UserSnowflake.fromId(toBanId), 0, TimeUnit.SECONDS)
+                .reason(LogUtil.auditReasonFormat(mod, min, reason))
+                .queue(success -> {
+                    vortex.getDatabase().tempbans.setBan(vortex, g, toBanId, mod.getIdLong(), unbanTime, reason);
+                    event.reply(FormatUtil.formatUserMention(toBanId) + " was banned");
+                }, failure -> {
+                    handleError(event, failure, action, toBanId);
+                });
     }
 }

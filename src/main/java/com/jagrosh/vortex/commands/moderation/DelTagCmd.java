@@ -1,9 +1,14 @@
 package com.jagrosh.vortex.commands.moderation;
 
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.jagrosh.vortex.Vortex;
-import com.jagrosh.vortex.commands.ModCommand;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+
+import java.util.Collections;
 
 public class DelTagCmd extends ModCommand {
     public DelTagCmd(Vortex vortex) {
@@ -12,6 +17,23 @@ public class DelTagCmd extends ModCommand {
         this.arguments = "<tagName>";
         this.help = "deletes a tag";
         this.guildOnly = true;
+        this.options = Collections.singletonList(new OptionData(OptionType.STRING, "name", "The tag to delete", true));
+    }
+
+
+    @Override
+    protected void execute(SlashCommandEvent event) {
+        String tagName = event.getOption("name", OptionMapping::getAsString);
+
+        if (tagName.isBlank()) {
+            event.reply("Please enter a tag to delete").setEphemeral(true).queue();
+        }
+
+        if (vortex.getDatabase().tags.deleteTag(event.getGuild(), tagName)) {
+            event.reply("Successfully deleted the `" + tagName + "` tag").queue();
+        } else {
+            event.reply("Oops! The tag `" + tagName + "` could not be found.").setEphemeral(true).queue();
+        }
     }
 
     @Override

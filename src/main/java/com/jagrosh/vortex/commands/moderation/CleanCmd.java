@@ -16,9 +16,9 @@
 package com.jagrosh.vortex.commands.moderation;
 
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener.CommandWarningException;
-import com.jagrosh.vortex.commands.ModCommand;
 import com.jagrosh.vortex.utils.LogUtil;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.EmbedType;
@@ -53,6 +53,12 @@ public class CleanCmd extends ModCommand {
         this.help = "cleans messages matching filters";
         this.botPermissions = new Permission[]{Permission.MESSAGE_MANAGE, Permission.MESSAGE_HISTORY};
         this.guildOnly = true;
+    }
+
+    @Override
+    protected void execute(SlashCommandEvent event) {
+        // TODO: Implement
+        event.reply("// TODO: Implement").queue();
     }
 
     @Override

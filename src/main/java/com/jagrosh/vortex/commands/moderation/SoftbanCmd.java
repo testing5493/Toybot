@@ -15,90 +15,77 @@
  */
 package com.jagrosh.vortex.commands.moderation;
 
-import com.jagrosh.jdautilities.command.CommandEvent;
+import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
-import com.jagrosh.vortex.commands.ModCommand;
-import com.jagrosh.vortex.utils.ArgsUtil;
+import com.jagrosh.vortex.commands.CommandExceptionListener;
+import com.jagrosh.vortex.commands.HybridEvent;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.LogUtil;
+import com.jagrosh.vortex.utils.OtherUtil;
+import lombok.extern.java.Log;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.*;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 /**
  * @author John Grosh (jagrosh)
  */
-public class SoftbanCmd extends ModCommand {
+@Log
+public class SoftbanCmd extends PunishmentCmd {
     public SoftbanCmd(Vortex vortex) {
-        super(vortex, Permission.BAN_MEMBERS);
+        super(vortex, Action.SOFTBAN, false, Permission.BAN_MEMBERS);
         this.name = "softban";
-        this.arguments = "<@users> [reason]";
         this.help = "bans and unbans users";
-        this.botPermissions = new Permission[]{Permission.BAN_MEMBERS};
-        this.guildOnly = true;
     }
 
     @Override
-    protected void execute(CommandEvent event) {
-        ArgsUtil.ResolvedArgs args = ArgsUtil.resolve(event.getArgs(), event.getGuild());
-        if (args.isEmpty()) {
-            event.replyError("Please include at least one user to softban (@mention or ID)!");
-            return;
+    protected void execute(HybridEvent event, long toBanId, int min, String reason) {
+        Member mod = event.getMember();
+
+        Guild g = mod.getGuild();
+        Role modrole = vortex.getDatabase().settings.getSettings(g).getModeratorRole(g);
+        Member toBanMember = OtherUtil.getMemberCacheElseRetrieve(g, toBanId);
+
+        if (!g.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
+            throw new CommandExceptionListener.CommandErrorException("I do not have any roles with permissions to ban users.");
         }
 
-        String reason = LogUtil.auditReasonFormat(event.getMember(), args.reason);
-        Role modrole = vortex.getDatabase().settings.getSettings(event.getGuild()).getModeratorRole(event.getGuild());
-        String unbanreason = LogUtil.auditReasonFormat(event.getMember(), "Softban Unban");
-        StringBuilder builder = new StringBuilder();
-        List<Member> toSoftban = new LinkedList<>();
-
-        args.members.forEach(m -> {
-            if (!event.getMember().canInteract(m)) {
-                builder.append("\n").append(event.getClient().getError()).append(" You do not have permission to softban ").append(FormatUtil.formatUser(m.getUser()));
-            } else if (!event.getSelfMember().canInteract(m)) {
-                builder.append("\n").append(event.getClient().getError()).append(" I am unable to softban ").append(FormatUtil.formatUser(m.getUser()));
-            } else if (modrole != null && m.getRoles().contains(modrole)) {
-                builder.append("\n").append(event.getClient().getError()).append(" I won't softban ").append(FormatUtil.formatUser(m.getUser())).append(" because they have the Moderator Role");
-            } else {
-                toSoftban.add(m);
+        if (toBanMember != null) {
+            if (toBanMember.getUser().isBot()) {
+                throw new CommandExceptionListener.CommandErrorException("Nice try bitslayn");
+            } else if (toBanMember.isOwner()) {
+                event.reply(FormatUtil.formatUserMention(toBanId) + " was softbanned");
+                return;
+            } else if (!mod.canInteract(toBanMember)) {
+                throw new CommandExceptionListener.CommandErrorException("You do not have permission to ban " + FormatUtil.formatUserMention(toBanId));
+            } else if (!g.getSelfMember().canInteract(toBanMember)) {
+                throw new CommandExceptionListener.CommandErrorException("I am unable to ban " + FormatUtil.formatUserMention(toBanId));
+            } else if (modrole != null && toBanMember.getRoles().contains(modrole)) {
+                throw new CommandExceptionListener.CommandErrorException("I won't ban " + FormatUtil.formatUserMention(toBanId) + " because they are a mod");
             }
-        });
-
-        args.unresolved.forEach(un -> builder.append("\n").append(event.getClient().getWarning()).append(" Could not resolve `").append(un).append("` to a member"));
-
-        args.users.forEach(u -> builder.append("\n").append(event.getClient().getWarning()).append("The user ").append(u.getAsMention()).append(" is not in this server."));
-
-        args.ids.forEach(id -> builder.append("\n").append(event.getClient().getWarning()).append("The user <@").append(id).append("> is not in this server."));
-
-        if (toSoftban.isEmpty()) {
-            event.reply(builder.toString());
-            return;
         }
 
-        if (toSoftban.size() > 5) {
-            event.reactSuccess();
-        }
+        g.ban(UserSnowflake.fromId(toBanId), 0, TimeUnit.SECONDS)
+                .reason(LogUtil.auditReasonFormat(mod, min, reason))
+                .queue(success -> {
+                    g.unban(User.fromId(toBanId))
+                            .reason(LogUtil.auditReasonFormat(mod, "Softban Unban"))
+                            .queueAfter(4, TimeUnit.SECONDS, success2 -> {
+                                vortex.getDatabase().tempbans.setSoftBan(vortex, g, toBanId, mod.getIdLong(), reason);
+                                event.reply(FormatUtil.formatUserMention(toBanId) + " was softbanned");
+                            }, failure2 -> {
+                                // If failed to unban
+                                vortex.getDatabase().tempbans.setBan(vortex, g, toBanId, mod.getIdLong(), Instant.now(), reason);
+                                event.replyError("Failed to unban " + FormatUtil.formatUserMention(toBanId) + " after banning");
+                                log.log(Level.WARNING, "Failed to unban a user after a softban", failure2);
+                            });
 
-        for (int i = 0; i < toSoftban.size(); i++) {
-            Member m = toSoftban.get(i);
-            boolean last = i + 1 == toSoftban.size();
-            event.getGuild().ban(m, 0, TimeUnit.SECONDS).reason(reason).queue(success -> {
-                builder.append("\n").append(event.getClient().getSuccess()).append(" Successfully softbanned ").append(FormatUtil.formatUser(m.getUser()));
-                event.getGuild().unban(m.getUser()).reason(unbanreason).queueAfter(4, TimeUnit.SECONDS);
-                vortex.getDatabase().tempbans.setSoftBan(vortex, event.getGuild(), m.getUser().getIdLong(), event.getAuthor().getIdLong(), reason);
-                if (last) {
-                    event.reply(builder.toString());
-                }
-            }, failure -> {
-                builder.append("\n").append(event.getClient().getError()).append(" Failed to softban ").append(FormatUtil.formatUser(m.getUser()));
-                if (last) {
-                    event.reply(builder.toString());
-                }
-            });
-        }
+                }, failure -> {
+                    log.log(Level.WARNING, "Failed to ban a user", failure);
+                    event.replyError("Failed to ban " + FormatUtil.formatUserMention(toBanId));
+                });
     }
 }

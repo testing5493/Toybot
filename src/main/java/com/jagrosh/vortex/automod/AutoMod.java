@@ -230,6 +230,10 @@ public class AutoMod {
     }
 
     public void performAutomod(Message message) {
+        if (true) {
+            return;
+        }
+
         //ignore users with Manage Messages, Kick Members, Ban Members, Manage Server, or anyone the bot can't interact with
         if (!shouldPerformAutomod(message.getMember(), message.getChannel().asTextChannel())) {
             return;

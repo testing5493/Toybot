@@ -15,86 +15,63 @@
  */
 package com.jagrosh.vortex.commands.moderation;
 
-import com.jagrosh.jdautilities.command.CommandEvent;
+import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
-import com.jagrosh.vortex.commands.ModCommand;
-import com.jagrosh.vortex.utils.ArgsUtil;
+import com.jagrosh.vortex.commands.CommandExceptionListener;
+import com.jagrosh.vortex.commands.HybridEvent;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.LogUtil;
+import com.jagrosh.vortex.utils.OtherUtil;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
-
-import java.util.LinkedList;
-import java.util.List;
+import net.dv8tion.jda.api.entities.UserSnowflake;
 
 /**
  * @author John Grosh (jagrosh)
  */
-public class KickCmd extends ModCommand {
+public class KickCmd extends PunishmentCmd {
     public KickCmd(Vortex vortex) {
-        super(vortex, Permission.KICK_MEMBERS);
+        super(vortex, Action.KICK, false, Permission.KICK_MEMBERS);
         this.name = "kick";
-        this.arguments = "<@users> [reason]";
         this.help = "kicks users";
-        this.botPermissions = new Permission[]{Permission.KICK_MEMBERS};
-        this.guildOnly = true;
     }
 
     @Override
-    protected void execute(CommandEvent event) {
-        ArgsUtil.ResolvedArgs args = ArgsUtil.resolve(event.getArgs(), event.getGuild());
-        if (args.isEmpty()) {
-            event.replyError("Please include at least one user to kick (@mention or ID)!");
-            return;
+    protected void execute(HybridEvent event, long targetId, int min, String reason) {
+        Member mod = event.getMember();
+
+        Guild g = event.getGuild();
+        Role modrole = vortex.getDatabase().settings.getSettings(g).getModeratorRole(g);
+
+        Member targetMember = OtherUtil.getMemberCacheElseRetrieve(g, targetId);
+
+        if (!g.getSelfMember().hasPermission(Permission.KICK_MEMBERS)) {
+            throw new CommandExceptionListener.CommandErrorException("I do not have any roles with permissions to kick users.");
         }
 
-        String reason = LogUtil.auditReasonFormat(event.getMember(), args.reason);
-        Role modrole = vortex.getDatabase().settings.getSettings(event.getGuild()).getModeratorRole(event.getGuild());
-        StringBuilder builder = new StringBuilder();
-        List<Member> toKick = new LinkedList<>();
-
-        args.members.forEach(m -> {
-            if (!event.getMember().canInteract(m)) {
-                builder.append("\n").append(event.getClient().getError()).append(" You do not have permission to kick ").append(FormatUtil.formatUser(m.getUser()));
-            } else if (!event.getSelfMember().canInteract(m)) {
-                builder.append("\n").append(event.getClient().getError()).append(" I am unable to kick ").append(FormatUtil.formatUser(m.getUser()));
-            } else if (modrole != null && m.getRoles().contains(modrole)) {
-                builder.append("\n").append(event.getClient().getError()).append(" I won't kick ").append(FormatUtil.formatUser(m.getUser())).append(" because they have the Moderator Role");
-            } else {
-                toKick.add(m);
+        if (targetMember != null) {
+            if (targetMember.getUser().isBot()) {
+                throw new CommandExceptionListener.CommandErrorException("Nice try bitslayn");
+            } else if (!mod.canInteract(targetMember)) {
+                throw new CommandExceptionListener.CommandErrorException("You do not have permission to kick " + FormatUtil.formatUserMention(targetId));
+            } else if (!g.getSelfMember().canInteract(targetMember)) {
+                throw new CommandExceptionListener.CommandErrorException("I am unable to kick " + FormatUtil.formatUserMention(targetId));
+            } else if (modrole != null && targetMember.getRoles().contains(modrole)) {
+                throw new CommandExceptionListener.CommandErrorException("I won't kick " + FormatUtil.formatUserMention(targetId) + " because they are a mod");
             }
-        });
-
-        args.unresolved.forEach(un -> builder.append("\n").append(event.getClient().getWarning()).append(" Could not resolve `").append(un).append("` to a member"));
-
-        args.users.forEach(u -> builder.append("\n").append(event.getClient().getWarning()).append("The user ").append(FormatUtil.formatUser(u)).append(" is not in this server."));
-
-        args.ids.forEach(id -> builder.append("\n").append(event.getClient().getWarning()).append("The user <@").append(id).append("> is not in this server."));
-
-        if (toKick.isEmpty()) {
-            event.reply(builder.toString());
-            return;
+        } else {
+            throw new CommandExceptionListener.CommandErrorException("I am unable to kick " + FormatUtil.formatUserMention(targetId) + " as they are not in this server");
         }
 
-        if (toKick.size() > 5) {
-            event.reactSuccess();
-        }
-
-        for (int i = 0; i < toKick.size(); i++) {
-            Member m = toKick.get(i);
-            boolean last = i + 1 == toKick.size();
-            event.getGuild().kick(m).reason(event.getAuthor().getId() + " " + reason.trim()).queue(success -> {
-                builder.append("\n").append(event.getClient().getSuccess()).append(" Successfully kicked ").append(FormatUtil.formatUser(m.getUser()));
-                if (last) {
-                    event.reply(builder.toString());
-                }
-            }, failure -> {
-                builder.append("\n").append(event.getClient().getError()).append(" Failed to kick ").append(FormatUtil.formatUser(m.getUser()));
-                if (last) {
-                    event.reply(builder.toString());
-                }
-            });
-        }
+        g.kick(UserSnowflake.fromId(targetId))
+                .reason(LogUtil.auditReasonFormat(mod, reason))
+                .queue(success -> {
+                    vortex.getDatabase().kicks.logCase(vortex, g, mod.getIdLong(), targetId, reason);
+                    event.replyError(FormatUtil.formatUserMention(targetId) + " was kicked");
+                }, failure -> {
+                    handleError(event, failure, action, targetId);
+                });
     }
 }

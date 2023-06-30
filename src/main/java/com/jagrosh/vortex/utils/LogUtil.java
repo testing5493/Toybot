@@ -15,7 +15,6 @@
  */
 package com.jagrosh.vortex.utils;
 
-import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.logging.MessageCache.CachedMessage;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
@@ -25,8 +24,6 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.sharding.ShardManager;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -44,8 +41,8 @@ public class LogUtil {
         Guild delg = messages.get(0).getGuild();
         StringBuilder sb = new StringBuilder("-- " + title + " -- #" + deltc.getName() + " (" + deltc.getId() + ") -- " + delg.getName() + " (" + delg.getId() + ") --");
         Message m;
-        for (int i = 0; i < messages.size(); i++) {
-            appendMessage(sb, messages.get(i));
+        for (Message message : messages) {
+            appendMessage(sb, message);
         }
 
         return sb.toString().trim();
@@ -55,8 +52,8 @@ public class LogUtil {
         TextChannel deltc = messages.get(0).getTextChannel(jda);
         Guild delg = deltc.getGuild();
         StringBuilder sb = new StringBuilder("-- " + title + " -- #" + deltc.getName() + " (" + deltc.getId() + ") -- " + delg.getName() + " (" + delg.getId() + ") --");
-        for (int i = 0; i < messages.size(); i++) {
-            appendMessage(sb, messages.get(i), messages.get(i).getAuthor(jda));
+        for (CachedMessage message : messages) {
+            appendMessage(sb, message, message.getAuthor(jda));
         }
 
         return sb.toString().trim();
@@ -66,8 +63,8 @@ public class LogUtil {
         TextChannel deltc = messages.get(0).getTextChannel(shardManager);
         Guild delg = deltc.getGuild();
         StringBuilder sb = new StringBuilder("-- " + title + " -- #" + deltc.getName() + " (" + deltc.getId() + ") -- " + delg.getName() + " (" + delg.getId() + ") --");
-        for (int i = 0; i < messages.size(); i++) {
-            appendMessage(sb, messages.get(i), messages.get(i).getAuthor(shardManager));
+        for (CachedMessage message : messages) {
+            appendMessage(sb, message, message.getAuthor(shardManager));
         }
 
         return sb.toString().trim();

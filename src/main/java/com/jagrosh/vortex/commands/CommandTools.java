@@ -4,9 +4,7 @@ import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.jagrosh.vortex.Vortex;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 
 public class CommandTools {
@@ -67,18 +65,11 @@ public class CommandTools {
      * @throws IllegalArgumentException If it could not be properly parsed
      */
     public static boolean parseEnabledDisabled(String str) throws IllegalArgumentException {
-        switch (str.toLowerCase().trim()) {
-            case "enable":
-            case "enabled":
-            case "on":
-                return true;
-            case "disable":
-            case "disabled":
-            case "off":
-                return false;
-            default:
-                throw new IllegalArgumentException("Could not parse string '" + str + "'");
-        }
+        return switch (str.toLowerCase().trim()) {
+            case "enable", "enabled", "on" -> true;
+            case "disable", "disabled", "off" -> false;
+            default -> throw new IllegalArgumentException("Could not parse string '" + str + "'");
+        };
     }
 
     /**

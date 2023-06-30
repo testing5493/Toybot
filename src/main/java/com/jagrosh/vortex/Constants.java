@@ -33,6 +33,10 @@ public class Constants {
     public final static int DEFAULT_CACHE_SIZE = 8000;
     public final static String OWNER_ID = Vortex.config.getString("owner-id");
     public final static long DELETED_USER_ID = 456226577798135808L;
+    public final static long CLYDE_AI_ID = 1081004946872352958L;
+    public final static long CLYDE_HOOK_ID = 1;
+    public final static long DISCORD_SYSTEM_ID = 643945264868098049L;
+    public final static long DISCORD_COMMUNITY_UPDATES_ID = 669627189624307712L;
     public final static String DONATION_LINK = "https://patreon.com/jagrosh";
 
     public final static class Wiki {
@@ -40,7 +44,6 @@ public class Constants {
 
         public final static String WIKI_BASE = "https://github.com/jagrosh/Vortex/wiki";
         public final static String START = WIKI_BASE + "/Getting-Started";
-        public final static String LOG_TIMEZONE = WIKI_BASE + "/Log-Timezone";
         public final static String RAID_MODE = WIKI_BASE + "/Raid-Mode";
         public final static String COMMANDS = WIKI_BASE + "/Commands";
         public final static String AUTOMOD = WIKI_BASE + "/Auto-Moderation";

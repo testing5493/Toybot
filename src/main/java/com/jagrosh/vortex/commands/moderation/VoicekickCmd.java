@@ -15,108 +15,58 @@
  */
 package com.jagrosh.vortex.commands.moderation;
 
-import com.jagrosh.jdautilities.command.CommandEvent;
+import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener.CommandErrorException;
-import com.jagrosh.vortex.commands.ModCommand;
-import com.jagrosh.vortex.utils.ArgsUtil;
+import com.jagrosh.vortex.commands.HybridEvent;
 import com.jagrosh.vortex.utils.FormatUtil;
-import com.jagrosh.vortex.utils.LogUtil;
+import com.jagrosh.vortex.utils.OtherUtil;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
-
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * @author John Grosh (jagrosh)
  */
-public class VoicekickCmd extends ModCommand {
+// TODO: Make this log in the database/modlogs cmd?
+public class VoicekickCmd extends PunishmentCmd {
     public VoicekickCmd(Vortex vortex) {
-        super(vortex, Permission.VOICE_MOVE_OTHERS);
+        super(vortex, Action.VOICE_KICK, false, Permission.VOICE_MOVE_OTHERS, Permission.MANAGE_CHANNEL);
         this.name = "voicekick";
         this.aliases = new String[]{"vckick"};
-        this.arguments = "<@users> [reason]";
         this.help = "removes users from voice channels";
         this.botPermissions = new Permission[]{Permission.MANAGE_CHANNEL};
-        this.guildOnly = true;
     }
 
     @Override
-    protected void execute(CommandEvent event) {
-        if (!event.getSelfMember().hasPermission(Permission.VOICE_MOVE_OTHERS, Permission.VOICE_CONNECT)) {
+    protected void execute(HybridEvent e, long userId, int min, String reason) {
+        Guild g = e.getGuild();
+        Member selfMember = g.getSelfMember();
+        if (!selfMember.hasPermission(Permission.VOICE_MOVE_OTHERS, Permission.VOICE_CONNECT)) {
             throw new CommandErrorException("I need permission to connect to voice channels and move members to do that!");
         }
 
-        ArgsUtil.ResolvedArgs args = ArgsUtil.resolve(event.getArgs(), event.getGuild());
-        if (args.isEmpty()) {
-            event.replyError("Please include at least one user to kick from voice (@mention or ID)!");
-            return;
+        Role modrole = vortex.getDatabase().settings.getSettings(g).getModeratorRole(g);
+        Member targetMember = OtherUtil.getMemberCacheElseRetrieve(g, userId);
+        String userMention = FormatUtil.formatUserMention(userId);
+
+        if (targetMember == null) {
+            throw new CommandErrorException("I am unable to voicekick " + userMention + " as they are not in this server");
+        } else if (!e.getMember().canInteract(targetMember)) {
+            throw new CommandErrorException("You do not have permission to voicekick " + userMention);
+        } else if (!selfMember.canInteract(targetMember)) {
+            throw new CommandErrorException("I am unable to voicekick " + userMention);
+        } else if (targetMember.getVoiceState() == null || !targetMember.getVoiceState().inAudioChannel()) {
+            throw new CommandErrorException(userMention + " is not in a voice channel!");
+        } else if (modrole != null && targetMember.getRoles().contains(modrole)) {
+            throw new CommandErrorException(" I won't voicekick " + userMention + " because they are a mod");
         }
 
-        String reason = LogUtil.auditReasonFormat(event.getMember(), args.reason);
-        Role modrole = vortex.getDatabase().settings.getSettings(event.getGuild()).getModeratorRole(event.getGuild());
-        StringBuilder builder = new StringBuilder();
-        List<Member> toKick = new LinkedList<>();
-
-        args.members.forEach(m -> {
-            if (!event.getMember().canInteract(m)) {
-                builder.append("\n").append(event.getClient().getError()).append(" You do not have permission to voicekick ").append(FormatUtil.formatUser(m.getUser()));
-            } else if (!event.getSelfMember().canInteract(m)) {
-                builder.append("\n").append(event.getClient().getError()).append(" I am unable to voicekick ").append(FormatUtil.formatUser(m.getUser()));
-            } else if (m.getVoiceState() == null || !m.getVoiceState().inAudioChannel()) {
-                builder.append("\n").append(event.getClient().getWarning()).append(" ").append(FormatUtil.formatUser(m.getUser())).append(" is not in a voice channel!");
-            } else if (modrole != null && m.getRoles().contains(modrole)) {
-                builder.append("\n").append(event.getClient().getError()).append(" I won't voicekick ").append(FormatUtil.formatUser(m.getUser())).append(" because they have the Moderator Role");
-            } else {
-                toKick.add(m);
-            }
-        });
-
-        args.unresolved.forEach(un -> builder.append("\n").append(event.getClient().getWarning()).append(" Could not resolve `").append(un).append("` to a member"));
-
-        args.users.forEach(u -> builder.append("\n").append(event.getClient().getWarning()).append("The user ").append(FormatUtil.formatUser(u)).append(" is not in this server."));
-
-        args.ids.forEach(id -> builder.append("\n").append(event.getClient().getWarning()).append("The user <@").append(id).append("> is not in this server."));
-
-        if (toKick.isEmpty()) {
-            event.reply(builder.toString());
-            return;
-        }
-
-        if (toKick.size() > 5) {
-            event.reactSuccess();
-        }
-
-        // do this async because its a nightmare to do it sync
-        event.async(() -> {
-            VoiceChannel vc;
-            try {
-                vc = event.getGuild().createVoiceChannel("Voice Kick Channel").setParent(toKick.get(0).getVoiceState().getChannel().getParentCategory()).reason(reason).complete();
-            } catch (Exception ex) {
-                builder.append("\n").append(event.getClient().getError()).append(" Failed to create a voice kick channel.");
-                event.reply(builder.toString());
-                return;
-            }
-
-            for (Member m : toKick) {
-                try {
-                    event.getGuild().moveVoiceMember(m, vc).complete();
-                    builder.append("\n").append(event.getClient().getSuccess()).append(" Successfully voicekicked ").append(FormatUtil.formatUser(m.getUser()));
-                } catch (Exception ex) {
-                    builder.append("\n").append(event.getClient().getError()).append(" Failed to move ").append(FormatUtil.formatUser(m.getUser())).append(" to the voice kick channel.");
-                }
-            }
-
-            try {
-                vc.delete().reason(reason).complete();
-            } catch (Exception ex) {
-                builder.append("\n").append(event.getClient().getError()).append(" Failed to delete the temporary voice channel.");
-            }
-
-            event.reply(builder.toString());
+        g.kickVoiceMember(targetMember).queue(success -> {
+            e.reply(userMention + " was voicekicked");
+        }, failure -> {
+            handleError(e, failure, action, userId);
         });
     }
 }

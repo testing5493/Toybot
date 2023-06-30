@@ -16,9 +16,9 @@
 package com.jagrosh.vortex.commands.moderation;
 
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.jagrosh.jdautilities.commons.utils.FinderUtil;
 import com.jagrosh.vortex.Vortex;
-import com.jagrosh.vortex.commands.ModCommand;
 import com.jagrosh.vortex.utils.FormatUtil;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
@@ -39,6 +39,12 @@ public class VoicemoveCmd extends ModCommand {
         this.help = "mass-moves voice channel users";
         this.arguments = "[channel]";
         this.guildOnly = true;
+    }
+
+    @Override
+    protected void execute(SlashCommandEvent event) {
+        // TODO: Implement maybe???
+        event.reply("// TODO: Implement").queue();
     }
 
     @Override

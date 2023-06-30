@@ -201,20 +201,31 @@ public class UserinfoCmd extends SlashCommand {
 
         User.Profile p = u.retrieveProfile().complete();
         String username = u.getName();
+        int discrim = 0;
         try {
-            int discrim = Integer.parseInt(u.getDiscriminator());
-            if (discrim != 0) {
-                username = u.getAsTag();
-            }
-        } catch (NumberFormatException ignore) {
-        }
+            discrim = Integer.parseInt(u.getDiscriminator());
+        } catch (NumberFormatException ignore) {}
+        username = discrim == 0 ? "@" + username : u.getAsTag();
 
         StringBuilder badges = new StringBuilder();
-        if (u.isBot()) { //TODO: Show a seperate badge for system accounts
-            badges.append(u.getFlags().contains(User.UserFlag.VERIFIED_BOT) ? Emoji.VERIFIED_BOT : Emoji.BOT);
+
+        if (u.isBot()) {
+            badges.append(' ');
+            if (u.getIdLong() == Constants.CLYDE_AI_ID) {
+                badges.append(Emoji.VERIFIED_AI);
+            } else if (u.getIdLong() == Constants.DISCORD_SYSTEM_ID || u.getIdLong() == Constants.DISCORD_COMMUNITY_UPDATES_ID) {
+                badges.append(Emoji.VERIFIED_SYSTEM);
+            } else if (u.getFlags().contains(User.UserFlag.VERIFIED_BOT)) {
+                badges.append(Emoji.VERIFIED_BOT);
+            } else {
+                badges.append(Emoji.BOT);
+            }
         }
 
-        badges.append((m != null && m.isOwner()) ? Emoji.SERVER_OWNER : "").append(u.getFlags().contains(User.UserFlag.STAFF) ? Emoji.DISCORD_STAFF : "").append(u.getFlags().contains(User.UserFlag.PARTNER) ? Emoji.PARTNERED_USER : "").append(m != null && OffsetDateTime.now().minusWeeks(1).isBefore(m.getTimeJoined()) ? Emoji.NEW_MEMBER : "");
+        badges.append((m != null && m.isOwner()) ? Emoji.SERVER_OWNER : "")
+              .append(u.getFlags().contains(User.UserFlag.STAFF) || u.getIdLong() == Constants.DISCORD_COMMUNITY_UPDATES_ID ? Emoji.DISCORD_STAFF : "")
+              .append(u.getFlags().contains(User.UserFlag.PARTNER) ? Emoji.PARTNERED_USER : "")
+              .append(m != null && OffsetDateTime.now().minusWeeks(1).isBefore(m.getTimeJoined()) ? Emoji.NEW_MEMBER : "");
 
         for (User.UserFlag flag : u.getFlags()) {
             badges.append(switch (flag) {
@@ -312,7 +323,7 @@ public class UserinfoCmd extends SlashCommand {
     // TODO: Double check this works properly because I written this while very tired
     private static <T> List<T> matchName(List<T> objs, String name, Function<T, String> nameMap, Predicate<T> initialFilter) {
         String desymboled = desymbol(name);
-        boolean symbolHeavy = name.length() / desymboled.length() <= 2;
+        boolean symbolHeavy = name.length() / desymboled.length() >= 2;
         Predicate<String> containsName = Pattern.compile(".*(?i)" + (symbolHeavy ? name : desymboled) + ".*").asMatchPredicate();
 
         Stream<T> stream = objs.parallelStream();

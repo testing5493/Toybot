@@ -67,7 +67,7 @@ public class MessageCache {
     public static class CachedMessage implements ISnowflake {
         private final String content;
         private final @Getter String username;
-        private final @Getter String discriminator;
+        private final @Deprecated @Getter String discriminator;
         private final long id, author, channel, guild;
         private final List<Attachment> attachments;
 
@@ -133,7 +133,7 @@ public class MessageCache {
         }
 
         public TextChannel getTextChannel(Guild guild) {
-            return guild.getTextChannelById(channel);
+            return this.guild == 0L ? null : guild.getTextChannelById(channel);
         }
 
         public Guild getGuild(JDA jda) {

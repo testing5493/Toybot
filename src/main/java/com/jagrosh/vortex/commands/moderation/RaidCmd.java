@@ -16,8 +16,8 @@
 package com.jagrosh.vortex.commands.moderation;
 
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.jagrosh.vortex.Vortex;
-import com.jagrosh.vortex.commands.ModCommand;
 import net.dv8tion.jda.api.Permission;
 
 /**
@@ -31,6 +31,12 @@ public class RaidCmd extends ModCommand {
         this.arguments = "[ON|OFF] [reason]";
         this.help = "view, enable, or disable raidmode";
         this.botPermissions = new Permission[]{Permission.MANAGE_SERVER, Permission.KICK_MEMBERS};
+    }
+
+    @Override
+    protected void execute(SlashCommandEvent event) {
+        // TODO: Implement (maybe)
+        event.reply("// TODO: Implement").queue();
     }
 
     @Override

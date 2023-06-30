@@ -31,6 +31,8 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
+import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveAllEvent;
 import net.dv8tion.jda.api.events.user.update.UserUpdateAvatarEvent;
 import net.dv8tion.jda.api.events.user.update.UserUpdateDiscriminatorEvent;
 import net.dv8tion.jda.api.events.user.update.UserUpdateNameEvent;
@@ -54,13 +56,11 @@ import java.util.stream.Collectors;
  * @author John Grosh (john.a.grosh@gmail.com)
  */
 public class BasicLogger {
-    private final static String REDIRECT = "\uD83D\uDD00"; // 🔀
     private final static String REDIR_MID = "\uD83D\uDD39"; // 🔹
     private final static String REDIR_END = "\uD83D\uDD37"; // 🔷
 
     private final Vortex vortex;
     private final AvatarSaver avatarSaver;
-    private final Usage usage = new Usage();
 
     public BasicLogger(Vortex vortex, Config config) {
         this.vortex = vortex;
@@ -93,11 +93,14 @@ public class BasicLogger {
         Guild guild = newMessage.getGuild();
         EmbedBuilder edit = new EmbedBuilder();
         edit.setColor(Color.BLUE).setAuthor(getLoggingName(guild, u), null, u.getEffectiveAvatarUrl()).appendDescription(
-                String.format("Message edited in <#%s> [Jump to Message](https://discordapp.com/channels/%s/%s/%s)\n",
+                String.format("Message edited in <#%s> [Jump to Message](https://discord.com/channels/%s/%s/%s)\n",
                               newMessage.getChannel().getId(),
                               guild.getId(), newMessage.getChannel().getId(),
                               newMessage.getId())).setFooter("User ID: " + u.getId() + " | Message ID: " + newMessage.getId(),
-                              null).setTimestamp(newMessage.getTimeEdited() == null ? newMessage.getTimeCreated() : newMessage.getTimeEdited()).addField("Before:", FormatUtil.formatMessage(oldMessage), false).addField("After:", FormatUtil.formatMessage(newMessage),
+                              null).setTimestamp(newMessage.getTimeEdited() == null ? newMessage.getTimeCreated() : newMessage.getTimeEdited()).addField("Before:",
+                              FormatUtil.formatMessage(oldMessage), false)
+                              .addField("After:",
+                              FormatUtil.formatMessage(newMessage),
                               false
         );
         log(guild, edit);
@@ -189,6 +192,10 @@ public class BasicLogger {
     }
 
     public void logNameChange(UserUpdateDiscriminatorEvent event) {
+        if (event.getNewDiscriminator().equals(event.getOldDiscriminator())) { // Weird bug
+            return;
+        }
+
         OffsetDateTime now = OffsetDateTime.now();
         User user = event.getUser();
         event.getUser().getMutualGuilds().stream().map(guild -> vortex.getDatabase().settings.getSettings(guild).getServerLogChannel(guild)).filter(Objects::nonNull).forEachOrdered(tc -> {

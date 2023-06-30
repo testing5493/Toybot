@@ -34,7 +34,6 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
 import java.awt.*;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
 import java.util.Collections;
@@ -110,11 +109,20 @@ public class FormatUtil {
     }
 
     public static String formatUser(User user) {
-        return filterEveryone("**" + user.getName() + "**#" + user.getDiscriminator());
+        String discrim = user.getDiscriminator();
+        String username = user.getName();
+        if (!discrim.matches("0*")) {
+            username += "#" + discrim;
+        }
+        return filterEveryone(username);
+    }
+
+    public static String formatUserMention(long userId) {
+        return String.format("<@%d>", userId);
     }
 
     public static String formatFullUser(User user) {
-        return filterEveryone("**" + user.getName() + "**#" + user.getDiscriminator() + " (ID:" + user.getId() + ")");
+        return formatUser(user) + filterEveryone(" (ID:" + user.getId() + ")");
     }
 
     public static String capitalize(String input) {
