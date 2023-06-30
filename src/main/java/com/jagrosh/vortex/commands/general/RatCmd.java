@@ -1,24 +1,21 @@
 package com.jagrosh.vortex.commands.general;
 
-import com.jagrosh.jdautilities.command.Command;
-import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.vortex.Vortex;
+import com.jagrosh.vortex.commands.HybridEvent;
 import com.jagrosh.vortex.utils.OtherUtil;
 
-public class RatCmd extends Command {
-    private final Vortex vortex;
-
+public class RatCmd extends GeneralHybridCmd {
     public RatCmd(Vortex vortex) {
+        super(vortex);
         this.name = "rat";
         this.help = "rat poggers";
         this.guildOnly = false;
         this.aliases = new String[]{"ratImage"};
-        this.vortex = vortex;
     }
 
     @Override
-    protected void execute(CommandEvent event) {
+    protected void execute(HybridEvent e) {
         String[] rats = OtherUtil.readLines("rats");
-        event.reply(rats[(int) (Math.random() * rats.length)]);
+        e.reply(rats[(int) (Math.random() * rats.length)]);
     }
 }

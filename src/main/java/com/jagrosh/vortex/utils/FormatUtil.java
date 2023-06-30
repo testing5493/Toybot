@@ -34,7 +34,6 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
 import java.awt.*;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
 import java.util.Collections;
@@ -116,6 +115,10 @@ public class FormatUtil {
             username += "#" + discrim;
         }
         return filterEveryone(username);
+    }
+
+    public static String formatUserMention(long userId) {
+        return String.format("<@%d>", userId);
     }
 
     public static String formatFullUser(User user) {

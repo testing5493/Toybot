@@ -23,21 +23,22 @@ import lombok.Getter;
  */
 @AllArgsConstructor
 public enum Action {
-    GRAVEL("graveled", Emoji.LOGS.GRAVEL),
-    TEMPGRAVEL("tempgraveled", Emoji.LOGS.GRAVEL),
-    UNGRAVEL("ungraveled", Emoji.LOGS.UNGRAVEL),
-    UNMUTE("unmuted", Emoji.LOGS.UNMUTE),
-    UNBAN("unbanned", Emoji.LOGS.UNBAN),
-    BAN("banned", Emoji.LOGS.BAN),
-    TEMPBAN("tempbanned", Emoji.LOGS.BAN),
-    SOFTBAN("softbanned", Emoji.LOGS.BAN),
-    KICK("kicked", Emoji.LOGS.KICK),
-    MUTE("muted", Emoji.LOGS.MUTE),
-    TEMPMUTE("tempmuted", Emoji.LOGS.MUTE),
-    WARN("warned", Emoji.LOGS.MODERATION),
-    CLEAN("cleaned", Emoji.LOGS.PURGE),
-    DELETE("deleted", Emoji.LOGS.DELETE);
+    GRAVEL("graveled", "gravel", "graveling", Emoji.LOGS.GRAVEL),
+    TEMPGRAVEL("tempgraveled", "gravel", "graveling", Emoji.LOGS.GRAVEL),
+    UNGRAVEL("ungraveled", "ungravel", "ungraveling", Emoji.LOGS.UNGRAVEL),
+    UNMUTE("unmuted", "unmute", "unmuting", Emoji.LOGS.UNMUTE),
+    UNBAN("unbanned", "unban", "unbanning", Emoji.LOGS.UNBAN),
+    BAN("banned", "ban", "banning", Emoji.LOGS.BAN),
+    TEMPBAN("tempbanned", "ban", "tempbanned", Emoji.LOGS.BAN),
+    SOFTBAN("softbanned", "softban", "softbanning", Emoji.LOGS.BAN),
+    KICK("kicked", "kick", "kicking", Emoji.LOGS.KICK),
+    MUTE("muted", "mute", "muting", Emoji.LOGS.MUTE),
+    TEMPMUTE("tempmuted", "tempmute", "muting", Emoji.LOGS.MUTE),
+    WARN("warned", "warn", "warning", Emoji.LOGS.MODERATION),
+    VOICE_KICK("kicked", "kics", "kicking", Emoji.LOGS.DISCONNECT),
+    CLEAN("cleaned", "clean", "cleaning", Emoji.LOGS.PURGE),
+    DELETE("deleted", "delete", "deleting", Emoji.LOGS.DELETE);
 
-    private final @Getter String verb;
+    private final @Getter String pastVerb, verb, presentVerb;
     private final @Getter Emoji.LogEmoji emoji;
 }

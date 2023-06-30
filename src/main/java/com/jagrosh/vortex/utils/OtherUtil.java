@@ -18,6 +18,7 @@ package com.jagrosh.vortex.utils;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.vortex.Emoji;
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
@@ -91,6 +92,16 @@ public class OtherUtil {
         return guild.getMembers().stream().filter(m -> m.getUser().getName().equals(username) && m.getUser().getDiscriminator().equals(discriminator)).findAny().orElse(null);
     }
 
+    public static Member getMemberCacheElseRetrieve(Guild g, long id) {
+        Member m = g.getMemberById(id);
+        return m != null ? m : g.retrieveMemberById(id).complete();
+    }
+
+    public static User getUserCacheElseRetrieve(JDA jda, long id) {
+        User u = jda.getUserById(id);
+        return u != null ? u : jda.retrieveUserById(id).complete();
+    }
+
     public static int parseTime(String timestr) {
         timestr = timestr.replaceAll("(?i)(\\s|,|and)", "").replaceAll("(?is)(-?\\d+|[a-z]+)", "$1 ").trim();
         String[] vals = timestr.split("\\s+");
@@ -99,14 +110,17 @@ public class OtherUtil {
             for (int j = 0; j < vals.length; j += 2) {
                 int num = Integer.parseInt(vals[j]);
 
-                if (vals.length > j + 1) {
-                    if (vals[j + 1].toLowerCase().startsWith("m")) {
-                        num *= 60;
-                    } else if (vals[j + 1].toLowerCase().startsWith("h")) {
-                        num *= 60 * 60;
-                    } else if (vals[j + 1].toLowerCase().startsWith("d")) {
-                        num *= 60 * 60 * 24;
-                    }
+                // Parses units, if any
+                if (vals.length > j + 1 && vals[j + 1].length() != 0) {
+                    char timeUnit = vals[j + 1].toLowerCase().charAt(0);
+                    num *= switch (timeUnit) {
+                        case 'm' -> 60;
+                        case 'h' -> 60 * 60;
+                        case 'd' -> 60 * 60 * 24;
+                        case 'w' -> 60 * 60 * 24 * 7;
+                        case 'y' -> 60 * 60 * 24 * 365;
+                        default  -> 1;
+                    };
                 }
 
                 timeinseconds += num;
@@ -116,6 +130,14 @@ public class OtherUtil {
         }
 
         return timeinseconds;
+    }
+
+    public static boolean isFalse(Boolean b) {
+        return b != null && !b;
+    }
+
+    public static boolean isTrue(Boolean b) {
+        return b != null && b;
     }
 
     public static String[] readLines(String filename) {

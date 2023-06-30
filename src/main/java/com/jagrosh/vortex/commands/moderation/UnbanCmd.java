@@ -15,90 +15,56 @@
  */
 package com.jagrosh.vortex.commands.moderation;
 
-import com.jagrosh.jdautilities.command.CommandEvent;
+import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
-import com.jagrosh.vortex.commands.ModCommand;
-import com.jagrosh.vortex.utils.ArgsUtil;
-import com.jagrosh.vortex.utils.ArgsUtil.ResolvedArgs;
+import com.jagrosh.vortex.commands.CommandExceptionListener.CommandErrorException;
 import com.jagrosh.vortex.utils.FormatUtil;
-import com.jagrosh.vortex.utils.LogUtil;
+import com.jagrosh.vortex.utils.OtherUtil;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Guild.Ban;
-
-import java.util.LinkedList;
-import java.util.List;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.UserSnowflake;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
+import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 
 /**
  * @author John Grosh (jagrosh)
  */
-public class UnbanCmd extends ModCommand {
+public class UnbanCmd extends PardonCommand {
     public UnbanCmd(Vortex vortex) {
-        super(vortex, Permission.BAN_MEMBERS);
+        super(vortex, Action.UNBAN, Permission.BAN_MEMBERS);
         this.name = "unban";
-        this.arguments = "<@users> [reason]";
         this.help = "unbans users";
         this.botPermissions = new Permission[]{Permission.BAN_MEMBERS};
-        this.guildOnly = true;
     }
 
     @Override
-    protected void execute(CommandEvent event) {
-        ResolvedArgs args = ArgsUtil.resolve(event.getArgs(), event.getGuild());
-        if (args.isEmpty()) {
-            event.replyError("Please include at least one user to unban (@mention or ID)!");
-            return;
+    protected String execute(Member mod, long targetId) {
+        Guild g = mod.getGuild();
+
+        // TODO: Queue this
+        try {
+            UserSnowflake u = UserSnowflake.fromId(targetId);
+            g.retrieveBan(u).complete();
+            g.unban(u).complete();
+        } catch (ErrorResponseException e) {
+            switch (e.getErrorResponse()) {
+                case MISSING_PERMISSIONS -> throw new CommandErrorException("I do not have permission to unban users");
+                case UNKNOWN_BAN -> {
+                    if (OtherUtil.getUserCacheElseRetrieve(g.getJDA(), targetId) == null) {
+                        throw new CommandErrorException("The specified user could not be found");
+                    } else {
+                        throw new CommandErrorException(FormatUtil.formatUserMention(targetId) + " is not banned!");
+                    }
+                }
+                case UNKNOWN_USER -> throw new CommandErrorException("The specified user could not be found");
+            }
+        } catch (InsufficientPermissionException e) {
+            throw new CommandErrorException("I do not have permission to unban users");
         }
 
-        String reason = LogUtil.auditReasonFormat(event.getMember(), args.reason);
-        StringBuilder builder = new StringBuilder();
-
-        event.getGuild().retrieveBanList().queue(list -> {
-            List<Ban> toUnban = new LinkedList<>();
-            args.members.forEach(m -> args.users.add(m.getUser()));
-            args.users.forEach(u -> {
-                Ban ban = list.stream().filter(b -> b.getUser().getIdLong() == u.getIdLong()).findFirst().orElse(null);
-                if (ban == null) {
-                    builder.append("\n").append(event.getClient().getError()).append(" ").append(FormatUtil.formatUser(u)).append(" is not banned!");
-                } else {
-                    toUnban.add(ban);
-                }
-            });
-            args.ids.forEach(id -> {
-                Ban ban = list.stream().filter(b -> b.getUser().getIdLong() == id).findFirst().orElse(null);
-                if (ban == null) {
-                    builder.append("\n").append(event.getClient().getError()).append(" <@").append(id).append("> is not banned!");
-                } else {
-                    toUnban.add(ban);
-                }
-            });
-            args.unresolved.forEach(un -> builder.append("\n").append(event.getClient().getWarning()).append(" Could not resolve `").append(un).append("` to a user ID"));
-
-            if (toUnban.isEmpty()) {
-                event.reply(builder.toString());
-                return;
-            }
-
-            if (toUnban.size() > 5) {
-                event.reactSuccess();
-            }
-
-            for (int i = 0; i < toUnban.size(); i++) {
-                Ban ban = toUnban.get(i);
-                boolean last = i + 1 == toUnban.size();
-                event.getGuild().unban(ban.getUser()).reason(reason).queue(success -> {
-                    vortex.getDatabase().tempbans.clearBan(vortex, event.getGuild(), ban.getUser().getIdLong(), event.getAuthor().getIdLong());
-                    builder.append("\n").append(event.getClient().getSuccess()).append(" Successfully unbanned ").append(FormatUtil.formatUser(ban.getUser()));
-                    if (last) {
-                        event.reply(builder.toString());
-                    }
-                }, f -> {
-                    builder.append("\n").append(event.getClient().getError()).append(" Failed to unban ").append(FormatUtil.formatUser(ban.getUser()));
-                    if (last) {
-                        event.reply(builder.toString());
-                    }
-                });
-            }
-
-        }, f -> event.replyError("Failed to retreive the ban list."));
+        // TODO: Do later???
+        vortex.getDatabase().tempbans.clearBan(vortex, g, targetId, mod.getIdLong());
+        return "Unbanned <@" + targetId + ">";
     }
 }
