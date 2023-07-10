@@ -31,6 +31,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.utils.TimeFormat;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.time.Instant;
@@ -117,6 +118,13 @@ public class FormatUtil {
         return filterEveryone(username);
     }
 
+    public static String formatUser(String username, @Nullable String discrim) {
+        if (discrim != null && !discrim.isEmpty() && !discrim.matches("0*")) {
+            username += "#" + discrim;
+        }
+        return filterEveryone(username);
+    }
+
     public static String formatUserMention(long userId) {
         return String.format("<@%d>", userId);
     }
@@ -189,7 +197,15 @@ public class FormatUtil {
         return out.toString();
     }
 
+    public static String clamp(String str, int maxLength) {
+        return str.length() > maxLength ? str.substring(0, maxLength) : str;
+    }
+
     public static String listOfRolesMention(List<Role> roles) {
+        if (roles == null) {
+            return "";
+        }
+
         return formatList(" ", roles.stream().map(Role::getAsMention).toArray(String[]::new));
     }
 
