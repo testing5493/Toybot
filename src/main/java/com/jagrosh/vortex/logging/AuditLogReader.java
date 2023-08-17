@@ -163,7 +163,6 @@ public class AuditLogReader {
                 }
 
                 for (AuditLogEntry maxEntry : maxEntryBuffer) {
-                    System.out.println("Test");
                     vortex.getDatabase().auditcache.setLastParsed(maxEntry.getGuild().getIdLong(), maxEntry.getIdLong());
                 }
 

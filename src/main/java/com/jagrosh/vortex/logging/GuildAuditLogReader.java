@@ -153,7 +153,6 @@ class GuildAuditLogReader {
             if (!retrievedLogs.isEmpty()) {
                 AuditLogEntry lastLog = retrievedLogs.get(retrievedLogs.size() - 1);
                 setLastParsedEntryAndSync(lastLog);
-                System.out.println("teststst");
                 retrievedLogs.forEach(handler);
                 readFromQueue(lastLog);
             }
