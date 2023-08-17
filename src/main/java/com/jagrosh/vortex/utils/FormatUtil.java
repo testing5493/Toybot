@@ -47,7 +47,6 @@ import java.util.stream.Collectors;
  * @author John Grosh (jagrosh)
  */
 public class FormatUtil {
-
     private final static String MULTIPLE_FOUND = "**Multiple %s found matching \"%s\":**";
     private final static String CMD_EMOJI = "\uD83D\uDCDC"; // 📜
 
@@ -439,18 +438,18 @@ public class FormatUtil {
         return (recent ? TimeFormat.DATE_TIME_SHORT : TimeFormat.DATE_SHORT).format(temporal);
     }
 
-    public static String toMentionableRoles(String[] roles) {
+    public static String toMentionableRoles(List<Long> roles) {
         StringBuilder str = new StringBuilder();
 
-        if (roles == null || roles.length == 0) {
+        if (roles == null || roles.isEmpty()) {
             return "nothing";
         }
 
-        for (int i = 0; i < roles.length; i++) {
+        for (int i = 0; i < roles.size(); i++) {
             String afterRoleChars;
-            if (i != roles.length - 1) {
-                if (i == roles.length - 2) {
-                    if (roles.length > 2) {
+            if (i != roles.size() - 1) {
+                if (i == roles.size() - 2) {
+                    if (roles.size() > 2) {
                         afterRoleChars = ", and ";
                     } else {
                         afterRoleChars = " and ";
@@ -462,7 +461,7 @@ public class FormatUtil {
                 afterRoleChars = "";
             }
 
-            str.append("<@&").append(roles[i]).append(">").append(afterRoleChars);
+            str.append("<@&").append(roles.get(i)).append(">").append(afterRoleChars);
         }
 
         return str.toString();
@@ -493,7 +492,7 @@ public class FormatUtil {
         }
     }
 
-    public static String formatPing(long ping) {
+    public static String formatPingTime(long ping) {
         String formattedPing = "";
 
         if (ping >= 60000) {

@@ -16,20 +16,20 @@
 package com.jagrosh.vortex.utils;
 
 import com.jagrosh.jdautilities.command.CommandEvent;
-import com.jagrosh.vortex.Emoji;
+import com.jagrosh.vortex.Constants;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.entities.User.UserFlag;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -154,5 +154,13 @@ public class OtherUtil {
             log.error("Failed to read '" + filename + "':" + ex);
             return new String[0];
         }
+    }
+
+    public static long someTimeAgoToSnowflake(long amount, TemporalUnit unit) {
+        return timeToSnowflake(System.currentTimeMillis() - unit.getDuration().toMillis() * amount);
+    }
+
+    public static long timeToSnowflake(long timeSinceUnixEpochMilli) {
+        return (timeSinceUnixEpochMilli - Constants.DISCORD_EPOCH) << Constants.SNOWFLAKE_TIME_OFFSET;
     }
 }

@@ -15,7 +15,6 @@
  */
 package com.jagrosh.vortex.logging;
 
-import com.jagrosh.vortex.Emoji;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.database.Database.Modlog;
 import com.jagrosh.vortex.logging.MessageCache.CachedMessage;
@@ -43,8 +42,6 @@ import java.awt.*;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.Temporal;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -54,6 +51,7 @@ import java.util.stream.Collectors;
  * @author John Grosh (john.a.grosh@gmail.com)
  */
 // TODO: Make sure all values are clamped
+// TODO: Check if bot can speak in a modlogs channel before creating the message
 public class BasicLogger {
     private final static String REDIR_MID = "\uD83D\uDD39"; // 🔹
     private final static String REDIR_END = "\uD83D\uDD37"; // 🔷
@@ -243,7 +241,7 @@ public class BasicLogger {
         });
     }
 
-    // TODO: Merge with the otehr name update event
+    // TODO: Merge with the other name update event
     public void logNameChange(UserUpdateDiscriminatorEvent event) {
         if (event.getNewDiscriminator().equals(event.getOldDiscriminator())) { // Weird bug
             return;
@@ -268,8 +266,8 @@ public class BasicLogger {
     }
 
     public void logGuildJoin(GuildMemberJoinEvent event, OffsetDateTime now) {
-        long timeNow = now.toEpochSecond();
-        long timeCreated = event.getUser().getTimeCreated().toEpochSecond();
+        long timeNow = now.toInstant().toEpochMilli();
+        long timeCreated = event.getUser().getTimeCreated().toInstant().toEpochMilli();
 
         String newText;
 
@@ -465,55 +463,39 @@ public class BasicLogger {
                                                .setFooter(String.format("Deleting Moderator ID: %s | User ID: %d | Punisher ID:%d%s", deletingModerator.getId(), modlog.getUserId(), modlog.getModId(), modlog.getSaviorId() == -1 ? "" : " | Pardoner ID: " + modlog.getSaviorId()), null).setTimestamp(Instant.now()));
     }
 
-    public void logAuditLogEntry(AuditLogEntry ale) {
-        Guild guild = ale.getGuild();
+    /**
+     * Purely visual, should be called after doing important audit log logic
+     * @param entry The entry to log in a servers modlogs channel
+     */
+    // TODO: Refactor
+    public void logAuditLogEntry(AuditLogEntry entry) {
+        Guild guild = entry.getGuild();
         TextChannel tc = vortex.getDatabase().settings.getSettings(guild).getModLogChannel(guild);
         if (tc == null) {
             return;
         }
 
         Function<EmbedBuilder, EmbedBuilder> builder = null;
-        switch (ale.getType()) {
+        switch (entry.getType()) {
             case MEMBER_ROLE_UPDATE -> {
                 String field;
-                String[] addedRoles, removedRoles;
+                List<Long> addedRoles = AuditLogReader.getPartialRoles(entry, AuditLogKey.MEMBER_ROLES_ADD);
+                List<Long> removedRoles = AuditLogReader.getPartialRoles(entry, AuditLogKey.MEMBER_ROLES_REMOVE);
 
-                try {
-                    ArrayList<HashMap<String, String>> newValue = ale.getChangeByKey(AuditLogKey.MEMBER_ROLES_ADD).getNewValue();
-                    addedRoles = new String[newValue.size()];
-                    for (int i = 0; i < addedRoles.length; i++) {
-                        addedRoles[i] = newValue.get(i).get("id");
-                    }
-                } catch (NullPointerException e) {
-                    addedRoles = null;
-                }
+                String targetMention = "<@" + entry.getTargetId() + ">";
+                String modMention = entry.getUserId() == null ? "an unknown moderator" : "<@" + entry.getUserId() + ">";
 
-                try {
-                    ArrayList<HashMap<String, String>> newValue = ale.getChangeByKey(AuditLogKey.MEMBER_ROLES_REMOVE).getNewValue();
-                    removedRoles = new String[newValue.size()];
-                    for (int i = 0; i < removedRoles.length; i++) {
-                        removedRoles[i] = newValue.get(i).get("id");
-                    }
-                } catch (NullPointerException e) {
-                    removedRoles = null;
-                }
-
-                boolean hasRemovedRoles = removedRoles != null && removedRoles.length > 0;
-                boolean hasAddedRoles = addedRoles != null && addedRoles.length > 0;
-                String targetMention = "<@" + ale.getTargetId() + ">";
-                String modMention = ale.getUser() == null ? "an unknown moderator" : "<@" + ale.getUser().getId() + ">";
-
-                if (hasAddedRoles && !hasRemovedRoles) {
+                if (removedRoles.isEmpty() && !addedRoles.isEmpty()) {
                     field = targetMention + " was given " + FormatUtil.toMentionableRoles(addedRoles) + " by " + modMention;
-                } else if (hasRemovedRoles && !hasAddedRoles) {
+                } else if (!removedRoles.isEmpty() && addedRoles.isEmpty()) {
                     field = targetMention + " had " + FormatUtil.toMentionableRoles(removedRoles) + " removed by " + modMention;
-                } else if (hasAddedRoles) {
+                } else if (!removedRoles.isEmpty() && !addedRoles.isEmpty()) {
                     field = String.format("%s was given %s and had %s removed by %s", targetMention, FormatUtil.toMentionableRoles(addedRoles), FormatUtil.toMentionableRoles(removedRoles), modMention);
                 } else {
                     return;
                 }
 
-                builder = embedBuilder -> embedBuilder.setColor(Color.BLUE).setAuthor(getLoggingName(ale), null, getTargetProfilePictureURL(ale)).addField("", field, true).setFooter("User ID: " + ale.getTargetId() + (ale.getUser() == null ? "" : " | Mod ID: " + ale.getUser().getId()), null).setTimestamp(ale.getTimeCreated());
+                builder = embedBuilder -> embedBuilder.setColor(Color.BLUE).setAuthor(getLoggingName(entry), null, getTargetProfilePictureURL(entry)).addField("", field, true).setFooter("User ID: " + entry.getTargetId() + (entry.getUser() == null ? "" : " | Mod ID: " + entry.getUser().getId()), null).setTimestamp(entry.getTimeCreated());
             }
         }
 

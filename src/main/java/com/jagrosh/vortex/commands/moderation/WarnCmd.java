@@ -17,7 +17,6 @@ public class WarnCmd extends PunishmentCmd {
 
     @Override
     protected void execute(HybridEvent event, long userId, int time, String reason) {
-        System.out.println("x");
         vortex.getDatabase().warnings.logCase(vortex, event.getGuild(), event.getUser().getIdLong(), userId, reason);
         event.reply(FormatUtil.formatUserMention(userId) + " was warned");
     }
