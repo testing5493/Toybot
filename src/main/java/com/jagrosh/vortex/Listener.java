@@ -145,7 +145,7 @@ public class Listener implements EventListener {
                 vortex.getThreadpool().scheduleWithFixedDelay(() -> vortex.getDatabase().tempmutes.checkUnmutes(genericEvent.getJDA(), vortex.getDatabase().settings), 0, 45, TimeUnit.SECONDS);
                 vortex.getThreadpool().scheduleWithFixedDelay(() -> vortex.getDatabase().gravels.checkGravels(genericEvent.getJDA(), vortex.getDatabase().settings), 0, 45, TimeUnit.SECONDS);
                 vortex.getThreadpool().scheduleWithFixedDelay(() -> vortex.getDatabase().tempslowmodes.checkSlowmode(genericEvent.getJDA()), 0, 45, TimeUnit.SECONDS);
-                vortex.getThreadpool().schedule(() -> vortex.getAuditLogReader().start(), 0, TimeUnit.SECONDS);
+                vortex.getThreadpool().execute(() -> vortex.getAuditLogReader().start());
             }
             default -> {}
         }

@@ -137,49 +137,47 @@ public class AuditLogReader {
      * Starts syncing the most recent audit log entry from each guild to the database.
      */
     public void start() {
-        vortex.getThreadpool().execute(() -> {
-            // TODO: Seperate on virtual threads maybe
-            vortex.getJda().getGuildCache().parallelStream().forEach(this::bulkRead);
+        // TODO: Seperate on virtual threads maybe
+        vortex.getJda().getGuildCache().parallelStream().forEach(this::bulkRead);
 
-            // TODO: Is this neccessary if a higher level cache is implemented?
-            try {
-                final int ITERATION_MAX = 1 << 5; // The max amount of entries that can be taken from the queue in a single iteration
-                TemporaryBuffer<AuditLogEntry> entryBuffer = new TemporaryBuffer<>(ITERATION_MAX);
-                TemporaryBuffer<AuditLogEntry> maxEntryBuffer = new TemporaryBuffer<>(ITERATION_MAX);
+        // TODO: Is this neccessary if a higher level cache is implemented?
+        try {
+            final int ITERATION_MAX = 1 << 5; // The max amount of entries that can be taken from the queue in a single iteration
+            TemporaryBuffer<AuditLogEntry> entryBuffer = new TemporaryBuffer<>(ITERATION_MAX);
+            TemporaryBuffer<AuditLogEntry> maxEntryBuffer = new TemporaryBuffer<>(ITERATION_MAX);
 
-                while (true) {
-                    entryBuffer.add(logsToSync.take());
-                    logsToSync.drainTo(entryBuffer, ITERATION_MAX - 1);
-                    outer: for (int i = entryBuffer.size() - 1; i >= 0; i--) {
-                        AuditLogEntry entry = entryBuffer.get(i);
-                        for (int j = 0; j < maxEntryBuffer.size(); j++) {
-                            AuditLogEntry maxEntry = maxEntryBuffer.get(j);
-                            if (entry.getGuild().equals(maxEntry.getGuild())) {
-                                maxEntryBuffer.set(j, entry);
-                                continue outer;
-                            }
+            while (true) {
+                entryBuffer.add(logsToSync.take());
+                logsToSync.drainTo(entryBuffer, ITERATION_MAX - 1);
+                outer: for (int i = entryBuffer.size() - 1; i >= 0; i--) {
+                    AuditLogEntry entry = entryBuffer.get(i);
+                    for (int j = 0; j < maxEntryBuffer.size(); j++) {
+                        AuditLogEntry maxEntry = maxEntryBuffer.get(j);
+                        if (entry.getGuild().equals(maxEntry.getGuild())) {
+                            maxEntryBuffer.set(j, entry);
+                            continue outer;
                         }
-
-                        maxEntryBuffer.add(entry);
                     }
 
-                    for (AuditLogEntry maxEntry : maxEntryBuffer) {
-                        System.out.println("Test");
-                        vortex.getDatabase().auditcache.setLastParsed(maxEntry.getGuild().getIdLong(), maxEntry.getIdLong());
-                    }
-
-                    entryBuffer.clear();
-                    maxEntryBuffer.clear();
+                    maxEntryBuffer.add(entry);
                 }
-            } catch (Exception e) {
-                if (amountOfTimesThisCrashed++ < 32) {
-                    log.log(Level.SEVERE, "Exception while syncing audit logs to database", e);
-                    vortex.getThreadpool().schedule(this::start, 1L << amountOfTimesThisCrashed, TimeUnit.SECONDS);
 
-                } else {
-                    log.log(Level.SEVERE, "Error while syncing audit logs to database. Will not reattempt.", e);
+                for (AuditLogEntry maxEntry : maxEntryBuffer) {
+                    System.out.println("Test");
+                    vortex.getDatabase().auditcache.setLastParsed(maxEntry.getGuild().getIdLong(), maxEntry.getIdLong());
                 }
+
+                entryBuffer.clear();
+                maxEntryBuffer.clear();
             }
-        });
+        } catch (Exception e) {
+            if (amountOfTimesThisCrashed++ < 32) {
+                log.log(Level.SEVERE, "Exception while syncing audit logs to database", e);
+                vortex.getThreadpool().schedule(this::start, 1L << amountOfTimesThisCrashed, TimeUnit.SECONDS);
+
+            } else {
+                log.log(Level.SEVERE, "Error while syncing audit logs to database. Will not reattempt.", e);
+            }
+        }
     }
 }
