@@ -16,21 +16,23 @@
 package com.jagrosh.vortex.utils;
 
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.jagrosh.jdautilities.command.UserContextMenu;
 import com.jagrosh.vortex.Constants;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.temporal.TemporalUnit;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -92,14 +94,56 @@ public class OtherUtil {
         return guild.getMembers().stream().filter(m -> m.getUser().getName().equals(username) && m.getUser().getDiscriminator().equals(discriminator)).findAny().orElse(null);
     }
 
+    @Nullable
     public static Member getMemberCacheElseRetrieve(Guild g, long id) {
-        Member m = g.getMemberById(id);
-        return m != null ? m : g.retrieveMemberById(id).complete();
+        try {
+            Member m = g.getMemberById(id);
+            return m != null ? m : g.retrieveMemberById(id).complete();
+        } catch (ErrorResponseException e) {
+            return null; // User is invalid or not apart of a guild
+        }
     }
 
+    @Nullable
     public static User getUserCacheElseRetrieve(JDA jda, long id) {
-        User u = jda.getUserById(id);
-        return u != null ? u : jda.retrieveUserById(id).complete();
+        try {
+            User u = jda.getUserById(id);
+            return u != null ? u : jda.retrieveUserById(id).complete();
+        } catch (ErrorResponseException e) {
+            return null; // User is invalid or not apart of a guild
+        }
+    }
+
+    /**
+     * Attempts to turn a userSnowflake into the most relevant object
+     * {@link Member} objects are generally strongly preferred over other {@link UserSnowflake} implementations as they give guild specific name/avatars,
+     * and this method will attempt to retrieve or get one from cache. If a user is not in a {@link Guild}, this method will try to return a {@link User} object.
+     * If the user is invalid (typically when it is deleted) then a generic {@link UserSnowflake} implementation.
+     *
+     * @param guild The expected guild of the user
+     * @param userSnowflake The usersnowflake object
+     * @throws NullPointerException If any of the parameters are null
+     */
+    @NotNull
+    public static UserSnowflake getMostRelevent(@NotNull Guild guild, @NotNull UserSnowflake userSnowflake) {
+        Objects.requireNonNull(userSnowflake);
+        Objects.requireNonNull(guild);
+
+        if (!(userSnowflake instanceof Member)) {
+            Member m = OtherUtil.getMemberCacheElseRetrieve(guild, userSnowflake.getIdLong());
+            if (m != null) {
+                userSnowflake = m;
+            } else if (!(userSnowflake instanceof User)) {
+                User u = OtherUtil.getUserCacheElseRetrieve(guild.getJDA(), userSnowflake.getIdLong());
+                if (u != null) {
+                    userSnowflake = u;
+                } else {
+                    // Invalid user. We just have to work with what we got, which in this case is only an ID and the defualt avatar, which is based on the ID.
+                }
+            }
+        }
+
+        return userSnowflake;
     }
 
     public static int parseTime(String timestr) {

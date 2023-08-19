@@ -15,12 +15,14 @@
  */
 package com.jagrosh.vortex.logging;
 
+import com.jagrosh.vortex.Emoji;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.database.Database.Modlog;
 import com.jagrosh.vortex.logging.MessageCache.CachedMessage;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.LogUtil;
 import com.jagrosh.vortex.utils.OtherUtil;
+import com.jagrosh.vortex.utils.ToycatPallete;
 import com.typesafe.config.Config;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
@@ -52,14 +54,12 @@ import java.util.stream.Collectors;
  */
 // TODO: Make sure all values are clamped
 // TODO: Check if bot can speak in a modlogs channel before creating the message
-public class BasicLogger {
-    private final static String REDIR_MID = "\uD83D\uDD39"; // 🔹
-    private final static String REDIR_END = "\uD83D\uDD37"; // 🔷
+public class ModlogGenerator {
 
     private final Vortex vortex;
     private final AvatarSaver avatarSaver;
 
-    public BasicLogger(Vortex vortex, Config config) {
+    public ModlogGenerator(Vortex vortex, Config config) {
         this.vortex = vortex;
         this.avatarSaver = new AvatarSaver(config);
     }
@@ -82,25 +82,31 @@ public class BasicLogger {
             return;
         }
 
-        if (newMessage.getContentRaw().equals(oldMessage.getContentRaw())) {
+        if (newMessage.getContentRaw().equals(oldMessage.getContentRaw()) || !newMessage.isEdited()) {
             return;
         }
 
-        User u = newMessage.getAuthor();
+        UserSnowflake author = newMessage.getMember() == null ? newMessage.getAuthor() : newMessage.getMember();
         Guild guild = newMessage.getGuild();
-        EmbedBuilder edit = new EmbedBuilder();
-        edit.setColor(Color.BLUE).setAuthor(getLoggingName(guild, u), null, u.getEffectiveAvatarUrl()).appendDescription(
-                String.format("Message edited in <#%s> [Jump to Message](https://discord.com/channels/%s/%s/%s)\n",
-                              newMessage.getChannel().getId(),
-                              guild.getId(), newMessage.getChannel().getId(),
-                              newMessage.getId())).setFooter("User ID: " + u.getId() + " | Message ID: " + newMessage.getId(),
-                              null).setTimestamp(newMessage.getTimeEdited() == null ? newMessage.getTimeCreated() : newMessage.getTimeEdited()).addField("Before:",
-                              FormatUtil.formatMessage(oldMessage), false)
-                              .addField("After:",
-                              FormatUtil.formatMessage(newMessage),
-                              false
-        );
-        log(guild, edit);
+        long channelId = newMessage.getChannel().getIdLong();
+
+        ModlogEmbed modlogEmbed = ModlogEmbed.fromGuild(guild)
+                .setTargetUser(author)
+                .formatDescription("**Message edited in <#%s> [Jump to Message](https://discord.com/channels/%s/%s/%s)**",
+                        channelId,
+                        guild.getId(),
+                        channelId,
+                        newMessage.getId()
+                ).appendIdToFooter("Message", newMessage.getIdLong())
+                .addField("Before", FormatUtil.formatMessage(oldMessage), false) // TODO: Ditch FormatUtil#formatMessage
+                .addField("After", FormatUtil.formatMessage(newMessage), false)
+                .setColor(ToycatPallete.DARK_BLUE) // TODO: Replace with discord pallete colours
+                .setIcon(Emoji.LOGS.EDIT.blueIcon(false))
+                .appendIdToFooter("Channel", channelId)
+                .appendIdToFooter("Message", newMessage.getIdLong())
+                .setTimestamp(newMessage.getTimeEdited());
+
+        log(modlogEmbed);
     }
 
     public void logMessageDelete(CachedMessage oldMessage) {
@@ -209,7 +215,7 @@ public class BasicLogger {
 
     //TODO: Will be worked on in the future
     public void logRedirectPath(Message message, String link, List<String> redirects) {
-        TextChannel tc = vortex.getDatabase().settings.getSettings(message.getGuild()).getMessageLogChannel(message.getGuild());
+        /*TextChannel tc = vortex.getDatabase().settings.getSettings(message.getGuild()).getMessageLogChannel(message.getGuild());
         if (tc == null) {
             return;
         }
@@ -220,6 +226,7 @@ public class BasicLogger {
         }
 
         // log(OffsetDateTime.now(), tc, REDIRECT, FormatUtil.formatFullUser(message.getAuthor()) + "'s message in " + message.getChannel().getAsMention() + " contained redirects:", new EmbedBuilder().setColor(Color.BLUE.brighter().brighter()).appendDescription(sb.toString()).build());
+         */
     }
 
     public void logNameChange(UserUpdateNameEvent event) {
@@ -535,6 +542,25 @@ public class BasicLogger {
 
         try {
             tc.sendMessageEmbeds(builderFunction.apply(new EmbedBuilder()).build()).queue();
+        } catch (PermissionException ignore) {
+        }
+    }
+
+    public void log(ModlogEmbed modlogEmbed) {
+        ModlogEmbedImpl modlogEmbedImpl = (ModlogEmbedImpl) modlogEmbed;
+
+        TextChannel tc = vortex.getDatabase().settings.getSettings(modlogEmbedImpl.getGuild()).getModLogChannel(modlogEmbedImpl.getGuild());
+        if (tc == null || modlogEmbed == null) {
+            return;
+        }
+
+        try {
+            FileUpload fileUpload = modlogEmbedImpl.getFileUpload();
+            if (fileUpload != null) {
+                tc.sendFiles(fileUpload).addEmbeds(modlogEmbedImpl.build()).queue();
+            } else {
+                tc.sendMessageEmbeds(modlogEmbedImpl.build()).queue();
+            }
         } catch (PermissionException ignore) {
         }
     }

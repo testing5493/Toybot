@@ -196,8 +196,14 @@ public class FormatUtil {
         return out.toString();
     }
 
-    public static String clamp(String str, int maxLength) {
-        return str.length() > maxLength ? str.substring(0, maxLength) : str;
+    public static String clamp(CharSequence str, int maxLength) {
+        if (str == null) {
+            return "";
+        } else if (str.length() > maxLength) {
+            return str.subSequence(0, maxLength).toString();
+        } else {
+            return str.toString();
+        }
     }
 
     public static String listOfRolesMention(List<Role> roles) {
@@ -248,6 +254,10 @@ public class FormatUtil {
     }
 
     public static String formatList(Iterable<String> list, String seperator) {
+        if (list == null) {
+            return "";
+        }
+
         StringBuilder builder = new StringBuilder();
         for (String str : list) {
             builder.append(str).append(seperator);

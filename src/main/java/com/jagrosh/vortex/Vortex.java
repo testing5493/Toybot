@@ -45,11 +45,14 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.exceptions.PermissionException;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.Compression;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
+import net.dv8tion.jda.api.utils.messages.MessageRequest;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -74,7 +77,7 @@ public class Vortex {
     private final @Getter TextUploader textUploader;
     private final @Getter JDA jda;
     private final @Getter AuditLogReader auditLogReader;
-    private final @Getter BasicLogger basicLogger;
+    private final @Getter ModlogGenerator basicLogger;
     private final @Getter MessageCache messageCache;
     private final @Getter WebhookClient logWebhook;
     private final @Getter AutoMod autoMod;
@@ -161,7 +164,7 @@ public class Vortex {
         database = new Database(config.getString("database.host"), config.getString("database.username"), config.getString("database.password"));
         textUploader = new TextUploader(config.getStringList("upload-webhooks"));
         auditLogReader = new AuditLogReader(this);
-        basicLogger = new BasicLogger(this, config);
+        basicLogger = new ModlogGenerator(this, config);
         messageCache = new MessageCache();
         logWebhook = new WebhookClientBuilder(config.getString("webhook-url")).build();
         autoMod = new AutoMod(this, config);
@@ -187,7 +190,7 @@ public class Vortex {
                             } catch (PermissionException ignore) {}
                         }
                     }, t -> e.replyWarning("Help cannot be sent because you are blocking Direct Messages."))).build();
-        // MessageAction.setDefaultMentions(Arrays.asList(Message.MentionType.EMOTE, Message.MentionType.CHANNEL)); // TODO: Update message mention settings to be more robust
+        MessageRequest.setDefaultMentions(Arrays.asList(Message.MentionType.CHANNEL, Message.MentionType.EMOJI, Message.MentionType.SLASH_COMMAND));
         jda = JDABuilder.create(config.getString("bot-token"), GatewayIntent.GUILD_MEMBERS,
                                                                     GatewayIntent.GUILD_MESSAGE_REACTIONS,
                                                                     GatewayIntent.GUILD_MESSAGES,
@@ -195,9 +198,10 @@ public class Vortex {
                                                                     GatewayIntent.GUILD_VOICE_STATES,
                                                                     GatewayIntent.MESSAGE_CONTENT,
                                                                     GatewayIntent.GUILD_PRESENCES
-                         ).addEventListeners(new Listener(this), client, eventWaiter)
+                         ).disableCache(CacheFlag.EMOJI, CacheFlag.SCHEDULED_EVENTS, CacheFlag.STICKER)
+                          .addEventListeners(new Listener(this), client, eventWaiter)
                          .setStatus(OnlineStatus.ONLINE)
-                         .setActivity(Activity.playing("loading..."))
+                         .setActivity(Activity.playing("loading...")) // TODO: Replace with custom status once supported
                          .setBulkDeleteSplittingEnabled(false)
                          .setRequestTimeoutRetry(true)
                          .setSessionController(new BlockingSessionController())
@@ -214,7 +218,6 @@ public class Vortex {
     }
 
     private static Config loadConfiguration() {
-        // TODO: Initialise with fallback values from reference.conf
         System.setProperty("config.file", System.getProperty("config.file", "application.conf"));
         File configFile = new File(System.getProperty("config.file"));
         try {
