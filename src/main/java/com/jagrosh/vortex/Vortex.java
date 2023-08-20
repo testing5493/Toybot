@@ -147,7 +147,7 @@ public class Vortex {
                 new AnnounceCmd(),
                 new AuditCmd(),
                 new DehoistCmd(),
-                new InvitepruneCmd(this),
+             // new InvitepruneCmd(this),
                 new LookupCmd(this),
                 new TagCmd(this),
                 new TagsCmd(this),

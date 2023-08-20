@@ -22,6 +22,7 @@ import com.jagrosh.jdautilities.commons.utils.FinderUtil;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener.CommandErrorException;
 import com.jagrosh.vortex.commands.CommandTools;
+import com.jagrosh.vortex.utils.DiscordPallete;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.ToycatPallete;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -84,7 +85,7 @@ public class RoleinfoCmd extends SlashCommand {
     }
 
     public MessageCreateData getRoleInfoEmbed(Role role) {
-        EmbedBuilder builder = new EmbedBuilder().setColor(role.getColor() == null ? ToycatPallete.DEFAULT_ROLE_WHITE : role.getColor()).setDescription("## Showing Info For " + role.getAsMention()).addField("ID", role.getId(), true).addField("Color", FormatUtil.formatRoleColor(role), true).addField("Created", TimeFormat.DATE_SHORT.format(role.getTimeCreated()), true).addField("Hoisted", role.isHoisted() ? "Yes" : "No", true).addField("Position", role.getPosition() + "/" + role.getGuild().getRoles().size(), true).addField("Permissions", FormatUtil.formatRolePermissions(role), false);
+        EmbedBuilder builder = new EmbedBuilder().setColor(role.getColor() == null ? DiscordPallete.DEFAULT_ROLE_WHITE : role.getColor()).setDescription("## Showing Info For " + role.getAsMention()).addField("ID", role.getId(), true).addField("Color", FormatUtil.formatRoleColor(role), true).addField("Created", TimeFormat.DATE_SHORT.format(role.getTimeCreated()), true).addField("Hoisted", role.isHoisted() ? "Yes" : "No", true).addField("Position", role.getPosition() + "/" + role.getGuild().getRoles().size(), true).addField("Permissions", FormatUtil.formatRolePermissions(role), false);
 
         if (role.isPublicRole()) {
             builder.appendDescription("\nThis is the special @everyone role, which everyone technically has");

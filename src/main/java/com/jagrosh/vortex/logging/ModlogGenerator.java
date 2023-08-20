@@ -19,13 +19,9 @@ import com.jagrosh.vortex.Emoji;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.database.Database.Modlog;
 import com.jagrosh.vortex.logging.MessageCache.CachedMessage;
-import com.jagrosh.vortex.utils.FormatUtil;
-import com.jagrosh.vortex.utils.LogUtil;
-import com.jagrosh.vortex.utils.OtherUtil;
-import com.jagrosh.vortex.utils.ToycatPallete;
+import com.jagrosh.vortex.utils.*;
 import com.typesafe.config.Config;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.audit.AuditLogEntry;
 import net.dv8tion.jda.api.audit.AuditLogKey;
 import net.dv8tion.jda.api.entities.*;
@@ -34,11 +30,10 @@ import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.user.update.UserUpdateAvatarEvent;
-import net.dv8tion.jda.api.events.user.update.UserUpdateDiscriminatorEvent;
-import net.dv8tion.jda.api.events.user.update.UserUpdateNameEvent;
 import net.dv8tion.jda.api.exceptions.PermissionException;
 import net.dv8tion.jda.api.utils.FileUpload;
 import net.dv8tion.jda.api.utils.TimeFormat;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.time.Instant;
@@ -55,7 +50,6 @@ import java.util.stream.Collectors;
 // TODO: Make sure all values are clamped
 // TODO: Check if bot can speak in a modlogs channel before creating the message
 public class ModlogGenerator {
-
     private final Vortex vortex;
     private final AvatarSaver avatarSaver;
 
@@ -65,48 +59,37 @@ public class ModlogGenerator {
     }
 
     /* Message Logs */
-
     public void logMessageEdit(Message newMessage, CachedMessage oldMessage) {
-        if (oldMessage == null) {
+        if (oldMessage == null || newMessage.getContentRaw().equals(oldMessage.getContentRaw()) || !newMessage.isEdited()) {
             return;
         }
 
-        TextChannel mtc = oldMessage.getTextChannel(newMessage.getGuild());
-        PermissionOverride po = mtc.getPermissionOverride(mtc.getGuild().getSelfMember());
-        if (po != null && po.getDenied().contains(Permission.MESSAGE_HISTORY)) {
-            return;
-        }
-
-        TextChannel tc = vortex.getDatabase().settings.getSettings(newMessage.getGuild()).getMessageLogChannel(newMessage.getGuild());
-        if (tc == null) {
-            return;
-        }
-
-        if (newMessage.getContentRaw().equals(oldMessage.getContentRaw()) || !newMessage.isEdited()) {
+        Guild g = newMessage.getGuild();
+        TextChannel modlogsChannel = getModlogsChannel(g);
+        if (modlogsChannel == null) {
             return;
         }
 
         UserSnowflake author = newMessage.getMember() == null ? newMessage.getAuthor() : newMessage.getMember();
-        Guild guild = newMessage.getGuild();
         long channelId = newMessage.getChannel().getIdLong();
 
-        ModlogEmbed modlogEmbed = ModlogEmbed.fromGuild(guild)
+        ModlogEmbed modlogEmbed = ModlogEmbed.createForSingleGuild()
                 .setTargetUser(author)
                 .formatDescription("**Message edited in <#%s> [Jump to Message](https://discord.com/channels/%s/%s/%s)**",
                         channelId,
-                        guild.getId(),
+                        g.getId(),
                         channelId,
                         newMessage.getId()
                 ).appendIdToFooter("Message", newMessage.getIdLong())
                 .addField("Before", FormatUtil.formatMessage(oldMessage), false) // TODO: Ditch FormatUtil#formatMessage
                 .addField("After", FormatUtil.formatMessage(newMessage), false)
-                .setColor(ToycatPallete.DARK_BLUE) // TODO: Replace with discord pallete colours
-                .setIcon(Emoji.LOGS.EDIT.blueIcon(false))
+                .setColor(DiscordPallete.BLURPLE) // TODO: Replace with discord pallete colours
+                .setIcon(Emoji.LOGS.EDIT.blurpleIcon(false))
                 .appendIdToFooter("Channel", channelId)
                 .appendIdToFooter("Message", newMessage.getIdLong())
                 .setTimestamp(newMessage.getTimeEdited());
 
-        log(modlogEmbed);
+        log(modlogsChannel, modlogEmbed);
     }
 
     public void logMessageDelete(CachedMessage oldMessage) {
@@ -119,14 +102,8 @@ public class ModlogGenerator {
             return;
         }
 
-        TextChannel mtc = oldMessage.getTextChannel(vortex.getJda());
-        PermissionOverride po = mtc.getPermissionOverride(guild.getSelfMember());
-        if (po != null && po.getDenied().contains(Permission.MESSAGE_HISTORY)) {
-            return;
-        }
-
-        TextChannel tc = vortex.getDatabase().settings.getSettings(guild).getMessageLogChannel(guild);
-        if (tc == null) {
+        TextChannel modlogsChannel = getModlogsChannel(guild);
+        if (modlogsChannel == null) {
             return;
         }
 
@@ -135,82 +112,71 @@ public class ModlogGenerator {
             return;
         }
 
-        User author = oldMessage.getAuthor(vortex.getJda());
+        ModlogEmbed modlogEmbed = ModlogEmbed.createForSingleGuild()
+                .setColor(DiscordPallete.YELLOW)
+                .setIcon(Emoji.LOGS.DELETE.yellowIcon(false))
+                .setTargetUser(User.fromId(oldMessage.getAuthorId()))
+                .formatDescription("**Message sent by <@%d> deleted in <#%d>**%n%s", oldMessage.getAuthorId(), oldMessage.getTextChannelId(), formatted)
+                .appendIdToFooter("Message", oldMessage.getIdLong())
+                .appendIdToFooter("Channel", oldMessage.getTextChannelId());
 
-        if (author == null) {
-            log(guild, embedBuilder -> embedBuilder.setColor(Color.yellow)
-                    .setAuthor(getLoggingName(oldMessage), null, null)
-                    .appendDescription(String.format("**Message sent by <@%d> deleted in <#%d>**%n", oldMessage.getAuthorId(), oldMessage.getTextChannelId()))
-                    .appendDescription(formatted)
-                    .setFooter(String.format("Author ID: %s | Message ID: %s", oldMessage.getAuthorId(), oldMessage.getId()), null)
-                    .setTimestamp(Instant.now()));
-        } else {
-            log(guild, embedBuilder -> embedBuilder.setColor(Color.yellow)
-                    .setAuthor(getLoggingName(guild, author), null, author.getEffectiveAvatarUrl())
-                    .appendDescription(String.format("**Message sent by <@%s> deleted in <#%s>**%n", author.getId(), oldMessage.getTextChannelId()))
-                    .appendDescription(formatted)
-                    .setFooter(String.format("Author ID: %d | Message ID: %d", author.getIdLong(), oldMessage.getIdLong()))
-                    .setTimestamp(Instant.now())
-            );
-        }
+        log(modlogsChannel, modlogEmbed);
     }
 
     public void logMessageBulkDelete(List<CachedMessage> messages, int count, TextChannel text) {
-        if (count == 0) {
+        if (count == 0 || messages.isEmpty()) {
+            return;
+        } else if (messages.size() == 1) {
+            logMessageDelete(messages.get(0));
             return;
         }
 
         Guild guild = text.getGuild();
-        TextChannel tc = vortex.getDatabase().settings.getSettings(guild).getModLogChannel(guild);
-        if (tc == null) {
+        TextChannel modlogsChannel = getModlogsChannel(guild);
+        if (modlogsChannel == null) {
             return;
         }
 
-        if (messages.isEmpty()) {
-            return;
-        }
-
-        TextChannel mtc = messages.get(0).getTextChannel(vortex.getJda());
-        PermissionOverride po = mtc.getPermissionOverride(mtc.getGuild().getSelfMember());
-        if (po != null && po.getDenied().contains(Permission.MESSAGE_HISTORY)) {
-            return;
-        }
-
-        if (messages.size() == 1) {
-            logMessageDelete(messages.get(0));
-        }
-
-        boolean plural = count != 1;
         vortex.getTextUploader().upload(
               LogUtil.logCachedMessagesForwards("Deleted Messages", messages, vortex.getJda()),
               "DeletedMessages",
               (view, download) -> {
-                  log(guild, embedBuilder -> embedBuilder.setColor(Color.YELLOW)
-                                                         .setDescription(String.format("**Bulk delete in %s, %d message%s deleted**%nClick to [view](%s) or [download](%s) the deleted message%s.", text.getAsMention(), count, plural ? "s were" : " was", view, download, plural ? "s" : ""))
-                                                         .setFooter("Channel ID: " + text.getId(), null)
-                                                         .setTimestamp(Instant.now())
-                  );
+                  ModlogEmbed modlogEmbed = ModlogEmbed.createForSingleGuild()
+                          .setColor(DiscordPallete.RED)
+                          .setIcon(Emoji.LOGS.DELETE.redIcon(false))
+                          .formatDescription("**Bulk delete in %s, %d messages were deleted**%nClick to [view](%s) or [download](%s) the deleted messages", text.getAsMention(), count, view, download)
+                          .appendIdToFooter("Channel", text.getIdLong());
+
+                  log(modlogsChannel, modlogEmbed);
               }
         );
     }
 
     public void postCleanCase(Member moderator, OffsetDateTime now, int count, TextChannel target, String criteria, String reason, String view, String download) {
+        TextChannel modlogsChannel = getModlogsChannel(moderator.getGuild());
+        if (modlogsChannel == null) {
+            return;
+        }
+
         boolean plural = count != 1;
-        log(target.getGuild(), embedBuilder -> embedBuilder.setColor(Color.YELLOW)
-                                                           .setAuthor(getLoggingName(moderator.getGuild(), moderator.getUser()), null, moderator.getUser().getEffectiveAvatarUrl())
-                                                           .appendDescription(String.format(
-                                                                   "**%s purged %d message%s from %s**%n**Criteria:** %s%n%sClick to [view](%s) or [download](%s) the deleted message%s.",
-                                                                   moderator.getAsMention(),
-                                                                   count,
-                                                                   plural ? "s" : "",
-                                                                   target.getAsMention(),
-                                                                   criteria,
-                                                                   reason == null || reason.trim().isEmpty() ? "" : "**Reason:** " + reason + "\n",
-                                                                   view,
-                                                                   download,
-                                                                   plural ? "s" : "")
-                                                           ).setFooter(String.format("Mod ID: %s | Channel ID: %s", moderator.getUser().getId(), target.getId()), null)
-                                                           .setTimestamp(now));
+        ModlogEmbed modlogEmbed = ModlogEmbed.createForSingleGuild()
+                .setColor(DiscordPallete.RED)
+                .setIcon(Emoji.LOGS.PURGE.redIcon(false))
+                .setModerator(moderator)
+                .formatDescription("**%s purged %d message%s from %s**%n**Criteria:** %s%n%sClick to [view](%s) or [download](%s) the deleted message%s.",
+                        moderator.getAsMention(),
+                        count,
+                        plural ? "s" : "",
+                        target.getAsMention(),
+                        criteria,
+                        reason == null || reason.trim().isEmpty() ? "" : "**Reason:** " + reason + "\n",
+                        view,
+                        download,
+                        plural ? "s" : ""
+                ).appendIdToFooter("Channel", target.getIdLong())
+                .setTimestamp(now);
+
+        log(modlogsChannel, modlogEmbed);
     }
 
     //TODO: Will be worked on in the future
@@ -229,73 +195,44 @@ public class ModlogGenerator {
          */
     }
 
-    public void logNameChange(UserUpdateNameEvent event) {
-        User user = event.getUser();
-        String oldUsername = FormatUtil.formatUser(event.getOldName(), user.getDiscriminator());
-        String newUsername = FormatUtil.formatUser(event.getOldName(), user.getDiscriminator());
-        OffsetDateTime now = OffsetDateTime.now();
-        user.getMutualGuilds()
-            .stream()
-            .map(guild -> vortex.getDatabase().settings.getSettings(guild)
-            .getServerLogChannel(guild))
-            .filter(Objects::nonNull)
-            .forEachOrdered(tc -> {
+    public void logNameChange(User user, String oldUsername, String newUsername) {
+        ModlogEmbed modlogEmbed = ModlogEmbed.createForMultiGuild()
+                .setTargetUser(user)
+                .formatDescription("**%s has changed their username from %s to %s**", oldUsername, newUsername)
+                .setColor(DiscordPallete.BLURPLE)
+                .setIcon(Emoji.LOGS.PROFILE_EDIT.blueIcon(false));
 
-                log(tc.getGuild(), embedBuilder -> embedBuilder.setAuthor(getLoggingName(tc.getGuild(), user), null, user.getEffectiveAvatarUrl())
-                                                                .setColor(Color.GREEN)
-                                                                .setDescription(String.format("**%s has changed their username from %s to %s**", user.getAsMention(), FormatUtil.formatUser(event.getOldName(), user.getDiscriminator()), FormatUtil.formatUser(event.getNewName(), user.getDiscriminator())))
-                                                                .setFooter("User ID: " + event.getUser().getId(), null).setTimestamp(now));
-        });
-    }
-
-    // TODO: Merge with the other name update event
-    public void logNameChange(UserUpdateDiscriminatorEvent event) {
-        if (event.getNewDiscriminator().equals(event.getOldDiscriminator())) { // Weird bug
-            return;
-        }
-
-        User user = event.getUser();
-        String oldUsername = FormatUtil.formatUser(user.getName(), event.getOldDiscriminator());
-        String newUsername = FormatUtil.formatUser(user.getName(), event.getNewDiscriminator());
-
-        OffsetDateTime now = OffsetDateTime.now();
-        event.getUser()
-             .getMutualGuilds()
-             .stream()
-             .map(guild -> vortex.getDatabase().settings.getSettings(guild).getServerLogChannel(guild))
-             .filter(Objects::nonNull)
-             .forEachOrdered(tc -> {
-                     log(tc.getGuild(), embedBuilder -> embedBuilder.setAuthor(getLoggingName(tc.getGuild(), user), null, user.getEffectiveAvatarUrl())
-                                                                    .setColor(Color.GREEN)
-                                                                    .setDescription(String.format("**%s has changed their username from %s to %s**", user.getAsMention(), oldUsername, newUsername))
-                                                                    .setFooter("User ID: " + event.getUser().getId(), null).setTimestamp(now));
-        });
+        logToMutualGuilds(user, modlogEmbed);
     }
 
     public void logGuildJoin(GuildMemberJoinEvent event, OffsetDateTime now) {
-        long timeNow = now.toInstant().toEpochMilli();
-        long timeCreated = event.getUser().getTimeCreated().toInstant().toEpochMilli();
-
-        String newText;
-
-        Color embedColor;
-        if (timeNow <= timeCreated) {
-            newText = "This account has joined \"before\" being created and is definitely an alt.";
-            embedColor = Color.RED;
-        } else {
-            embedColor = Color.BLUE;
-            newText = String.format("Account created on %s (%s)", TimeFormat.DATE_TIME_SHORT.format(timeCreated), TimeFormat.RELATIVE.format(timeCreated));
+        TextChannel modlogsChannel = getModlogsChannel(event.getGuild());
+        if (modlogsChannel == null) {
+            return;
         }
 
-        Guild guild = event.getGuild();
-        User user = event.getUser();
-        log(guild, embedBuilder -> embedBuilder.setAuthor(getLoggingName(guild, user), null, user.getEffectiveAvatarUrl())
-                                               .setThumbnail(user.getEffectiveAvatarUrl())
-                                               .setColor(embedColor)
-                                               .appendDescription("**" + user.getAsMention() + " joined the server**\n")
-                                               .appendDescription(newText)
-                                               .setFooter("User ID: " + user.getId(), null)
-                                               .setTimestamp(now));
+
+        Member m = event.getMember();
+        long accountAge = m.getTimeJoined().toInstant().toEpochMilli() - m.getTimeCreated().toInstant().toEpochMilli();
+
+        ModlogEmbed modlogEmbed = ModlogEmbed.createForSingleGuild()
+                .setTargetUser(m)
+                .setTimestamp(m.getTimeJoined());
+
+        if (accountAge <= 0) {
+            modlogEmbed.formatDescription("**%s joined the server**%nThis account has joined \"before\" being created and is definitely an alt.", m.getAsMention())
+                    .setColor(DiscordPallete.RED)
+                    .setIcon(Emoji.LOGS.JOIN_ALT.yellowIcon(false));
+        } else {
+            modlogEmbed.formatDescription("**%s joined the server**%nAccount created on %s (%s)",
+                            m.getAsMention(),
+                            TimeFormat.DATE_TIME_SHORT.format(m.getTimeJoined()),
+                            TimeFormat.RELATIVE.format(m.getTimeJoined()))
+                    .setColor(DiscordPallete.YELLOW)
+                    .setIcon(Emoji.LOGS.JOIN.greenIcon(false));
+        }
+
+        log(modlogsChannel, modlogEmbed);
     }
 
     public void logGuildLeave(GuildMemberRemoveEvent event) {
@@ -542,27 +479,22 @@ public class ModlogGenerator {
 
         try {
             tc.sendMessageEmbeds(builderFunction.apply(new EmbedBuilder()).build()).queue();
-        } catch (PermissionException ignore) {
-        }
+        } catch (PermissionException ignore) {}
     }
 
-    public void log(ModlogEmbed modlogEmbed) {
+    // TODO: Make is so that you don't have to recompile the entire embed everytime you change the author. Then you can remove the @DoNotUseForVerifiedBots tag
+    @DoNotUseForVerifiedBots
+    public void log(@NotNull TextChannel modlogsChannel, @NotNull ModlogEmbed modlogEmbed) {
         ModlogEmbedImpl modlogEmbedImpl = (ModlogEmbedImpl) modlogEmbed;
-
-        TextChannel tc = vortex.getDatabase().settings.getSettings(modlogEmbedImpl.getGuild()).getModLogChannel(modlogEmbedImpl.getGuild());
-        if (tc == null || modlogEmbed == null) {
-            return;
-        }
 
         try {
             FileUpload fileUpload = modlogEmbedImpl.getFileUpload();
             if (fileUpload != null) {
-                tc.sendFiles(fileUpload).addEmbeds(modlogEmbedImpl.build()).queue();
+                modlogsChannel.sendFiles(fileUpload).addEmbeds(modlogEmbedImpl.build(modlogsChannel.getGuild())).queue();
             } else {
-                tc.sendMessageEmbeds(modlogEmbedImpl.build()).queue();
+                modlogsChannel.sendMessageEmbeds(modlogEmbedImpl.build(modlogsChannel.getGuild())).queue();
             }
-        } catch (PermissionException ignore) {
-        }
+        } catch (PermissionException ignore) {}
     }
 
     public void log(Guild guild, EmbedBuilder embedBuilder) {
@@ -573,7 +505,19 @@ public class ModlogGenerator {
 
         try {
             tc.sendMessageEmbeds(embedBuilder.build()).queue();
-        } catch (PermissionException ignore) {
-        }
+        } catch (PermissionException ignore) {}
+    }
+
+    public void logToMutualGuilds(User user, ModlogEmbed modlogEmbed) {
+        user.getMutualGuilds()
+                .stream()
+                .map(this::getModlogsChannel)
+                .filter(Objects::nonNull)
+                .forEach(modlogsChannel -> log(modlogsChannel, modlogEmbed));
+    }
+
+    public TextChannel getModlogsChannel(Guild g) {
+        TextChannel channel =  vortex.getDatabase().settings.getSettings(g).getModLogChannel(g);
+        return channel == null || !channel.canTalk() ? null : channel;
     }
 }

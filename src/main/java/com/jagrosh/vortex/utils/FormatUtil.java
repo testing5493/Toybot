@@ -51,7 +51,7 @@ public class FormatUtil {
     private final static String CMD_EMOJI = "\uD83D\uDCDC"; // 📜
 
     public static String formatRoleColor(Role role) {
-        Color color = role == null || role.getColor() == null ? ToycatPallete.DEFAULT_ROLE_WHITE : role.getColor();
+        Color color = role == null || role.getColor() == null ? DiscordPallete.DEFAULT_ROLE_WHITE : role.getColor();
         return formatColor(color.getRGB());
     }
 

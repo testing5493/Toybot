@@ -3,7 +3,6 @@ package com.jagrosh.vortex.logging;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.OtherUtil;
 import com.jagrosh.vortex.utils.ToycatPallete;
-import lombok.Getter;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.utils.FileUpload;
@@ -15,7 +14,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 public non-sealed class ModlogEmbedImpl implements ModlogEmbed {
-    private final @Getter Guild guild;
     private UserSnowflake targetUserSnowflake, modUserSnowflake;
     private String title, description;
     private FileUpload fileUpload;
@@ -25,9 +23,7 @@ public non-sealed class ModlogEmbedImpl implements ModlogEmbed {
     private List<MessageEmbed.Field> embedFields = null;
     private final List<String> footerList = new LinkedList<>();
 
-    public ModlogEmbedImpl(Guild g) {
-        this.guild = g;
-    }
+    public ModlogEmbedImpl() {}
 
     @Override
     public ModlogEmbed setTargetUser(UserSnowflake userOrMember) {
@@ -101,7 +97,9 @@ public non-sealed class ModlogEmbedImpl implements ModlogEmbed {
     }
 
     // TODO: Send another embed when there are 0 chars remaining instead of trunctating
-    public MessageEmbed build() {
+    public MessageEmbed build(Guild g) {
+
+
         int charRemaining = MessageEmbed.EMBED_MAX_LENGTH_BOT;
         EmbedBuilder builder = new EmbedBuilder().setColor(color == null ? ToycatPallete.DARK_BLUE : color)
                                                  .  setThumbnail(iconUrl)
@@ -109,9 +107,9 @@ public non-sealed class ModlogEmbedImpl implements ModlogEmbed {
 
 
         if (targetUserSnowflake != null) {
-            charRemaining -= setAuthor(builder, targetUserSnowflake);
+            charRemaining -= setAuthor(builder, g, targetUserSnowflake);
         } else if (modUserSnowflake != null) {
-            charRemaining -= setAuthor(builder, modUserSnowflake);
+            charRemaining -= setAuthor(builder, g, modUserSnowflake);
         }
 
 
@@ -141,6 +139,7 @@ public non-sealed class ModlogEmbedImpl implements ModlogEmbed {
             footerList.add(0, formatFooter("User", targetUserSnowflake.getIdLong()));
         }
         String footer = FormatUtil.clamp(FormatUtil.formatList(footerList, " | "), Math.min(2048, charRemaining)); //TODO: Add 2048 max length for footers to JDA
+        builder.setFooter(footer);
         charRemaining -= footer.length();
         if (charRemaining == 0) { // At this point we may start to exhaust all our characters, although it is unlikely
             return builder.build();
@@ -176,8 +175,8 @@ public non-sealed class ModlogEmbedImpl implements ModlogEmbed {
         return fileUpload;
     }
 
-    private int setAuthor(EmbedBuilder builder, UserSnowflake userSnowflake) {
-        userSnowflake = OtherUtil.getMostRelevent(guild, userSnowflake);
+    private int setAuthor(EmbedBuilder builder, Guild g, UserSnowflake userSnowflake) {
+        userSnowflake = OtherUtil.getMostRelevent(g, userSnowflake);
 
         String username, discrim, nickname, avatar;
         switch (userSnowflake) {

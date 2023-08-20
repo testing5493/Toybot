@@ -1,6 +1,5 @@
 package com.jagrosh.vortex.logging;
 
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.utils.FileUpload;
 
@@ -15,8 +14,16 @@ public sealed interface ModlogEmbed permits ModlogEmbedImpl {
     /**
      * Creates a modlog embed from the specified guild.
      */
-    static ModlogEmbed fromGuild(Guild g) {
-        return new ModlogEmbedImpl(g);
+    static ModlogEmbed createForSingleGuild() {
+        return new ModlogEmbedImpl();
+    }
+
+    /**
+     * Creates a modlog embed for multiple guilds. Slightly more efficient for multiple guilds compared to
+     * {@link ModlogEmbed#createForSingleGuild()}
+     */
+    static ModlogEmbed createForMultiGuild() {
+        return new ModlogEmbedImpl();
     }
 
     /**

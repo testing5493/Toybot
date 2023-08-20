@@ -16,8 +16,10 @@
 package com.jagrosh.vortex;
 
 import com.jagrosh.vortex.logging.MessageCache.CachedMessage;
+import com.jagrosh.vortex.utils.FormatUtil;
 import net.dv8tion.jda.api.JDA.ShardInfo;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.channel.update.ChannelUpdateSlowmodeEvent;
 import net.dv8tion.jda.api.events.guild.GuildAuditLogEntryCreateEvent;
@@ -108,10 +110,21 @@ public class Listener implements EventListener {
             }
             case UserUpdateNameEvent event -> {
                 // Log the name change
-                vortex.getBasicLogger().logNameChange(event);
+                User u = event.getUser();
+                String oldUsername = FormatUtil.formatUser(event.getOldName(), u.getDiscriminator());
+                String newUsername = FormatUtil.formatUser(event.getNewName(), u.getDiscriminator());
+                vortex.getBasicLogger().logNameChange(u, oldUsername, newUsername);
+
+                // Dehoist
                 event.getUser().getMutualGuilds().stream().map(g -> g.getMember(event.getUser())).forEach(m -> vortex.getAutoMod().dehoist(m));
             }
-            case UserUpdateDiscriminatorEvent event -> vortex.getBasicLogger().logNameChange(event);
+            case UserUpdateDiscriminatorEvent event -> {
+                // Log the name change
+                User u = event.getUser();
+                String oldUsername = FormatUtil.formatUser(u.getName(), event.getOldDiscriminator());
+                String newUsername = FormatUtil.formatUser(u.getName(), event.getNewDiscriminator());
+                vortex.getBasicLogger().logNameChange(u, oldUsername, newUsername);
+            }
             case GuildMemberUpdateNicknameEvent event -> vortex.getAutoMod().dehoist(event.getMember());
             case UserUpdateAvatarEvent event -> {
                 // Log the avatar change
