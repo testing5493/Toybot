@@ -5,7 +5,7 @@ import com.jagrosh.vortex.utils.DoNotUseForVerifiedBots;
 import com.jagrosh.vortex.utils.GuildResourceProvider;
 import com.jagrosh.vortex.utils.GuildSettingsCache;
 import com.jagrosh.vortex.utils.TemporaryBuffer;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.audit.AuditLogChange;
 import net.dv8tion.jda.api.audit.AuditLogEntry;
 import net.dv8tion.jda.api.audit.AuditLogKey;
@@ -16,9 +16,8 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
-@Log
+@Slf4j
 public class AuditLogReader {
     // TODO: Make this reset after its fine after a while
     private volatile int amountOfTimesThisCrashed = 0; // Amount of times start() has crashed, just in case
@@ -111,16 +110,16 @@ public class AuditLogReader {
                     try {
                         yield Long.parseLong(id);
                     } catch (NumberFormatException e) {
-                        log.log(Level.SEVERE, "Could not resolve role id", e);
+                        log.error("Could not resolve role id", e);
                         yield -1;
                     }
                 }
                 case null -> {
-                    log.log(Level.SEVERE, "Could not resolve role id");
+                    log.error("Could not resolve role id");
                     yield -1;
                 }
                 case Object o -> {
-                    log.log(Level.SEVERE, "Could not resolve role id from Object: " + o.getClass().getName() + " with toString " + o);
+                    log.error("Could not resolve role id from Object: " + o.getClass().getName() + " with toString " + o);
                     yield -1;
                 }
             };
@@ -171,11 +170,11 @@ public class AuditLogReader {
             }
         } catch (Exception e) {
             if (amountOfTimesThisCrashed++ < 32) {
-                log.log(Level.SEVERE, "Exception while syncing audit logs to database", e);
+                log.error("Exception while syncing audit logs to database", e);
                 vortex.getThreadpool().schedule(this::start, 1L << amountOfTimesThisCrashed, TimeUnit.SECONDS);
 
             } else {
-                log.log(Level.SEVERE, "Error while syncing audit logs to database. Will not reattempt.", e);
+                log.error("Error while syncing audit logs to database. Will not reattempt.", e);
             }
         }
     }

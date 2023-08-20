@@ -17,7 +17,7 @@ package com.jagrosh.vortex.utils;
 
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.vortex.Constants;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
@@ -33,13 +33,12 @@ import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-@Log
+@Slf4j
 public class OtherUtil {
 
     public final static char[] DEHOIST_ORIGINAL = {'!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/'};
@@ -131,7 +130,7 @@ public class OtherUtil {
 
         if (userSnowflake instanceof Member m) {
             if (!guild.equals(m.getGuild())) {
-                log.log(Level.WARNING, "Member instance of a wrong guild was passed. Temporarily subverted error", new IllegalStateException().fillInStackTrace());
+                log.warn("Member instance of a wrong guild was passed. Temporarily subverted error", new IllegalStateException().fillInStackTrace());
                 return getMostRelevent(guild, m.getUser());
             }
         } else {
@@ -199,7 +198,7 @@ public class OtherUtil {
             log.info("Successfully read " + list.length + " entries from '" + filename + "'");
             return list;
         } catch (Exception ex) {
-            log.log(Level.WARNING, "Failed to read '" + filename + "':" + ex);
+            log.warn("Failed to read '" + filename, ex);
             return new String[0];
         }
     }

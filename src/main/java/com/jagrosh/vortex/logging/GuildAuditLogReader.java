@@ -1,7 +1,7 @@
 package com.jagrosh.vortex.logging;
 
 import com.jagrosh.vortex.Vortex;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.audit.AuditLogEntry;
 import net.dv8tion.jda.api.entities.Guild;
@@ -15,7 +15,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 
 // TODO: Check to make sure audit log entries are always in order
 // TODO: Vastly simplify this code
@@ -25,7 +24,7 @@ import java.util.logging.Level;
  * All requests to bulk request audit logs for a certain guild, or to forward an entry from a {@link net.dv8tion.jda.api.events.guild.GuildAuditLogEntryCreateEvent}
  * should be redirected to {@link AuditLogReader}, which will then call the appropriate {@link GuildAuditLogReader} instance.
  */
-@Log
+@Slf4j
 class GuildAuditLogReader {
     private final Vortex vortex;
     private final Consumer<AuditLogEntry> handler;
@@ -56,7 +55,7 @@ class GuildAuditLogReader {
                 localLastParsedId = vortex.getDatabase().auditcache.getLastParsed(guildId); // TODO: Handle first time joining guild
                 willBulkRetrieve = localLastParsedId != 0L;
             } catch (Exception e) {
-                log.log(Level.WARNING, "Could not get the id of the last audit log parsed for guild " + guildId, e);
+                log.warn("Could not get the id of the last audit log parsed for guild " + guildId, e);
                 localLastParsedId = 0L;
                 willBulkRetrieve = false;
             }
@@ -160,7 +159,7 @@ class GuildAuditLogReader {
             readFromQueue(null);
         } catch (Throwable t) {
             readFromQueue(null);
-            log.log(Level.SEVERE, "Could not bulk retrieve audit logs from guild " + g.getId(), t);
+            log.error("Could not bulk retrieve audit logs from guild " + g.getId(), t);
         } finally {
             willBulkRetrieve = false;
             stateWriteLock.unlock();
@@ -186,7 +185,7 @@ class GuildAuditLogReader {
             try {
                 logsToSyncQueue.put(entry);
             } catch (InterruptedException e) {
-                log.log(Level.SEVERE, "Could not sync last parsed audit log id " + entry.getId() + " for guild " + entry.getGuild().getId(), e);
+                log.error("Could not sync last parsed audit log id " + entry.getId() + " for guild " + entry.getGuild().getId(), e);
             }
         }
     }

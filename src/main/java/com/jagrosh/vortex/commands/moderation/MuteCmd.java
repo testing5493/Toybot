@@ -2,8 +2,7 @@ package com.jagrosh.vortex.commands.moderation;
 
 import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
-import lombok.extern.java.Log;
-@Log
+
 public non-sealed class MuteCmd extends RolePersistCmd {
     public MuteCmd(Vortex vortex) {
         super(vortex, Action.MUTE);
