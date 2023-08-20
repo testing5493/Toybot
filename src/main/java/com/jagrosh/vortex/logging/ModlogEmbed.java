@@ -12,7 +12,7 @@ import java.time.temporal.TemporalAccessor;
  */
 public sealed interface ModlogEmbed permits ModlogEmbedImpl {
     /**
-     * Creates a modlog embed from the specified guild.
+     * Creates a modlog embed for a single guild
      */
     static ModlogEmbed createForSingleGuild() {
         return new ModlogEmbedImpl();
@@ -22,6 +22,7 @@ public sealed interface ModlogEmbed permits ModlogEmbedImpl {
      * Creates a modlog embed for multiple guilds. Slightly more efficient for multiple guilds compared to
      * {@link ModlogEmbed#createForSingleGuild()}
      */
+    // TODO: Make this return a seperate object
     static ModlogEmbed createForMultiGuild() {
         return new ModlogEmbedImpl();
     }
