@@ -37,6 +37,7 @@ public class AuditCacheManager extends DataManager {
         super(connector, "AUDIT_CACHE");
     }
 
+    // TODO: Figure out why this was implemented like this
     public List<AuditLogEntry> filterUncheckedEntries(List<AuditLogEntry> list) {
         if (list.isEmpty()) {
             return list;
@@ -84,6 +85,26 @@ public class AuditCacheManager extends DataManager {
             }
 
             return filtered;
+        });
+    }
+
+    // this is messy but will be replaced by hibernate soon
+    public long getLastParsed(long guildId) {
+        Long val = read(select(GUILD_ID.is(guildId), GUILD_ID, OLDEST), rs -> rs.first() ? OLDEST.getValue(rs) : 0L);
+        return val == null ? 0L : val;
+    }
+
+    public void setLastParsed(long guildId, long lastParsedId) {
+        readWrite(select(GUILD_ID.is(guildId), GUILD_ID, OLDEST), rs -> {
+           if (rs.first()) {
+               OLDEST.updateValue(rs, lastParsedId);
+               rs.updateRow();
+           } else {
+               rs.moveToInsertRow();
+               GUILD_ID.updateValue(rs, guildId);
+               OLDEST.updateValue(rs, lastParsedId);
+               rs.insertRow();
+           }
         });
     }
 }

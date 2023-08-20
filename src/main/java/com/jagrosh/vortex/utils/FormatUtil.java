@@ -31,6 +31,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.utils.TimeFormat;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.time.Instant;
@@ -46,12 +47,11 @@ import java.util.stream.Collectors;
  * @author John Grosh (jagrosh)
  */
 public class FormatUtil {
-
     private final static String MULTIPLE_FOUND = "**Multiple %s found matching \"%s\":**";
     private final static String CMD_EMOJI = "\uD83D\uDCDC"; // 📜
 
     public static String formatRoleColor(Role role) {
-        Color color = role == null || role.getColor() == null ? ToycatPallete.DEFAULT_ROLE_WHITE : role.getColor();
+        Color color = role == null || role.getColor() == null ? DiscordPallete.DEFAULT_ROLE_WHITE : role.getColor();
         return formatColor(color.getRGB());
     }
 
@@ -112,6 +112,13 @@ public class FormatUtil {
         String discrim = user.getDiscriminator();
         String username = user.getName();
         if (!discrim.matches("0*")) {
+            username += "#" + discrim;
+        }
+        return filterEveryone(username);
+    }
+
+    public static String formatUser(String username, @Nullable String discrim) {
+        if (discrim != null && !discrim.isEmpty() && !discrim.matches("0*")) {
             username += "#" + discrim;
         }
         return filterEveryone(username);
@@ -189,7 +196,21 @@ public class FormatUtil {
         return out.toString();
     }
 
+    public static String clamp(CharSequence str, int maxLength) {
+        if (str == null) {
+            return "";
+        } else if (str.length() > maxLength) {
+            return str.subSequence(0, maxLength).toString();
+        } else {
+            return str.toString();
+        }
+    }
+
     public static String listOfRolesMention(List<Role> roles) {
+        if (roles == null) {
+            return "";
+        }
+
         return formatList(" ", roles.stream().map(Role::getAsMention).toArray(String[]::new));
     }
 
@@ -233,6 +254,10 @@ public class FormatUtil {
     }
 
     public static String formatList(Iterable<String> list, String seperator) {
+        if (list == null) {
+            return "";
+        }
+
         StringBuilder builder = new StringBuilder();
         for (String str : list) {
             builder.append(str).append(seperator);
@@ -423,18 +448,18 @@ public class FormatUtil {
         return (recent ? TimeFormat.DATE_TIME_SHORT : TimeFormat.DATE_SHORT).format(temporal);
     }
 
-    public static String toMentionableRoles(String[] roles) {
+    public static String toMentionableRoles(List<Long> roles) {
         StringBuilder str = new StringBuilder();
 
-        if (roles == null || roles.length == 0) {
+        if (roles == null || roles.isEmpty()) {
             return "nothing";
         }
 
-        for (int i = 0; i < roles.length; i++) {
+        for (int i = 0; i < roles.size(); i++) {
             String afterRoleChars;
-            if (i != roles.length - 1) {
-                if (i == roles.length - 2) {
-                    if (roles.length > 2) {
+            if (i != roles.size() - 1) {
+                if (i == roles.size() - 2) {
+                    if (roles.size() > 2) {
                         afterRoleChars = ", and ";
                     } else {
                         afterRoleChars = " and ";
@@ -446,7 +471,7 @@ public class FormatUtil {
                 afterRoleChars = "";
             }
 
-            str.append("<@&").append(roles[i]).append(">").append(afterRoleChars);
+            str.append("<@&").append(roles.get(i)).append(">").append(afterRoleChars);
         }
 
         return str.toString();
@@ -477,7 +502,7 @@ public class FormatUtil {
         }
     }
 
-    public static String formatPing(long ping) {
+    public static String formatPingTime(long ping) {
         String formattedPing = "";
 
         if (ping >= 60000) {

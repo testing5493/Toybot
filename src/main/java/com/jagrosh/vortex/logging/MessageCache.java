@@ -94,10 +94,6 @@ public class MessageCache {
             return jda.getUserById(author);
         }
 
-        public User getAuthor(ShardManager shardManager) {
-            return shardManager.getUserById(author);
-        }
-
         public long getAuthorId() {
             return author;
         }

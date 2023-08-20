@@ -230,7 +230,7 @@ public class AutoMod {
     }
 
     public void performAutomod(Message message) {
-        if (true) {
+        if (true) { // TODO: Implement
             return;
         }
 
@@ -443,6 +443,7 @@ public class AutoMod {
     }
 
     private boolean isReferralUrl(String url) {
+        // TODO: Make it search against a presorted refferal list?
         for (String reflink : refLinkList) {
             if (reflink.equalsIgnoreCase(url)) {
                 return true;
@@ -485,13 +486,13 @@ public class AutoMod {
             if (nextcontent.equals(content) && this.time.plusSeconds(30).isAfter(nexttime)) {
                 count++;
                 this.time = nexttime;
-                return count;
             } else {
                 this.content = nextcontent;
                 this.time = nexttime;
                 count = 0;
-                return count;
             }
+
+            return count;
         }
     }
 }

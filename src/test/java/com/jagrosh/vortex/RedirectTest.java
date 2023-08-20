@@ -17,11 +17,11 @@ package com.jagrosh.vortex;
 
 import com.jagrosh.vortex.automod.URLResolver;
 import com.typesafe.config.ConfigFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * @author John Grosh (john.a.grosh@gmail.com)

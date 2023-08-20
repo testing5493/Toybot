@@ -23,6 +23,7 @@ import com.jagrosh.vortex.Constants;
 import com.jagrosh.vortex.Emoji;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandTools;
+import com.jagrosh.vortex.utils.DiscordPallete;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.ToycatPallete;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -254,7 +255,7 @@ public class UserinfoCmd extends SlashCommand {
         EmbedBuilder builder = new EmbedBuilder();
         builder.getDescriptionBuilder().append(FormatUtil.formatList(formattedActivities, ", "));
 
-        builder.setTitle(String.format("Showing Info For %s %s", username, badges)).setColor((m != null && m.getColor() != null) ? m.getColor() : ToycatPallete.DEFAULT_ROLE_WHITE).setThumbnail(m == null ? u.getEffectiveAvatarUrl() : m.getEffectiveAvatarUrl()).addField("ID", u.getId(), true).addField("Created At", TimeFormat.DATE_TIME_SHORT.format(u.getTimeCreated()), true);
+        builder.setTitle(String.format("Showing Info For %s %s", username, badges)).setColor((m != null && m.getColor() != null) ? m.getColor() : DiscordPallete.DEFAULT_ROLE_WHITE).setThumbnail(m == null ? u.getEffectiveAvatarUrl() : m.getEffectiveAvatarUrl()).addField("ID", u.getId(), true).addField("Created At", TimeFormat.DATE_TIME_SHORT.format(u.getTimeCreated()), true);
 
         if (m != null) {
             builder.addField("Joined At", TimeFormat.DATE_TIME_SHORT.format(m.getTimeJoined()), true);

@@ -20,7 +20,7 @@ import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.HybridEvent;
 import com.jagrosh.vortex.utils.FormatUtil;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
@@ -28,12 +28,10 @@ import net.dv8tion.jda.api.exceptions.HierarchyException;
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 
-import java.util.logging.Level;
-
 /**
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-@Log
+@Slf4j
 public abstract class ModCommand extends SlashCommand {
     protected final Vortex vortex;
 
@@ -79,7 +77,7 @@ public abstract class ModCommand extends SlashCommand {
         }
 
         if (errMsg == null) {
-            log.log(Level.WARNING, "Failed to " + action.getVerb() + " a user", t);
+            log.warn("Failed to " + action.getVerb() + " a user", t);
             errMsg = String.format("Failed to %s %s", action.getVerb(), mention);
         }
 
@@ -91,7 +89,7 @@ public abstract class ModCommand extends SlashCommand {
         String errMsg = getErrorMessage(e, action, mention);
 
         if (errMsg == null) {
-            log.log(Level.WARNING, "Failed to " + action.getVerb() + " a user", new RuntimeException(e.getMeaning()));
+            log.warn("Failed to " + action.getVerb() + " a user", new RuntimeException(e.getMeaning()));
             errMsg = String.format("Failed to %s %s", action.getVerb(), mention);
         }
 

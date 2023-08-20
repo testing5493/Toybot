@@ -2,8 +2,7 @@ package com.jagrosh.vortex.commands.moderation;
 
 import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
-import lombok.extern.java.Log;
-@Log
+
 public non-sealed class GravelCmd extends RolePersistCmd {
     public GravelCmd(Vortex vortex) {
         super(vortex, Action.GRAVEL);

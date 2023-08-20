@@ -16,17 +16,15 @@
 package com.jagrosh.vortex;
 
 import com.jagrosh.vortex.logging.MessageCache.CachedMessage;
+import com.jagrosh.vortex.utils.FormatUtil;
 import net.dv8tion.jda.api.JDA.ShardInfo;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.channel.update.ChannelUpdateSlowmodeEvent;
-import net.dv8tion.jda.api.events.guild.GuildBanEvent;
-import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
-import net.dv8tion.jda.api.events.guild.GuildUnbanEvent;
+import net.dv8tion.jda.api.events.guild.GuildAuditLogEntryCreateEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
-import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent;
-import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent;
 import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.message.MessageBulkDeleteEvent;
@@ -60,102 +58,109 @@ public class Listener implements EventListener {
     }
 
     @Override
-    public void onEvent(@NotNull GenericEvent event) {
-        if (event instanceof MessageReceivedEvent mre) {
-            Message m = mre.getMessage();
-            if (!m.getAuthor().isBot() && m.isFromGuild()) // ignore bot messages
-            {
-                // Store the message
-                vortex.getMessageCache().putMessage(m);
+    public void onEvent(@NotNull GenericEvent genericEvent) {
+        switch (genericEvent) {
+            case MessageReceivedEvent event -> {
+                Message m = event.getMessage();
+                if (!m.getAuthor().isBot() && m.isFromGuild()) // ignore bot messages
+                {
+                    // Store the message
+                    vortex.getMessageCache().putMessage(m);
 
-                // Run automod on the message
-                vortex.getAutoMod().performAutomod(m);
-            }
-        } else if (event instanceof MessageUpdateEvent mue) {
-            Message m = mue.getMessage();
-            if (!m.getAuthor().isBot() && m.isFromGuild()) // ignore bot edits
-            {
-                // Run automod on the message
-                vortex.getAutoMod().performAutomod(m);
+                    // Run automod on the message
+                    vortex.getAutoMod().performAutomod(m);
+                }
+            } case MessageUpdateEvent event -> {
+                Message m = event.getMessage();
+                if (!m.getAuthor().isBot() && m.isFromGuild()) // ignore bot edits
+                {
+                    // Run automod on the message
+                    vortex.getAutoMod().performAutomod(m);
 
-                // Store and log the edit
-                CachedMessage old = vortex.getMessageCache().putMessage(m);
-                vortex.getBasicLogger().logMessageEdit(m, old);
+                    // Store and log the edit
+                    CachedMessage old = vortex.getMessageCache().putMessage(m);
+                    vortex.getBasicLogger().logMessageEdit(m, old);
+                }
+            } case MessageDeleteEvent event -> {
+                if (event.isFromGuild()) {
+                    // Log the deletion
+                    CachedMessage old = vortex.getMessageCache().pullMessage(event.getGuild(), event.getMessageIdLong());
+                    vortex.getBasicLogger().logMessageDelete(old);
+                }
             }
-        } else if (event instanceof MessageDeleteEvent mevent) {
-            if (mevent.isFromGuild()) {
+            case MessageBulkDeleteEvent event -> {
+                // Get the messages we had cached
+                List<CachedMessage> logged = event.getMessageIds().stream().map(id -> vortex.getMessageCache().pullMessage(event.getGuild(), Long.parseLong(id))).filter(Objects::nonNull).collect(Collectors.toList());
+
                 // Log the deletion
-                CachedMessage old = vortex.getMessageCache().pullMessage(mevent.getGuild(), mevent.getMessageIdLong());
-                vortex.getModLogger().setNeedUpdate(mevent.getGuild());
-                vortex.getBasicLogger().logMessageDelete(old);
+                vortex.getBasicLogger().logMessageBulkDelete(logged, event.getMessageIds().size(), event.getChannel().asTextChannel());
             }
-        } else if (event instanceof MessageBulkDeleteEvent gevent) {
-            // Get the messages we had cached
-            List<CachedMessage> logged = gevent.getMessageIds().stream().map(id -> vortex.getMessageCache().pullMessage(gevent.getGuild(), Long.parseLong(id))).filter(Objects::nonNull).collect(Collectors.toList());
+            case GuildMemberJoinEvent event -> {
+                OffsetDateTime now = OffsetDateTime.now();
 
-            // Log the deletion
-            vortex.getBasicLogger().logMessageBulkDelete(logged, gevent.getMessageIds().size(), gevent.getChannel().asTextChannel());
-        } else if (event instanceof GuildMemberJoinEvent gevent) {
-            OffsetDateTime now = OffsetDateTime.now();
+                // Log the join
+                vortex.getBasicLogger().logGuildJoin(event, now);
 
-            // Log the join
-            vortex.getBasicLogger().logGuildJoin(gevent, now);
-
-            // Perform automod on the newly-joined member
-            vortex.getAutoMod().memberJoin(gevent);
-        } else if (event instanceof GuildMemberRemoveEvent gmre) {
-            // Log the member leaving
-            vortex.getBasicLogger().logGuildLeave(gmre);
-
-            // Signal the modlogger because someone might have been kicked
-            vortex.getModLogger().setNeedUpdate(gmre.getGuild());
-        } else if (event instanceof GuildBanEvent gbe) {
-            // Signal the modlogger because someone was banned
-            vortex.getModLogger().setNeedUpdate(gbe.getGuild());
-        } else if (event instanceof GuildUnbanEvent gue) {
-            // Signal the modlogger because someone was unbanned
-            vortex.getModLogger().setNeedUpdate((gue).getGuild());
-        } else if (event instanceof GuildMemberRoleAddEvent gmrae) {
-            vortex.getModLogger().setNeedUpdate(gmrae.getGuild());
-        } else if (event instanceof GuildMemberRoleRemoveEvent gmrre) {
-            vortex.getModLogger().setNeedUpdate(gmrre.getGuild());
-        } else if (event instanceof UserUpdateNameEvent unue) {
-            // Log the name change
-            vortex.getBasicLogger().logNameChange(unue);
-            unue.getUser().getMutualGuilds().stream().map(g -> g.getMember(unue.getUser())).forEach(m -> vortex.getAutoMod().dehoist(m));
-        } else if (event instanceof UserUpdateDiscriminatorEvent uude) {
-            vortex.getBasicLogger().logNameChange(uude);
-        } else if (event instanceof GuildMemberUpdateNicknameEvent gmune) {
-            vortex.getAutoMod().dehoist(gmune.getMember());
-        } else if (event instanceof UserUpdateAvatarEvent uaue) {
-            // Log the avatar change
-            if (!uaue.getUser().isBot()) {
-                vortex.getBasicLogger().logAvatarChange(uaue);
+                // Perform automod on the newly-joined member
+                vortex.getAutoMod().memberJoin(event);
             }
-        } else if (event instanceof GuildVoiceUpdateEvent gevent) {
-            if (!gevent.getMember().getUser().isBot()) // ignore bots
-            {
-                vortex.getBasicLogger().logVoiceUpdate(gevent);
+            case GuildMemberRemoveEvent event -> {
+                // Log the member leaving
+                vortex.getBasicLogger().logGuildLeave(event);
             }
-        } else if (event instanceof ChannelUpdateSlowmodeEvent cuse) {
-            // TODO: Check if this logic is correct, no funky thread things etc.
-            vortex.getDatabase().tempslowmodes.clearSlowmode(cuse.getChannel().asTextChannel());
-        } else if (event instanceof ReadyEvent) {
-            // Log the shard that has finished loading
-            ShardInfo si = event.getJDA().getShardInfo();
-            String shardinfo = si == null ? "N/A" : (si.getShardId() + 1) + "/" + si.getShardTotal();
-            LOG.info("Shard " + shardinfo + " is ready.");
+            case UserUpdateNameEvent event -> {
+                // Log the name change
+                User u = event.getUser();
+                String oldUsername = FormatUtil.formatUser(event.getOldName(), u.getDiscriminator());
+                String newUsername = FormatUtil.formatUser(event.getNewName(), u.getDiscriminator());
+                vortex.getBasicLogger().logNameChange(u, oldUsername, newUsername);
 
-            // TODO: Make sure gravels and mutes are checked from before the bot is on
-            vortex.getLogWebhook().send("\uD83C\uDF00 Shard `" + shardinfo + "` has connected. Guilds: `" // 🌀
-                    + event.getJDA().getGuildCache().size() + "` Users: `" + event.getJDA().getUserCache().size() + "`");
-            vortex.getThreadpool().scheduleWithFixedDelay(() -> vortex.getDatabase().tempbans.checkUnbans(vortex, event.getJDA()), 0, 2, TimeUnit.MINUTES);
-            vortex.getThreadpool().scheduleWithFixedDelay(() -> vortex.getDatabase().tempmutes.checkUnmutes(event.getJDA(), vortex.getDatabase().settings), 0, 45, TimeUnit.SECONDS);
-            vortex.getThreadpool().scheduleWithFixedDelay(() -> vortex.getDatabase().gravels.checkGravels(event.getJDA(), vortex.getDatabase().settings), 0, 45, TimeUnit.SECONDS);
-            vortex.getThreadpool().scheduleWithFixedDelay(() -> vortex.getDatabase().tempslowmodes.checkSlowmode(event.getJDA()), 0, 45, TimeUnit.SECONDS);
+                // Dehoist
+                event.getUser().getMutualGuilds().stream().map(g -> g.getMember(event.getUser())).forEach(m -> vortex.getAutoMod().dehoist(m));
+            }
+            case UserUpdateDiscriminatorEvent event -> {
+                // Log the name change
+                User u = event.getUser();
+                String oldUsername = FormatUtil.formatUser(u.getName(), event.getOldDiscriminator());
+                String newUsername = FormatUtil.formatUser(u.getName(), event.getNewDiscriminator());
+                vortex.getBasicLogger().logNameChange(u, oldUsername, newUsername);
+            }
+            case GuildMemberUpdateNicknameEvent event -> vortex.getAutoMod().dehoist(event.getMember());
+            case UserUpdateAvatarEvent event -> {
+                // Log the avatar change
+                if (!event.getUser().isBot()) {
+                    vortex.getBasicLogger().logAvatarChange(event);
+                }
+            }
+            case GuildVoiceUpdateEvent event -> {
+                if (!event.getMember().getUser().isBot()) // ignore bots
+                {
+                    vortex.getBasicLogger().logVoiceUpdate(event);
+                }
+            }
+            case ChannelUpdateSlowmodeEvent event -> {
+                // TODO: Check if this logic is correct, no funky thread things etc.
+                vortex.getDatabase().tempslowmodes.clearSlowmode(event.getChannel().asTextChannel());
+            }
+            case GuildAuditLogEntryCreateEvent event -> {
+                vortex.getAuditLogReader().parseEntry(event.getEntry());
+            }
+            case ReadyEvent event -> {
+                // Log the shard that has finished loading
+                ShardInfo si = genericEvent.getJDA().getShardInfo();
+                String shardinfo = si == null ? "N/A" : (si.getShardId() + 1) + "/" + si.getShardTotal();
+                LOG.info("Shard " + shardinfo + " is ready.");
 
-        } else if (event instanceof GuildJoinEvent gje) {
-            vortex.getModLogger().addNewGuild(gje.getGuild());
+                // TODO: Make sure gravels and mutes are checked from before the bot is on
+                vortex.getLogWebhook().send("\uD83C\uDF00 Shard `" + shardinfo + "` has connected. Guilds: `" // 🌀
+                        + genericEvent.getJDA().getGuildCache().size() + "` Users: `" + genericEvent.getJDA().getUserCache().size() + "`");
+                vortex.getThreadpool().scheduleWithFixedDelay(() -> vortex.getDatabase().tempbans.checkUnbans(vortex, genericEvent.getJDA()), 0, 2, TimeUnit.MINUTES);
+                vortex.getThreadpool().scheduleWithFixedDelay(() -> vortex.getDatabase().tempmutes.checkUnmutes(genericEvent.getJDA(), vortex.getDatabase().settings), 0, 45, TimeUnit.SECONDS);
+                vortex.getThreadpool().scheduleWithFixedDelay(() -> vortex.getDatabase().gravels.checkGravels(genericEvent.getJDA(), vortex.getDatabase().settings), 0, 45, TimeUnit.SECONDS);
+                vortex.getThreadpool().scheduleWithFixedDelay(() -> vortex.getDatabase().tempslowmodes.checkSlowmode(genericEvent.getJDA()), 0, 45, TimeUnit.SECONDS);
+                vortex.getThreadpool().execute(() -> vortex.getAuditLogReader().start());
+            }
+            default -> {}
         }
     }
 }

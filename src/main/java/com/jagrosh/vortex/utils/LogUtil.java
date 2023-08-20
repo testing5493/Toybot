@@ -59,17 +59,6 @@ public class LogUtil {
         return sb.toString().trim();
     }
 
-    public static String logCachedMessagesForwards(String title, List<CachedMessage> messages, ShardManager shardManager) {
-        TextChannel deltc = messages.get(0).getTextChannel(shardManager);
-        Guild delg = deltc.getGuild();
-        StringBuilder sb = new StringBuilder("-- " + title + " -- #" + deltc.getName() + " (" + deltc.getId() + ") -- " + delg.getName() + " (" + delg.getId() + ") --");
-        for (CachedMessage message : messages) {
-            appendMessage(sb, message, message.getAuthor(shardManager));
-        }
-
-        return sb.toString().trim();
-    }
-
     public static String logMessagesBackwards(String title, List<Message> messages) {
         TextChannel deltc = messages.get(0).getChannel().asTextChannel();
         Guild delg = messages.get(0).getGuild();

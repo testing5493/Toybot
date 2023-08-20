@@ -9,7 +9,6 @@ import com.jagrosh.vortex.database.managers.GuildSettingsDataManager;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.LogUtil;
 import com.jagrosh.vortex.utils.OtherUtil;
-import lombok.extern.java.Log;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -19,7 +18,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 // TODO: Abstract this so sealing is unneccessary
-@Log
 public abstract sealed class RolePersistCmd extends PunishmentCmd permits GravelCmd, MuteCmd {
     public RolePersistCmd(Vortex vortex, Action action) {
         super(vortex, action, true, Permission.MANAGE_ROLES);
