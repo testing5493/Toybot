@@ -19,6 +19,7 @@ import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener;
 import com.jagrosh.vortex.commands.HybridEvent;
+import com.jagrosh.vortex.hibernate.api.ModlogManager;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.LogUtil;
 import com.jagrosh.vortex.utils.OtherUtil;
@@ -73,11 +74,11 @@ public class SoftbanCmd extends PunishmentCmd {
                     g.unban(User.fromId(toBanId))
                             .reason(LogUtil.auditReasonFormat(mod, "Softban Unban"))
                             .queueAfter(4, TimeUnit.SECONDS, success2 -> {
-                                vortex.getDatabase().tempbans.setSoftBan(vortex, g, toBanId, mod.getIdLong(), reason);
+                                vortex.getHibernate().modlogs.logSoftban(g.getIdLong(), toBanId, mod.getIdLong(), Instant.now().getEpochSecond(), reason);
                                 event.reply(FormatUtil.formatUserMention(toBanId) + " was softbanned");
                             }, failure2 -> {
                                 // If failed to unban
-                                vortex.getDatabase().tempbans.setBan(vortex, g, toBanId, mod.getIdLong(), Instant.now(), reason);
+                                vortex.getHibernate().modlogs.logBan(g.getIdLong(), toBanId, mod.getIdLong(), Instant.now().getEpochSecond(), ModlogManager.INDEFINITE_TIME, reason);
                                 event.replyError("Failed to unban " + FormatUtil.formatUserMention(toBanId) + " after banning");
                                 log.warn("Failed to unban a user after a softban", failure2);
                             });

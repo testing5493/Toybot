@@ -8,16 +8,16 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
- * A persistant class representing a ban modlog entry
+ * A persistant class representing a softban modlog entry
  */
-@Table(name = "BANS")
+@Table(name = "SOFTBANS")
 @Entity
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class BanLog extends TimedLog {
+public class SoftbanLog extends ModLog {
     @Override
     public Action actionType() {
-        return Action.BAN;
+        return Action.SOFTBAN;
     }
 }

@@ -56,7 +56,7 @@ public class CleanCmd extends ModCommand {
     }
 
     @Override
-    protected void execute(SlashCommandEvent event) {
+    protected void execute1(SlashCommandEvent event) {
         // TODO: Implement
         event.reply("// TODO: Implement").queue();
     }

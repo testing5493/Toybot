@@ -18,6 +18,7 @@ package com.jagrosh.vortex.logging;
 import com.jagrosh.vortex.Emoji;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.database.Database.Modlog;
+import com.jagrosh.vortex.hibernate.entities.ModLog;
 import com.jagrosh.vortex.logging.MessageCache.CachedMessage;
 import com.jagrosh.vortex.utils.*;
 import com.typesafe.config.Config;
@@ -397,14 +398,6 @@ public class ModlogGenerator {
                                                .setFooter("Updating Moderator ID: " + updatingModerator.getId(), null)
                                                .setTimestamp(now)
         );
-    }
-
-    public void logModlogDeletion(Guild guild, Modlog modlog, User deletingModerator) {
-        log(guild, embedBuilder -> embedBuilder.setAuthor(getLoggingName(guild, deletingModerator), null, deletingModerator.getEffectiveAvatarUrl())
-                                               .setColor(Color.ORANGE.darker())
-                                               .appendDescription(deletingModerator.getAsMention() + " deleted a modlog")
-                                               .addField("Case " + modlog.getId(), FormatUtil.formatModlogCase(vortex, guild, modlog), true)
-                                               .setFooter(String.format("Deleting Moderator ID: %s | User ID: %d | Punisher ID:%d%s", deletingModerator.getId(), modlog.getUserId(), modlog.getModId(), modlog.getSaviorId() == -1 ? "" : " | Pardoner ID: " + modlog.getSaviorId()), null).setTimestamp(Instant.now()));
     }
 
     /**

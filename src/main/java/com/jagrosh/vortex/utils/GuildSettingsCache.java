@@ -4,6 +4,7 @@ import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.database.managers.GuildSettingsDataManager;
 import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Role;
 
 /**
  * Just to make lazy loading easier
@@ -16,7 +17,11 @@ public class GuildSettingsCache {
     private GuildSettingsDataManager.GuildSettings guildSettings;
 
     public GuildSettingsDataManager.GuildSettings get() {
-        return guildSettings != null ? guildSettings : vortex.getDatabase().settings.getSettings(g);
+        if (guildSettings == null) {
+            guildSettings = vortex.getDatabase().settings.getSettings(g);
+        }
+
+        return guildSettings;
     }
 
     public long getGraveledRoleId() {
@@ -25,5 +30,13 @@ public class GuildSettingsCache {
 
     public long getMutedRoleId() {
         return get().getMutedRoleId();
+    }
+
+    public Role getGravelRole() {
+        return g.getRoleById(getGraveledRoleId());
+    }
+
+    public Role getMutedRole() {
+        return g.getRoleById(getMutedRoleId());
     }
 }

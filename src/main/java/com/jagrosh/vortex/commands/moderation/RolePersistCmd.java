@@ -4,8 +4,8 @@ import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener;
 import com.jagrosh.vortex.commands.HybridEvent;
-import com.jagrosh.vortex.database.Database;
 import com.jagrosh.vortex.database.managers.GuildSettingsDataManager;
+import com.jagrosh.vortex.hibernate.api.ModlogManager;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.LogUtil;
 import com.jagrosh.vortex.utils.OtherUtil;
@@ -83,12 +83,12 @@ public abstract sealed class RolePersistCmd extends PunishmentCmd permits Gravel
     }
 
     private void logPersist(boolean isGravel, Guild g, long targetId, long modId, Instant finishTime, String reason) {
-        Database database = vortex.getDatabase();
+        ModlogManager modlogManager = vortex.getHibernate().modlogs;
 
         if (isGravel) {
-            database.gravels.overrideGravel(g, targetId, modId, finishTime, reason);
+            modlogManager.logGravel(g.getIdLong(), targetId, modId, Instant.now().getEpochSecond(), finishTime.getEpochSecond(), reason);
         } else {
-            database.tempmutes.overrideMute(g, targetId, modId, finishTime, reason);
+            modlogManager.logMute(g.getIdLong(), targetId, modId, Instant.now().getEpochSecond(), finishTime.getEpochSecond(), reason);
         }
     }
 }

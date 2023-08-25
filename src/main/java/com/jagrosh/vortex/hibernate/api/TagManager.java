@@ -1,7 +1,6 @@
 package com.jagrosh.vortex.hibernate.api;
 
 import com.jagrosh.vortex.hibernate.entities.Tag;
-import com.jagrosh.vortex.hibernate.internal.TagId;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
@@ -10,12 +9,13 @@ import org.jetbrains.annotations.NotNull;
 
 import jakarta.persistence.PersistenceException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * A collection of {@link Database} methods that are in charge of dealing with tags.
  */
 @Slf4j
-class TagManager {
+public class TagManager {
     private final Database database;
 
     TagManager(Database database) {
@@ -36,7 +36,7 @@ class TagManager {
             throw new IllegalArgumentException("Name must be supplied");
         }
 
-        TagId tagId = new TagId(guildId, name);
+        Tag.Id tagId = new Tag.Id(guildId, name.toLowerCase());
         return database.doTransaction(session -> {
             String oldValue;
             Tag tag = session.get(Tag.class, tagId);
@@ -63,9 +63,14 @@ class TagManager {
      * @param name The unique name of the tag
      * @return The old value, or null if the tag doesn't exist
      * @throws PersistenceException If something went wrong while deleting the tag
+     * @throws IllegalArgumentException If the name is blank or null
      */
     public String delete(long guildId, String name) {
-        TagId tagId = new TagId(guildId, name);
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Name must be supplied");
+        }
+
+        Tag.Id tagId = new Tag.Id(guildId, name.toLowerCase());
         return database.doTransaction(session -> {
             Tag tag = session.get(Tag.class, tagId);
             if (tag == null) {
@@ -89,10 +94,31 @@ class TagManager {
     public List<String> getTags(long guildId) {
         return database.doTransaction(session -> {
             CriteriaBuilder cb = session.getCriteriaBuilder();
-            CriteriaQuery<Tag> cq =  cb.createQuery(Tag.class);
+            CriteriaQuery<String> cq =  cb.createQuery(String.class);
             Root<Tag> root = cq.from(Tag.class);
-            cq.select(root.get("NAME")).where(cb.equal(root.get("GUILD_ID"), guildId));
-            return session.createQuery(cq).getResultStream().map(Tag::getName).toList();
+            cq.select(root.get("name")).where(cb.equal(root.get("guildId"), guildId));
+            return session.createQuery(cq).getResultStream().collect(Collectors.toList());
+        });
+    }
+
+    /**
+     * Gets a tag
+     *
+     * @param guildId The id of the guild
+     * @param name The name of the tag
+     * @return The value of the tag, or null if no tag with that value was found
+     * @throws IllegalArgumentException If the name is blank or null
+     * @throws PersistenceException If something went wrong while retrieving the tags
+     */
+    public String getTag(long guildId, String name) throws PersistenceException {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Name must be supplied");
+        }
+
+        Tag.Id tagId = new Tag.Id(guildId, name.toLowerCase());
+        return database.doTransaction(session -> {
+            Tag tag = session.get(Tag.class, tagId);
+            return tag == null ? null : tag.getValue();
         });
     }
 }

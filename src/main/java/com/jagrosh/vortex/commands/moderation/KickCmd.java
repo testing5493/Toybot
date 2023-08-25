@@ -28,6 +28,8 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.UserSnowflake;
 
+import java.time.Instant;
+
 /**
  * @author John Grosh (jagrosh)
  */
@@ -68,7 +70,7 @@ public class KickCmd extends PunishmentCmd {
         g.kick(UserSnowflake.fromId(targetId))
                 .reason(LogUtil.auditReasonFormat(mod, reason))
                 .queue(success -> {
-                    vortex.getDatabase().kicks.logCase(vortex, g, mod.getIdLong(), targetId, reason);
+                    vortex.getHibernate().modlogs.logKick(g.getIdLong(), targetId, mod.getIdLong(), Instant.now().getEpochSecond(), reason);
                     event.replyError(FormatUtil.formatUserMention(targetId) + " was kicked");
                 }, failure -> {
                     handleError(event, failure, action, targetId);

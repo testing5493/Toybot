@@ -72,7 +72,7 @@ public class BanCmd extends PunishmentCmd {
         g.ban(UserSnowflake.fromId(toBanId), 0, TimeUnit.SECONDS)
                 .reason(LogUtil.auditReasonFormat(mod, min, reason))
                 .queue(success -> {
-                    vortex.getDatabase().tempbans.setBan(vortex, g, toBanId, mod.getIdLong(), unbanTime, reason);
+                    vortex.getHibernate().modlogs.logBan(g.getIdLong(), toBanId, mod.getIdLong(), Instant.now().getEpochSecond(), unbanTime.getEpochSecond(), reason);
                     event.reply(FormatUtil.formatUserMention(toBanId) + " was banned");
                 }, failure -> {
                     handleError(event, failure, action, toBanId);

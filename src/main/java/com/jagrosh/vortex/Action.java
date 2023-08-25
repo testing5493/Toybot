@@ -15,6 +15,10 @@
  */
 package com.jagrosh.vortex;
 
+import com.jagrosh.vortex.hibernate.entities.BanLog;
+import com.jagrosh.vortex.hibernate.entities.GravelLog;
+import com.jagrosh.vortex.hibernate.entities.KickLog;
+import com.jagrosh.vortex.hibernate.entities.ModLog;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

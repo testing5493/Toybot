@@ -65,15 +65,18 @@ import java.util.concurrent.ScheduledExecutorService;
  *
  * @author John Grosh (jagrosh)
  */
+// TODO: Double check switch statements are null safe
 @Slf4j
 public class Vortex {
     public static final Config config;
     public static final boolean BULK_PARSE_ON_START;
     public static final boolean DEVELOPER_MODE;
+    public static final boolean AUTO_CREATE_DB;
 
     private final @Getter EventWaiter eventWaiter;
     private final @Getter ScheduledExecutorService threadpool;
     private final @Getter Database database;
+    private final @Getter com.jagrosh.vortex.hibernate.api.Database hibernate;
     private final @Getter TextUploader textUploader;
     private final @Getter JDA jda;
     private final @Getter AuditLogReader auditLogReader;
@@ -88,6 +91,7 @@ public class Vortex {
 
         BULK_PARSE_ON_START = config.getBoolean("check-for-missed-logs-on-start");
         DEVELOPER_MODE = config.getBoolean("developer-mode"); // TODO: Maybe make dev mode a bit better
+        AUTO_CREATE_DB = config.getBoolean("auto-create-database");
     }
 
 
@@ -159,6 +163,7 @@ public class Vortex {
         };
 
         SlashCommand[] slashCommands = Arrays.stream(commands).filter(command -> command instanceof SlashCommand).toArray(SlashCommand[]::new);
+        hibernate = new com.jagrosh.vortex.hibernate.api.Database();
         eventWaiter = new EventWaiter(Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "eventwaiter")), false);
         threadpool = Executors.newScheduledThreadPool(30, r -> new Thread(r, "vortex"));
         database = new Database(config.getString("database.host"), config.getString("database.username"), config.getString("database.password"));

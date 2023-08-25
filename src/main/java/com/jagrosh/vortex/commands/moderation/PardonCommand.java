@@ -27,7 +27,7 @@ public abstract class PardonCommand extends ModCommand {
     }
 
     @Override
-    protected final void execute(SlashCommandEvent event) {
+    protected final void execute1(SlashCommandEvent event) {
         User targetUser = event.getOption("user", OptionMapping::getAsUser);
 
         try {

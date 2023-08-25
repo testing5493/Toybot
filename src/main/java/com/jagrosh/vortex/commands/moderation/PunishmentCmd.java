@@ -45,7 +45,7 @@ public abstract class PunishmentCmd extends ModCommand {
     }
 
     @Override
-    public final void execute(SlashCommandEvent e) {
+    public final void execute1(SlashCommandEvent e) {
         User targetUser = e.getOption("user", OptionMapping::getAsUser);
         int time = parseMinutes(e.getOption("time", OptionMapping::getAsString));
         String reason = e.getOption("reason", OptionMapping::getAsString);

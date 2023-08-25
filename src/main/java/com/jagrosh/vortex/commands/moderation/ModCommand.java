@@ -16,13 +16,18 @@
 package com.jagrosh.vortex.commands.moderation;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
+import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
+import com.jagrosh.vortex.commands.CommandTools;
 import com.jagrosh.vortex.commands.HybridEvent;
 import com.jagrosh.vortex.utils.FormatUtil;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.channel.Channel;
+import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.exceptions.HierarchyException;
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
@@ -31,39 +36,61 @@ import net.dv8tion.jda.api.requests.ErrorResponse;
 /**
  * @author John Grosh (john.a.grosh@gmail.com)
  */
+// TODO: Implement restricting moderator slash commands to be mods only
 @Slf4j
 public abstract class ModCommand extends SlashCommand {
     protected final Vortex vortex;
+    protected final Permission[] altPerms;
 
     public ModCommand(Vortex vortex, Permission... altPerms) {
         this.vortex = vortex;
         this.guildOnly = true;
-        this.category = new Category("Moderation", event -> {
-            if (!event.getChannelType().isGuild()) {
-                event.replyError("This command is not available in Direct Messages!");
-                return false;
-            }
-
-            Role modrole = vortex.getDatabase().settings.getSettings(event.getGuild()).getModeratorRole(event.getGuild());
-            if (modrole != null && event.getMember().getRoles().contains(modrole)) {
-                return true;
-            }
-
-            for (Permission altPerm : altPerms) {
-                if (altPerm.isChannel()) {
-                    if (event.getMember().hasPermission(event.getGuildChannel(), altPerm)) {
-                        return true;
-                    }
-                } else {
-                    if (event.getMember().hasPermission(altPerm)) {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        });
+        this.altPerms = altPerms == null ? new Permission[]{} : altPerms;
+        this.category = new Category("Moderation", event -> canExecute(HybridEvent.of(event)));
     }
+
+    /**
+     * Determines if a user is allowed to execute a standard moderation command.
+     * @param event The hybrid event
+     * @return Weather the user can execute the command
+     */
+    private boolean canExecute(HybridEvent event) {
+       if (event.getGuild() == null) {
+           event.replyError("This command is not available in Direct Messages!");
+           return false;
+       }
+
+       Role modrole = vortex.getDatabase().settings.getSettings(event.getGuild()).getModeratorRole(event.getGuild());
+       if (modrole != null && event.getMember().getRoles().contains(modrole)) {
+           return true;
+       }
+
+       for (Permission altPerm : altPerms) {
+           if (altPerm.isChannel()) {
+               if (event.getMember().hasPermission(event.getGuildChannel(), altPerm)) {
+                   return true;
+               }
+           } else {
+               if (event.getMember().hasPermission(altPerm)) {
+                   return true;
+               }
+           }
+       }
+
+       return false;
+    }
+
+    @Override
+    public final void execute(SlashCommandEvent e) {
+        HybridEvent hybridEvent = HybridEvent.of(e);
+        if (canExecute(hybridEvent)) {
+            execute1(e);
+        } else if (hybridEvent.getGuild() != null) {
+            hybridEvent.replyError(CommandTools.MOD_COMMAND_NO_PERMS);
+        }
+    }
+
+    protected abstract void execute1(SlashCommandEvent e);
 
     protected void handleError(HybridEvent event, Throwable t, Action action, long targetId) {
         String mention = FormatUtil.formatUserMention(targetId);
@@ -106,7 +133,7 @@ public abstract class ModCommand extends SlashCommand {
                     String.format("No %s role exists!", action.getPastVerb());
             case UNKNOWN_CHANNEL ->
                     "The vc was deleted before I could do anything";
-            default -> null;
+            case null, default -> null;
         };
     }
 }

@@ -1,14 +1,14 @@
 package com.jagrosh.vortex.hibernate.api;
 
 import com.jagrosh.vortex.hibernate.entities.*;
+import jakarta.persistence.*;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.hibernate.cfg.Configuration;
+import org.hibernate.boot.Metadata;
+import org.hibernate.boot.MetadataSources;
 
-import jakarta.persistence.PersistenceException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -20,27 +20,44 @@ import java.util.function.Function;
  * (ie. {@link Database#modlogs#getCase(long, int)}, {@link Database#modlogs#deleteCase(long, long, int), etc.},
  * while all methods that interact with tags would be in the {@link Database#tags}.
  */
-@Slf4j
+// TODO: Hide so things are hidden jda api/implementation style
+@Slf4j(topic = "Database")
 public final class Database {
-    private final SessionFactory SESSION_FACTORY;
     public final TagManager tags = new TagManager(this);
     public final ModlogManager modlogs = new ModlogManager(this);
 
+
+
+
+    /* INTERNALS */
+    private final SessionFactory SESSION_FACTORY;
+
     public Database() {
-        try {
-            SESSION_FACTORY = new Configuration()
-                    .configure()
-                    .addClass(BanLog.class)
-                    .addClass(GravelLog.class)
-                    .addClass(KickLog.class)
-                    .addClass(MuteLog.class)
-                    .addClass(WarnLog.class)
-                    .addClass(Tag.class)
-                    .buildSessionFactory();
+        this.SESSION_FACTORY = jpaBootstrap();
+        modlogs.init();
+    }
+
+    private SessionFactory nativeBootsrap() {
+        Metadata metadata = new MetadataSources()
+                .addAnnotatedClass(Tag.class)
+                .addAnnotatedClass(BanLog.class)
+                .addAnnotatedClass(KickLog.class)
+                .addAnnotatedClass(GravelLog.class)
+                .addAnnotatedClass(MuteLog.class)
+                .addAnnotatedClass(WarnLog.class)
+                .buildMetadata();
+
+        try (SessionFactory sessionFactory = metadata.buildSessionFactory()) {
+            return sessionFactory;
         } catch (Throwable e) {
             log.error("Could not initialise the Database", e);
             throw new ExceptionInInitializerError(e);
         }
+    }
+
+    private SessionFactory jpaBootstrap() {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("experimental-unit");
+        return emf.unwrap(SessionFactory.class);
     }
 
     /**
