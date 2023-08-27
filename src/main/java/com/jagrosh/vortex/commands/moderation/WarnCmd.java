@@ -6,6 +6,8 @@ import com.jagrosh.vortex.commands.HybridEvent;
 import com.jagrosh.vortex.utils.FormatUtil;
 import net.dv8tion.jda.api.Permission;
 
+import java.time.Instant;
+    
 public class WarnCmd extends PunishmentCmd {
     public WarnCmd(Vortex vortex) {
         super(vortex, Action.WARN, false, Permission.ADMINISTRATOR);
@@ -17,8 +19,7 @@ public class WarnCmd extends PunishmentCmd {
 
     @Override
     protected void execute(HybridEvent event, long userId, int time, String reason) {
-        System.out.println("x");
-        vortex.getDatabase().warnings.logCase(vortex, event.getGuild(), event.getUser().getIdLong(), userId, reason);
+        vortex.getHibernate().modlogs.logWarning(event.getGuild().getIdLong(), userId, event.getUser().getIdLong(), Instant.now(), reason);
         event.reply(FormatUtil.formatUserMention(userId) + " was warned");
     }
 }

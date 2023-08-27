@@ -4,12 +4,11 @@ import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener;
 import com.jagrosh.vortex.commands.HybridEvent;
-import com.jagrosh.vortex.database.Database;
 import com.jagrosh.vortex.database.managers.GuildSettingsDataManager;
+import com.jagrosh.vortex.hibernate.api.ModlogManager;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.LogUtil;
 import com.jagrosh.vortex.utils.OtherUtil;
-import lombok.extern.java.Log;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -19,7 +18,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 // TODO: Abstract this so sealing is unneccessary
-@Log
 public abstract sealed class RolePersistCmd extends PunishmentCmd permits GravelCmd, MuteCmd {
     public RolePersistCmd(Vortex vortex, Action action) {
         super(vortex, action, true, Permission.MANAGE_ROLES);
@@ -85,12 +83,12 @@ public abstract sealed class RolePersistCmd extends PunishmentCmd permits Gravel
     }
 
     private void logPersist(boolean isGravel, Guild g, long targetId, long modId, Instant finishTime, String reason) {
-        Database database = vortex.getDatabase();
+        ModlogManager modlogManager = vortex.getHibernate().modlogs;
 
         if (isGravel) {
-            database.gravels.overrideGravel(g, targetId, modId, finishTime, reason);
+            modlogManager.logGravel(g.getIdLong(), targetId, modId, Instant.now(), finishTime, reason);
         } else {
-            database.tempmutes.overrideMute(g, targetId, modId, finishTime, reason);
+            modlogManager.logMute(g.getIdLong(), targetId, modId, Instant.now(), finishTime, reason);
         }
     }
 }

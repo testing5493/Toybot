@@ -21,6 +21,9 @@ import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.vortex.Constants;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.database.Database;
+import com.jagrosh.vortex.hibernate.api.ModlogManager;
+import com.jagrosh.vortex.hibernate.entities.ModLog;
+import com.jagrosh.vortex.hibernate.entities.TimedLog;
 import com.jagrosh.vortex.logging.MessageCache.CachedMessage;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
@@ -31,9 +34,11 @@ import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.utils.TimeFormat;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
 import java.util.Collections;
@@ -46,12 +51,11 @@ import java.util.stream.Collectors;
  * @author John Grosh (jagrosh)
  */
 public class FormatUtil {
-
     private final static String MULTIPLE_FOUND = "**Multiple %s found matching \"%s\":**";
     private final static String CMD_EMOJI = "\uD83D\uDCDC"; // 📜
 
     public static String formatRoleColor(Role role) {
-        Color color = role == null || role.getColor() == null ? ToycatPallete.DEFAULT_ROLE_WHITE : role.getColor();
+        Color color = role == null || role.getColor() == null ? DiscordPallete.DEFAULT_ROLE_WHITE : role.getColor();
         return formatColor(color.getRGB());
     }
 
@@ -112,6 +116,13 @@ public class FormatUtil {
         String discrim = user.getDiscriminator();
         String username = user.getName();
         if (!discrim.matches("0*")) {
+            username += "#" + discrim;
+        }
+        return filterEveryone(username);
+    }
+
+    public static String formatUser(String username, @Nullable String discrim) {
+        if (discrim != null && !discrim.isEmpty() && !discrim.matches("0*")) {
             username += "#" + discrim;
         }
         return filterEveryone(username);
@@ -189,7 +200,21 @@ public class FormatUtil {
         return out.toString();
     }
 
+    public static String clamp(CharSequence str, int maxLength) {
+        if (str == null) {
+            return "";
+        } else if (str.length() > maxLength) {
+            return str.subSequence(0, maxLength).toString();
+        } else {
+            return str.toString();
+        }
+    }
+
     public static String listOfRolesMention(List<Role> roles) {
+        if (roles == null) {
+            return "";
+        }
+
         return formatList(" ", roles.stream().map(Role::getAsMention).toArray(String[]::new));
     }
 
@@ -233,6 +258,10 @@ public class FormatUtil {
     }
 
     public static String formatList(Iterable<String> list, String seperator) {
+        if (list == null) {
+            return "";
+        }
+
         StringBuilder builder = new StringBuilder();
         for (String str : list) {
             builder.append(str).append(seperator);
@@ -341,19 +370,19 @@ public class FormatUtil {
                 + "<:discord:314003252830011395> [Support Server](" + commandClient.getServerInvite() + ")\n" + CMD_EMOJI + " [Full Command Reference](" + Constants.Wiki.COMMANDS + ")\n" + "<:patreon:417455429145329665> [Donations](" + Constants.DONATION_LINK + ")";
     }
 
-    public static String formatModlogCase(Vortex vortex, Guild guild, Database.Modlog modlog) {
-        String type = "", punisher = "", savior = "";
+    public static String formatModlogCase(Vortex vortex, Guild guild, ModLog modlog) {
+        String type = "", punisher = "", pardoner = "";
 
-        switch (modlog.getType()) {
+        switch (modlog.actionType()) {
             case GRAVEL -> {
                 type = "Gravel";
                 punisher = "Graveler";
-                savior = "Ungraveler";
+                pardoner = "Ungraveler";
             }
             case MUTE -> {
                 type = "Mute";
                 punisher = "Muter";
-                savior = "Unmuter";
+                pardoner = "Unmuter";
             }
             case WARN -> {
                 type = "Warning";
@@ -362,12 +391,12 @@ public class FormatUtil {
             case BAN -> {
                 type = "Ban";
                 punisher = "Banner";
-                savior = "Unbanner";
+                pardoner = "Unbanner";
             }
             case SOFTBAN -> {
                 type = "Softban";
                 punisher = "Banner";
-                savior = "Unbanner";
+                pardoner = "Unbanner";
             }
             case KICK -> {
                 type = "Kick";
@@ -376,41 +405,48 @@ public class FormatUtil {
         }
 
         String value = "Type: " + type;
-        if (modlog.getModId() > 0) {
-            value += "\n" + punisher + ": <@" + modlog.getModId() + ">";
+        if (modlog.getPunishingModId() > 0) {
+            value += "\n" + punisher + ": <@" + modlog.getPunishingModId() + ">";
         } else {
             value += "\n" + punisher + ": _Automod_";
         }
 
-        if (modlog.getSaviorId() > 0) {
-            value += "\n" + savior + ": <@" + modlog.getSaviorId() + ">";
-        } else if (modlog.getSaviorId() == 0) {
-            value += "\n" + savior + ": _Automod_";
+        if (modlog instanceof TimedLog timedLog) {
+            String pardonerMod = formatModForModlog(timedLog.getPardoningModId());
+
+            if (pardonerMod != null) {
+                value += "\n" + pardoner + ": " + pardonerMod;
+            }
         }
 
         if (modlog.getReason() != null && !modlog.getReason().trim().isEmpty()) {
             value += "\nReason: " + modlog.getReason().trim();
         }
 
-        if (modlog.getStart() != null) {
-            String label = switch (modlog.getType()) {
-                case WARN, KICK, SOFTBAN -> "Time";
-                default -> "Started ";
-            };
+        value += "\n" + FormatUtil.formatModlogTime(modlog instanceof TimedLog ? "Started" : "Time", modlog.getPunishmentTime());
 
-            value += "\n" + FormatUtil.formatModlogTime(label, modlog.getStart());
-        }
-
-        if (modlog.getFinnish() != null) {
-            if (modlog.getFinnish().getEpochSecond() == Instant.MAX.getEpochSecond()) {
+        if (modlog instanceof TimedLog timedLog) {
+            if (timedLog.isPunishedIndefinitely()) {
                 value += "\nFinishes: Never";
             } else {
-                String label = "Finishe" + (modlog.getFinnish().compareTo(Instant.now()) <= 0 ? "d" : "s");
-                value += "\n" + FormatUtil.formatModlogTime(label, modlog.getFinnish());
+                String label = "Finishe" + (timedLog.getPardoningModId() != ModlogManager.NOT_YET_PARDONED_MOD_ID && timedLog.getPardoningTime().isBefore(Instant.now())  ? "d" : "s");
+                value += "\n" + FormatUtil.formatModlogTime(label, timedLog.getPardoningTime());
             }
         }
 
         return value;
+    }
+
+    private static String formatModForModlog(long modId) {
+        if (modId == ModlogManager.AUTOMOD_ID) {
+            return "_Automod_";
+        } else if (modId == ModlogManager.UNKNOWN_MOD_ID) {
+            return "_Unknown_";
+        } else if (modId == ModlogManager.NOT_YET_PARDONED_MOD_ID) {
+            return null;
+        } else {
+            return "<@" + modId + ">";
+        }
     }
 
     public static String formatModlogTime(String label, TemporalAccessor temporalAccessor) {
@@ -419,22 +455,22 @@ public class FormatUtil {
 
     public static String formatCreationTime(TemporalAccessor temporal) {
         Instant creationTime = Instant.from(temporal);
-        boolean recent = Instant.now().minusSeconds(creationTime.getEpochSecond()).getEpochSecond() < 60 * 60 * 24 * 31; // ~1 month
+        boolean recent = Instant.now().minus(1, ChronoUnit.MONTHS).isBefore(creationTime);
         return (recent ? TimeFormat.DATE_TIME_SHORT : TimeFormat.DATE_SHORT).format(temporal);
     }
 
-    public static String toMentionableRoles(String[] roles) {
+    public static String toMentionableRoles(List<Long> roles) {
         StringBuilder str = new StringBuilder();
 
-        if (roles == null || roles.length == 0) {
+        if (roles == null || roles.isEmpty()) {
             return "nothing";
         }
 
-        for (int i = 0; i < roles.length; i++) {
+        for (int i = 0; i < roles.size(); i++) {
             String afterRoleChars;
-            if (i != roles.length - 1) {
-                if (i == roles.length - 2) {
-                    if (roles.length > 2) {
+            if (i != roles.size() - 1) {
+                if (i == roles.size() - 2) {
+                    if (roles.size() > 2) {
                         afterRoleChars = ", and ";
                     } else {
                         afterRoleChars = " and ";
@@ -446,7 +482,7 @@ public class FormatUtil {
                 afterRoleChars = "";
             }
 
-            str.append("<@&").append(roles[i]).append(">").append(afterRoleChars);
+            str.append("<@&").append(roles.get(i)).append(">").append(afterRoleChars);
         }
 
         return str.toString();
@@ -477,7 +513,7 @@ public class FormatUtil {
         }
     }
 
-    public static String formatPing(long ping) {
+    public static String formatPingTime(long ping) {
         String formattedPing = "";
 
         if (ping >= 60000) {

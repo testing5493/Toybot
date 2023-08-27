@@ -5,18 +5,19 @@ import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener.CommandErrorException;
 import com.jagrosh.vortex.database.Database;
 import com.jagrosh.vortex.database.managers.GuildSettingsDataManager;
+import com.jagrosh.vortex.hibernate.api.ModlogManager;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.LogUtil;
 import com.jagrosh.vortex.utils.OtherUtil;
-import lombok.extern.java.Log;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 
+import java.time.Instant;
+
 // TODO: Abstract this so sealing is unneccessary
-@Log
 public abstract sealed class RolePersistPardonCmd extends PardonCommand permits UngravelCmd, UnmuteCmd {
 
     public RolePersistPardonCmd(Vortex vortex, Action action) {
@@ -64,12 +65,12 @@ public abstract sealed class RolePersistPardonCmd extends PardonCommand permits 
     }
 
     private void logPersistPardon(boolean isGravel, Guild g, long targetId, long modId) {
-        Database database = vortex.getDatabase();
+        ModlogManager modlogManager = vortex.getHibernate().modlogs;
 
         if (isGravel) {
-            database.gravels.removeGravel(g, targetId, modId);
+            modlogManager.logUngravel(g.getIdLong(), targetId, modId, Instant.now());
         } else {
-            database.tempmutes.removeMute(g, targetId, modId);
+            modlogManager.logUnmute(g.getIdLong(), targetId, modId, Instant.now());
         }
     }
 }

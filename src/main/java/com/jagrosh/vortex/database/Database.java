@@ -36,15 +36,14 @@ public class Database extends DatabaseConnector {
     public final GuildSettingsDataManager settings; // logs and other settings
     public final IgnoreManager ignores; // ignored roles and channels
     public final AuditCacheManager auditcache; // cache of latest audit logs
-    public final TempMuteManager tempmutes;
+    /*public final TempMuteManager tempmutes;
     public final GravelManager gravels;
-    public final TempBanManager tempbans;
+    public final TempBanManager tempbans;*/
     public final TempSlowmodeManager tempslowmodes;
     public final InviteWhitelistManager inviteWhitelist;
     public final FilterManager filters;
-    public final TagManager tags;
-    public final WarningManager warnings;
-    public final KickingManager kicks;
+    /*public final WarningManager warnings;
+    public final KickingManager kicks;*/
     private static final List<CurrentId> idCache = new ArrayList<>(1);
     private static ModlogManager[] managers = null;
 
@@ -91,17 +90,16 @@ public class Database extends DatabaseConnector {
         settings = new GuildSettingsDataManager(this);
         ignores = new IgnoreManager(this);
         auditcache = new AuditCacheManager(this);
-        tempmutes = new TempMuteManager(this);
-        gravels = new GravelManager(this);
-        tempbans = new TempBanManager(this);
+        // tempmutes = new TempMuteManager(this);
+        // gravels = new GravelManager(this);
+        // tempbans = new TempBanManager(this);
         tempslowmodes = new TempSlowmodeManager(this);
         inviteWhitelist = new InviteWhitelistManager(this);
         filters = new FilterManager(this);
-        tags = new TagManager(this);
-        warnings = new WarningManager(this);
-        kicks = new KickingManager(this);
+        // warnings = new WarningManager(this);
+        // kicks = new KickingManager(this);
 
-        managers = new ModlogManager[]{tempmutes, gravels, warnings, tempbans, kicks};
+        // managers = new ModlogManager[]{tempmutes, gravels, warnings, tempbans, kicks};
         init();
     }
 
@@ -137,7 +135,7 @@ public class Database extends DatabaseConnector {
         return param;
     }
 
-    public static List<Modlog> getAllModlogs(long guildId, long userId) {
+    /*public static List<Modlog> getAllModlogs(long guildId, long userId) {
         List<Modlog> modlogs = new ArrayList<>();
         for (ModlogManager manager : managers) {
             modlogs.addAll(manager.getModlogs(guildId, userId));
@@ -147,14 +145,14 @@ public class Database extends DatabaseConnector {
         return modlogs;
     }
 
-    /**
+
      * Updates a reason
      *
      * @param guildId Guild Id
      * @param caseId Case Id
      * @param reason New Reason
      * @return The old reason, null if the case could not be found
-     */
+
     public static String updateReason(long guildId, int caseId, String reason) {
         for (ModlogManager manager : managers) {
             String oldReason = manager.updateReason(guildId, caseId, reason);
@@ -175,7 +173,7 @@ public class Database extends DatabaseConnector {
         }
 
         return null;
-    }
+    }*/
 
     public static boolean deleteRow(ResultSet rs) throws SQLException {
         if (rs.next()) {

@@ -57,7 +57,7 @@ public class SlowmodeCmd extends ModCommand {
     }
 
     @Override
-    protected void execute(SlashCommandEvent event) {
+    protected void execute1(SlashCommandEvent event) {
         String timeStr = event.getOption("time", OptionMapping::getAsString);
         String durStr = event.getOption("duration", OptionMapping::getAsString);
 

@@ -2,10 +2,14 @@ package com.jagrosh.vortex.commands.moderation;
 
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
+import com.jagrosh.vortex.Action;
+import com.jagrosh.vortex.Emoji;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandTools;
 import com.jagrosh.vortex.database.Database;
 import com.jagrosh.vortex.database.Database.Modlog;
+import com.jagrosh.vortex.hibernate.entities.BanLog;
+import com.jagrosh.vortex.hibernate.entities.ModLog;
 import com.jagrosh.vortex.utils.FormatUtil;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
@@ -17,6 +21,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
+import javax.xml.crypto.Data;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,7 +38,7 @@ public class ModlogsCmd extends ModCommand {
     }
 
     @Override
-    protected void execute(SlashCommandEvent event) {
+    protected void execute1(SlashCommandEvent event) {
         User u = event.getOption("user", OptionMapping::getAsUser);
         if (u == null) {
             u = event.getUser();
@@ -63,7 +68,7 @@ public class ModlogsCmd extends ModCommand {
     }
 
     private MessageCreateData generateMessage(Guild g, long userId, User u) {
-        List<Modlog> modlogs = Database.getAllModlogs(g.getIdLong(), userId);
+        List<ModLog> modlogs = vortex.getHibernate().modlogs.getCases(g.getIdLong(), userId);
         int size = modlogs.size();
         if (size == 0) {
             return MessageCreateData.fromContent("Could not find any modlogs for that user");
@@ -87,9 +92,9 @@ public class ModlogsCmd extends ModCommand {
             embeds[0].setAuthor(String.format("%d modlog%s found for %d", size, size == 1 ? "" : "s", userId));
         }
 
-        for (int i = modlogs.size() - 1; i >= 0; i--) {
-            Modlog modlog = modlogs.get(i);
-            embeds[i / 25].addField(modlog.getType().getEmoji().neutralEmoji() + " Case: " + modlog.getId(), FormatUtil.formatModlogCase(vortex, g, modlog), false);
+        for (int i = 0; i < modlogs.size(); i++) {
+            ModLog modlog = modlogs.get(i);
+            embeds[i / 25].addField(modlog.actionType().getEmoji().neutralEmoji() + " Case: " + modlog.getCaseId(), FormatUtil.formatModlogCase(vortex, g, modlog), false);
         }
 
         MessageCreateBuilder messageBuilder = new MessageCreateBuilder();

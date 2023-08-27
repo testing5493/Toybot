@@ -345,6 +345,10 @@ public class GuildSettingsDataManager extends DataManager implements GuildSettin
             return guild.getRoleById(modRole);
         }
 
+        public long getMutedRoleId() {
+            return muteRole;
+        }
+
         public Role getMutedRole(Guild guild) {
             Role rid = guild.getRoleById(muteRole);
             if (rid != null) {
@@ -367,6 +371,10 @@ public class GuildSettingsDataManager extends DataManager implements GuildSettin
             return guild.getRoles().stream().filter(r -> r.getName().equalsIgnoreCase("Gravel")).findFirst().orElse(null);
         }
 
+        public long getGravelRoleId() {
+            return gravelRole;
+        }
+
         public Role getRtcRole(Guild guild) {
             Role rid = guild.getRoleById(rtcRole);
             if (rid != null) {
@@ -374,6 +382,10 @@ public class GuildSettingsDataManager extends DataManager implements GuildSettin
             }
 
             return guild.getRoles().stream().filter(r -> r.getName().equalsIgnoreCase("Regular Toy Chatters")).findFirst().orElse(null);
+        }
+
+        public long getRtcRoleId() {
+            return rtcRole;
         }
 
         public TextChannel getModLogChannel(Guild guild) {

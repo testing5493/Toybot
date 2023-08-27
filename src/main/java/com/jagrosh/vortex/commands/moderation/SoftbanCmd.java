@@ -19,21 +19,21 @@ import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener;
 import com.jagrosh.vortex.commands.HybridEvent;
+import com.jagrosh.vortex.hibernate.api.ModlogManager;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.LogUtil;
 import com.jagrosh.vortex.utils.OtherUtil;
-import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 /**
  * @author John Grosh (jagrosh)
  */
-@Log
+@Slf4j
 public class SoftbanCmd extends PunishmentCmd {
     public SoftbanCmd(Vortex vortex) {
         super(vortex, Action.SOFTBAN, false, Permission.BAN_MEMBERS);
@@ -74,17 +74,17 @@ public class SoftbanCmd extends PunishmentCmd {
                     g.unban(User.fromId(toBanId))
                             .reason(LogUtil.auditReasonFormat(mod, "Softban Unban"))
                             .queueAfter(4, TimeUnit.SECONDS, success2 -> {
-                                vortex.getDatabase().tempbans.setSoftBan(vortex, g, toBanId, mod.getIdLong(), reason);
+                                vortex.getHibernate().modlogs.logSoftban(g.getIdLong(), toBanId, mod.getIdLong(), Instant.now(), reason);
                                 event.reply(FormatUtil.formatUserMention(toBanId) + " was softbanned");
                             }, failure2 -> {
                                 // If failed to unban
-                                vortex.getDatabase().tempbans.setBan(vortex, g, toBanId, mod.getIdLong(), Instant.now(), reason);
+                                vortex.getHibernate().modlogs.logBan(g.getIdLong(), toBanId, mod.getIdLong(), Instant.now(), ModlogManager.INDEFINITE_TIME, reason);
                                 event.replyError("Failed to unban " + FormatUtil.formatUserMention(toBanId) + " after banning");
-                                log.log(Level.WARNING, "Failed to unban a user after a softban", failure2);
+                                log.warn("Failed to unban a user after a softban", failure2);
                             });
 
                 }, failure -> {
-                    log.log(Level.WARNING, "Failed to ban a user", failure);
+                    log.warn("Failed to ban a user", failure);
                     event.replyError("Failed to ban " + FormatUtil.formatUserMention(toBanId));
                 });
     }

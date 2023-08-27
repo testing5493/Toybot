@@ -33,10 +33,7 @@ import com.jagrosh.vortex.commands.owner.ReloadCmd;
 import com.jagrosh.vortex.commands.settings.*;
 import com.jagrosh.vortex.commands.tools.*;
 import com.jagrosh.vortex.database.Database;
-import com.jagrosh.vortex.logging.BasicLogger;
-import com.jagrosh.vortex.logging.MessageCache;
-import com.jagrosh.vortex.logging.ModLogger;
-import com.jagrosh.vortex.logging.TextUploader;
+import com.jagrosh.vortex.logging.*;
 import com.jagrosh.vortex.utils.BlockingSessionController;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.OtherUtil;
@@ -48,11 +45,14 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.exceptions.PermissionException;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.Compression;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
+import net.dv8tion.jda.api.utils.messages.MessageRequest;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -65,53 +65,33 @@ import java.util.concurrent.ScheduledExecutorService;
  *
  * @author John Grosh (jagrosh)
  */
+// TODO: Double check switch statements are null safe
 @Slf4j
 public class Vortex {
     public static final Config config;
-    public final boolean developerMode;
+    public static final boolean BULK_PARSE_ON_START;
+    public static final boolean DEVELOPER_MODE;
+    public static final boolean AUTO_CREATE_DB;
+
     private final @Getter EventWaiter eventWaiter;
     private final @Getter ScheduledExecutorService threadpool;
     private final @Getter Database database;
+    private final @Getter com.jagrosh.vortex.hibernate.api.Database hibernate;
     private final @Getter TextUploader textUploader;
     private final @Getter JDA jda;
-    private final @Getter ModLogger modLogger;
-    private final @Getter BasicLogger basicLogger;
+    private final @Getter AuditLogReader auditLogReader;
+    private final @Getter ModlogGenerator basicLogger;
     private final @Getter MessageCache messageCache;
     private final @Getter WebhookClient logWebhook;
     private final @Getter AutoMod autoMod;
     private final @Getter CommandExceptionListener listener;
 
     static {
-        System.setProperty("config.file", System.getProperty("config.file", "application.conf"));
-        File configFile = new File(System.getProperty("config.file"));
-        try {
-            if (configFile.createNewFile()) {
-                InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("reference.conf");
+        config = loadConfiguration();
 
-                if (inputStream == null) {
-                    log.error("Unable to load reference.conf in resources");
-                    System.exit(1);
-                }
-
-                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-                BufferedWriter writer = new BufferedWriter(new FileWriter(configFile));
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    writer.write(line + "\n");
-                }
-
-                reader.close();
-                writer.close();
-                log.info("A configuration file named " + System.getProperty("config.file") + " was created. Please fill it out and rerun the bot");
-                System.exit(0);
-            }
-        } catch (IOException e) {
-            log.error("Could not create a configuration file", e);
-            throw new IOError(e);
-        }
-
-        config = ConfigFactory.load();
+        BULK_PARSE_ON_START = config.getBoolean("check-for-missed-logs-on-start");
+        DEVELOPER_MODE = config.getBoolean("developer-mode"); // TODO: Maybe make dev mode a bit better
+        AUTO_CREATE_DB = config.getBoolean("auto-create-database");
     }
 
 
@@ -171,7 +151,7 @@ public class Vortex {
                 new AnnounceCmd(),
                 new AuditCmd(),
                 new DehoistCmd(),
-                new InvitepruneCmd(this),
+             // new InvitepruneCmd(this),
                 new LookupCmd(this),
                 new TagCmd(this),
                 new TagsCmd(this),
@@ -183,18 +163,21 @@ public class Vortex {
         };
 
         SlashCommand[] slashCommands = Arrays.stream(commands).filter(command -> command instanceof SlashCommand).toArray(SlashCommand[]::new);
-        developerMode = config.getBoolean("developer-mode"); // TODO: Maybe make dev mode a bit better
+        hibernate = new com.jagrosh.vortex.hibernate.api.Database();
         eventWaiter = new EventWaiter(Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "eventwaiter")), false);
-        threadpool = Executors.newScheduledThreadPool(100, r -> new Thread(r, "vortex"));
+        threadpool = Executors.newScheduledThreadPool(30, r -> new Thread(r, "vortex"));
         database = new Database(config.getString("database.host"), config.getString("database.username"), config.getString("database.password"));
         textUploader = new TextUploader(config.getStringList("upload-webhooks"));
-        modLogger = new ModLogger(this);
-        basicLogger = new BasicLogger(this, config);
+        auditLogReader = new AuditLogReader(this);
+        basicLogger = new ModlogGenerator(this, config);
         messageCache = new MessageCache();
         logWebhook = new WebhookClientBuilder(config.getString("webhook-url")).build();
         autoMod = new AutoMod(this, config);
         listener = new CommandExceptionListener();
-        CommandClient client = new CommandClientBuilder().setPrefix(Constants.PREFIX).setActivity(Activity.watching("Toycat")).setOwnerId(Constants.OWNER_ID)
+        CommandClient client = new CommandClientBuilder()
+                .setPrefix(Constants.PREFIX)
+                .setActivity(Activity.watching("Toycat"))
+                .setOwnerId(Constants.OWNER_ID)
                 .setEmojis(Constants.SUCCESS, Constants.WARNING, Constants.ERROR)
                 .setLinkedCacheSize(0)
                 .setGuildSettingsManager(database.settings)
@@ -203,7 +186,7 @@ public class Vortex {
                 .setShutdownAutomatically(false)
                 .addCommands(commands)
                 .addSlashCommands(slashCommands)
-                .forceGuildOnly(developerMode ? config.getString("uploader.guild") : null) //  TODO: Maybe make not guild only
+                .forceGuildOnly(DEVELOPER_MODE ? config.getString("uploader.guild") : null) //  TODO: Maybe make not guild only
                 .setHelpConsumer(e -> OtherUtil.commandEventReplyDm(e, FormatUtil.formatHelp(e, this), m -> // TODO: Consider using "event.replyInDm(FormatUtil.formatHelp(event, this)" if that is newer/better
                     {
                         if (e.isFromType(ChannelType.TEXT)) {
@@ -212,7 +195,7 @@ public class Vortex {
                             } catch (PermissionException ignore) {}
                         }
                     }, t -> e.replyWarning("Help cannot be sent because you are blocking Direct Messages."))).build();
-        //MessageAction.setDefaultMentions(Arrays.asList(Message.MentionType.EMOTE, Message.MentionType.CHANNEL)); // TODO: Figure out what this does
+        MessageRequest.setDefaultMentions(Arrays.asList(Message.MentionType.CHANNEL, Message.MentionType.EMOJI, Message.MentionType.SLASH_COMMAND));
         jda = JDABuilder.create(config.getString("bot-token"), GatewayIntent.GUILD_MEMBERS,
                                                                     GatewayIntent.GUILD_MESSAGE_REACTIONS,
                                                                     GatewayIntent.GUILD_MESSAGES,
@@ -220,16 +203,15 @@ public class Vortex {
                                                                     GatewayIntent.GUILD_VOICE_STATES,
                                                                     GatewayIntent.MESSAGE_CONTENT,
                                                                     GatewayIntent.GUILD_PRESENCES
-                         ).addEventListeners(new Listener(this), client, eventWaiter)
+                         ).disableCache(CacheFlag.EMOJI, CacheFlag.SCHEDULED_EVENTS, CacheFlag.STICKER, CacheFlag.ROLE_TAGS)
+                          .addEventListeners(new Listener(this), client, eventWaiter)
                          .setStatus(OnlineStatus.ONLINE)
-                         .setActivity(Activity.playing("loading..."))
+                         .setActivity(Activity.playing("loading...")) // TODO: Replace with custom status once supported
                          .setBulkDeleteSplittingEnabled(false)
                          .setRequestTimeoutRetry(true)
                          .setSessionController(new BlockingSessionController())
                          .setCompression(Compression.NONE)
                          .build();
-
-        modLogger.start();
     }
 
     /**
@@ -238,5 +220,38 @@ public class Vortex {
      */
     public static void main(String[] args) throws Exception {
         new Vortex();
+    }
+
+    private static Config loadConfiguration() {
+        System.setProperty("config.file", System.getProperty("config.file", "application.conf"));
+        File configFile = new File(System.getProperty("config.file"));
+        try {
+            if (configFile.createNewFile()) {
+                InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("reference.conf");
+
+                if (inputStream == null) {
+                    log.error("Unable to load reference.conf in resources");
+                    System.exit(1);
+                }
+
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+                BufferedWriter writer = new BufferedWriter(new FileWriter(configFile));
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    writer.write(line + "\n");
+                }
+
+                reader.close();
+                writer.close();
+                log.info("A configuration file named " + System.getProperty("config.file") + " was created. Please fill it out and rerun the bot");
+                System.exit(0);
+            }
+        } catch (IOException e) {
+            log.error("Could not create a configuration file", e);
+            throw new IOError(e);
+        }
+
+        return ConfigFactory.load();
     }
 }

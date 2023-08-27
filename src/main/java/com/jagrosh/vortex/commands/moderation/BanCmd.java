@@ -22,7 +22,6 @@ import com.jagrosh.vortex.commands.HybridEvent;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.LogUtil;
 import com.jagrosh.vortex.utils.OtherUtil;
-import lombok.extern.java.Log;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 
@@ -33,7 +32,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author John Grosh (jagrosh)
  */
-@Log
 public class BanCmd extends PunishmentCmd {
     public BanCmd(Vortex vortex) {
         super(vortex, Action.BAN, true, Permission.BAN_MEMBERS);
@@ -74,7 +72,7 @@ public class BanCmd extends PunishmentCmd {
         g.ban(UserSnowflake.fromId(toBanId), 0, TimeUnit.SECONDS)
                 .reason(LogUtil.auditReasonFormat(mod, min, reason))
                 .queue(success -> {
-                    vortex.getDatabase().tempbans.setBan(vortex, g, toBanId, mod.getIdLong(), unbanTime, reason);
+                    vortex.getHibernate().modlogs.logBan(g.getIdLong(), toBanId, mod.getIdLong(), Instant.now(), unbanTime, reason);
                     event.reply(FormatUtil.formatUserMention(toBanId) + " was banned");
                 }, failure -> {
                     handleError(event, failure, action, toBanId);

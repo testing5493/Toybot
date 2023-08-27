@@ -11,6 +11,8 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
 /**
@@ -24,6 +26,7 @@ public sealed interface HybridEvent permits HybridEvent.SlashHybridEvent, Hybrid
     User getUser();
     Member getMember();
     Guild getGuild();
+    GuildChannel getGuildChannel();
     default JDA getJDA() {
         return getUser().getJDA();
     }
@@ -81,6 +84,11 @@ public sealed interface HybridEvent permits HybridEvent.SlashHybridEvent, Hybrid
         @Override
         public Guild getGuild() {
             return e.getGuild();
+        }
+
+        @Override
+        public GuildChannel getGuildChannel() {
+            return e.getGuildChannel();
         }
 
         @Override
@@ -145,6 +153,11 @@ public sealed interface HybridEvent permits HybridEvent.SlashHybridEvent, Hybrid
         @Override
         public Guild getGuild() {
             return e.getGuild();
+        }
+
+        @Override
+        public GuildMessageChannel getGuildChannel() {
+            return e.getGuildChannel();
         }
 
         @Override

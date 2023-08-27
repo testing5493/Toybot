@@ -27,6 +27,8 @@ import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 
+import java.time.Instant;
+
 /**
  * @author John Grosh (jagrosh)
  */
@@ -64,7 +66,7 @@ public class UnbanCmd extends PardonCommand {
         }
 
         // TODO: Do later???
-        vortex.getDatabase().tempbans.clearBan(vortex, g, targetId, mod.getIdLong());
+        vortex.getHibernate().modlogs.logUnban(g.getIdLong(), targetId, mod.getIdLong(), Instant.now());
         return "Unbanned <@" + targetId + ">";
     }
 }

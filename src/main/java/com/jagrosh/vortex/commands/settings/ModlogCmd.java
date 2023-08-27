@@ -45,7 +45,6 @@ public class ModlogCmd extends LogCommand {
     @Override
     protected void setLogChannel(CommandEvent event, TextChannel tc) {
         vortex.getDatabase().settings.setModLogChannel(event.getGuild(), tc);
-        vortex.getModLogger().setNeedUpdate(event.getGuild());
         if (tc == null) {
             event.replySuccess("Moderation Logs will not be sent");
         } else {
