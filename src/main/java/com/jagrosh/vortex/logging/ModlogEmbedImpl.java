@@ -5,6 +5,7 @@ import com.jagrosh.vortex.utils.OtherUtil;
 import com.jagrosh.vortex.utils.ToycatPallete;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.automod.AutoModResponse;
 import net.dv8tion.jda.api.utils.FileUpload;
 
 import java.awt.Color;
@@ -144,7 +145,6 @@ public non-sealed class ModlogEmbedImpl implements ModlogEmbed {
         if (charRemaining == 0) { // At this point we may start to exhaust all our characters, although it is unlikely
             return builder.build();
         }
-
 
         if (embedFields != null) {
             for (MessageEmbed.Field field : embedFields) {

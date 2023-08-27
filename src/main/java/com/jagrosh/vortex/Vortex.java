@@ -134,7 +134,6 @@ public class Vortex {
                 // Automoderation
                 new AntiinviteCmd(this),
                 new MaxlinesCmd(this),
-                new MaxmentionsCmd(this),
                 new AntiduplicateCmd(this),
                 new AutodehoistCmd(this),
                 new FilterCmd(this),
