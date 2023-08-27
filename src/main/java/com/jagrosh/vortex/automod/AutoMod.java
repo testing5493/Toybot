@@ -369,30 +369,11 @@ public class AutoMod {
             }
         }
 
-        // anti-mention (users)
-        if (settings.maxMentions >= AutomodManager.MENTION_MINIMUM) {
-
-            long mentions = message.getMentions().getUsers().stream().filter(u -> !u.isBot() && !u.equals(message.getAuthor())).distinct().count();
-            if (mentions > settings.maxMentions) {
-                reason.append(", Mentioning ").append(mentions).append(" users");
-                shouldDelete = true;
-            }
-        }
-
         // max newlines
         if (settings.maxLines > 0 && preventSpam) {
             int count = message.getContentRaw().split("\n").length;
             if (count > settings.maxLines) {
                 reason.append(", Message contained ").append(count).append(" newlines");
-                shouldDelete = true;
-            }
-        }
-
-        // anti-mention (roles)
-        if (settings.maxRoleMentions >= AutomodManager.ROLE_MENTION_MINIMUM) {
-            long mentions = message.getMentions().getRoles().stream().distinct().count();
-            if (mentions > settings.maxRoleMentions) {
-                reason.append(", Mentioning ").append(mentions).append(" roles");
                 shouldDelete = true;
             }
         }

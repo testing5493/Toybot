@@ -101,16 +101,6 @@ public class SetupCmd extends Command {
                     sb.append("\n").append(event.getClient().getSuccess()).append(" Anti-copypasta enabled");
                 }
 
-                if (ams.maxMentions == 0) {
-                    vortex.getDatabase().automod.setMaxMentions(event.getGuild(), 3);
-                    sb.append("\n").append(event.getClient().getSuccess()).append(" Maximum mentions set to `3` mentions");
-                }
-
-                if (ams.maxRoleMentions == 0) {
-                    vortex.getDatabase().automod.setMaxRoleMentions(event.getGuild(), 4);
-                    sb.append("\n").append(event.getClient().getSuccess()).append(" Maximum role mentions set to `4` mentions");
-                }
-
                 if (ams.maxLines == 0) {
                     vortex.getDatabase().automod.setMaxLines(event.getGuild(), 10);
                     sb.append("\n").append(event.getClient().getSuccess()).append(" Maximum lines set to `10` lines");
