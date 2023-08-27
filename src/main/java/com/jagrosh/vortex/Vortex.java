@@ -203,7 +203,7 @@ public class Vortex {
                                                                     GatewayIntent.GUILD_VOICE_STATES,
                                                                     GatewayIntent.MESSAGE_CONTENT,
                                                                     GatewayIntent.GUILD_PRESENCES
-                         ).disableCache(CacheFlag.EMOJI, CacheFlag.SCHEDULED_EVENTS, CacheFlag.STICKER)
+                         ).disableCache(CacheFlag.EMOJI, CacheFlag.SCHEDULED_EVENTS, CacheFlag.STICKER, CacheFlag.ROLE_TAGS)
                           .addEventListeners(new Listener(this), client, eventWaiter)
                          .setStatus(OnlineStatus.ONLINE)
                          .setActivity(Activity.playing("loading...")) // TODO: Replace with custom status once supported

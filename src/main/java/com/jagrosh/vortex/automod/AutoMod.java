@@ -125,7 +125,7 @@ public class AutoMod {
 
     private TimedLog autoPardon(TimedLog timedLog) {
         try {
-            timedLog.setPardoningTime(Instant.now().getEpochSecond());
+            timedLog.setPardoningTime(Instant.now());
             timedLog.setPardoningModId(ModlogManager.AUTOMOD_ID);
             return switch (timedLog) {
                 case GravelLog gravelLog -> vortex.getHibernate().modlogs.logUngravel(gravelLog);
@@ -141,6 +141,7 @@ public class AutoMod {
     public void checkAutoPardons() {
         JDA jda = vortex.getJda();
         for (TimedLog timedLog : vortex.getHibernate().modlogs.checkAutoPardons()) {
+            System.out.println(timedLog);
             Guild g = jda.getGuildById(timedLog.getGuildId());
             if (g == null || jda.isUnavailable(g.getIdLong())) {
                 continue;
@@ -154,7 +155,7 @@ public class AutoMod {
                 }
 
                 if (m != null) {
-                    banLog.setPardoningModId(Instant.now().getEpochSecond());
+                    banLog.setPardoningTime(Instant.now());
                     banLog.setPardoningModId(ModlogManager.UNKNOWN_MOD_ID);
                     try {
                         vortex.getHibernate().modlogs.logUnban(banLog);

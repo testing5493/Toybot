@@ -70,7 +70,7 @@ public class KickCmd extends PunishmentCmd {
         g.kick(UserSnowflake.fromId(targetId))
                 .reason(LogUtil.auditReasonFormat(mod, reason))
                 .queue(success -> {
-                    vortex.getHibernate().modlogs.logKick(g.getIdLong(), targetId, mod.getIdLong(), Instant.now().getEpochSecond(), reason);
+                    vortex.getHibernate().modlogs.logKick(g.getIdLong(), targetId, mod.getIdLong(), Instant.now(), reason);
                     event.replyError(FormatUtil.formatUserMention(targetId) + " was kicked");
                 }, failure -> {
                     handleError(event, failure, action, targetId);

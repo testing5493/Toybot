@@ -68,9 +68,9 @@ public abstract sealed class RolePersistPardonCmd extends PardonCommand permits 
         ModlogManager modlogManager = vortex.getHibernate().modlogs;
 
         if (isGravel) {
-            modlogManager.logUngravel(g.getIdLong(), targetId, modId, Instant.now().getEpochSecond());
+            modlogManager.logUngravel(g.getIdLong(), targetId, modId, Instant.now());
         } else {
-            modlogManager.logUnmute(g.getIdLong(), targetId, modId, Instant.now().getEpochSecond());
+            modlogManager.logUnmute(g.getIdLong(), targetId, modId, Instant.now());
         }
     }
 }

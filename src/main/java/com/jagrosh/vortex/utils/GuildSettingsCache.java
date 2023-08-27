@@ -25,18 +25,18 @@ public class GuildSettingsCache {
     }
 
     public long getGraveledRoleId() {
-        return get().getGravelRoleId();
+        return get().getGravelRole(g).getIdLong();
     }
 
     public long getMutedRoleId() {
-        return get().getMutedRoleId();
+        return get().getMutedRole(g).getIdLong();
     }
 
     public Role getGravelRole() {
-        return g.getRoleById(getGraveledRoleId());
+        return get().getGravelRole(g);
     }
 
     public Role getMutedRole() {
-        return g.getRoleById(getMutedRoleId());
+        return get().getMutedRole(g);
     }
 }

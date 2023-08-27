@@ -86,9 +86,9 @@ public abstract sealed class RolePersistCmd extends PunishmentCmd permits Gravel
         ModlogManager modlogManager = vortex.getHibernate().modlogs;
 
         if (isGravel) {
-            modlogManager.logGravel(g.getIdLong(), targetId, modId, Instant.now().getEpochSecond(), finishTime.getEpochSecond(), reason);
+            modlogManager.logGravel(g.getIdLong(), targetId, modId, Instant.now(), finishTime, reason);
         } else {
-            modlogManager.logMute(g.getIdLong(), targetId, modId, Instant.now().getEpochSecond(), finishTime.getEpochSecond(), reason);
+            modlogManager.logMute(g.getIdLong(), targetId, modId, Instant.now(), finishTime, reason);
         }
     }
 }

@@ -74,11 +74,11 @@ public class SoftbanCmd extends PunishmentCmd {
                     g.unban(User.fromId(toBanId))
                             .reason(LogUtil.auditReasonFormat(mod, "Softban Unban"))
                             .queueAfter(4, TimeUnit.SECONDS, success2 -> {
-                                vortex.getHibernate().modlogs.logSoftban(g.getIdLong(), toBanId, mod.getIdLong(), Instant.now().getEpochSecond(), reason);
+                                vortex.getHibernate().modlogs.logSoftban(g.getIdLong(), toBanId, mod.getIdLong(), Instant.now(), reason);
                                 event.reply(FormatUtil.formatUserMention(toBanId) + " was softbanned");
                             }, failure2 -> {
                                 // If failed to unban
-                                vortex.getHibernate().modlogs.logBan(g.getIdLong(), toBanId, mod.getIdLong(), Instant.now().getEpochSecond(), ModlogManager.INDEFINITE_TIME, reason);
+                                vortex.getHibernate().modlogs.logBan(g.getIdLong(), toBanId, mod.getIdLong(), Instant.now(), ModlogManager.INDEFINITE_TIME, reason);
                                 event.replyError("Failed to unban " + FormatUtil.formatUserMention(toBanId) + " after banning");
                                 log.warn("Failed to unban a user after a softban", failure2);
                             });

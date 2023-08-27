@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
 import java.util.Collections;
@@ -422,14 +423,14 @@ public class FormatUtil {
             value += "\nReason: " + modlog.getReason().trim();
         }
 
-        value += "\n" + FormatUtil.formatModlogTime(modlog instanceof TimedLog ? "Started" : "Time", Instant.ofEpochSecond(modlog.getPunishmentTime()));
+        value += "\n" + FormatUtil.formatModlogTime(modlog instanceof TimedLog ? "Started" : "Time", modlog.getPunishmentTime());
 
         if (modlog instanceof TimedLog timedLog) {
-            if (timedLog.getPardoningTime() >= Instant.MAX.getEpochSecond()) {
+            if (timedLog.isPunishedIndefinitely()) {
                 value += "\nFinishes: Never";
             } else {
-                String label = "Finishe" + (timedLog.getPardoningTime() - Instant.now().getEpochSecond() <= 0 ? "d" : "s");
-                value += "\n" + FormatUtil.formatModlogTime(label, Instant.ofEpochSecond(timedLog.getPardoningTime()));
+                String label = "Finishe" + (timedLog.getPardoningModId() != ModlogManager.NOT_YET_PARDONED_MOD_ID && timedLog.getPardoningTime().isBefore(Instant.now())  ? "d" : "s");
+                value += "\n" + FormatUtil.formatModlogTime(label, timedLog.getPardoningTime());
             }
         }
 
@@ -454,7 +455,7 @@ public class FormatUtil {
 
     public static String formatCreationTime(TemporalAccessor temporal) {
         Instant creationTime = Instant.from(temporal);
-        boolean recent = Instant.now().minusSeconds(creationTime.getEpochSecond()).getEpochSecond() < 60 * 60 * 24 * 31; // ~1 month
+        boolean recent = Instant.now().minus(1, ChronoUnit.MONTHS).isBefore(creationTime);
         return (recent ? TimeFormat.DATE_TIME_SHORT : TimeFormat.DATE_SHORT).format(temporal);
     }
 

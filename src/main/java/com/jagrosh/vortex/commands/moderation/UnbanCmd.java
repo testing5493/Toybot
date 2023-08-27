@@ -66,7 +66,7 @@ public class UnbanCmd extends PardonCommand {
         }
 
         // TODO: Do later???
-        vortex.getHibernate().modlogs.logUnban(g.getIdLong(), targetId, mod.getIdLong(), Instant.now().getEpochSecond());
+        vortex.getHibernate().modlogs.logUnban(g.getIdLong(), targetId, mod.getIdLong(), Instant.now());
         return "Unbanned <@" + targetId + ">";
     }
 }

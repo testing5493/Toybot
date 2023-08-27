@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.audit.AuditLogEntry;
 import net.dv8tion.jda.api.audit.AuditLogKey;
 import net.dv8tion.jda.api.entities.Guild;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -61,27 +62,27 @@ public class AuditLogReader {
         String reason = entry.getReason() == null ? "" : entry.getReason();
         long userId = entry.getUserIdLong();
         long targetId = entry.getTargetIdLong();
-        long timeNowSec = entry.getTimeCreated().toInstant().getEpochSecond();
+        Instant timeCreated = entry.getTimeCreated().toInstant();
 
         // TODO: Fix thing where past logs may interfere with present logs
         switch (entry.getType()) {
-            case KICK -> vortex.getHibernate().modlogs.logKick(g.getIdLong(), targetId, userId, timeNowSec, reason);
-            case BAN -> vortex.getHibernate().modlogs.logBan(g.getIdLong(), targetId, userId, timeNowSec, ModlogManager.INDEFINITE_TIME, reason);
-            case UNBAN -> vortex.getHibernate().modlogs.logUnban(g.getIdLong(), targetId, userId, timeNowSec);
+            case KICK -> vortex.getHibernate().modlogs.logKick(g.getIdLong(), targetId, userId, timeCreated, reason);
+            case BAN -> vortex.getHibernate().modlogs.logBan(g.getIdLong(), targetId, userId, timeCreated, ModlogManager.INDEFINITE_TIME, reason);
+            case UNBAN -> vortex.getHibernate().modlogs.logUnban(g.getIdLong(), targetId, userId, timeCreated);
             case MEMBER_ROLE_UPDATE -> {
                 for (long id : getPartialRoles(entry, AuditLogKey.MEMBER_ROLES_ADD)) {
                     if (id == gCache.getMutedRoleId()) {
-                        vortex.getHibernate().modlogs.logMute(g.getIdLong(), targetId, userId, timeNowSec, ModlogManager.INDEFINITE_TIME, reason);
+                        vortex.getHibernate().modlogs.logMute(g.getIdLong(), targetId, userId, timeCreated, ModlogManager.INDEFINITE_TIME, reason);
                     } else if (id == gCache.getGraveledRoleId()) {
-                        vortex.getHibernate().modlogs.logGravel(g.getIdLong(), targetId, userId, timeNowSec, ModlogManager.INDEFINITE_TIME, reason);
+                        vortex.getHibernate().modlogs.logGravel(g.getIdLong(), targetId, userId, timeCreated, ModlogManager.INDEFINITE_TIME, reason);
                     }
                 }
 
                 for (long id : getPartialRoles(entry, AuditLogKey.MEMBER_ROLES_REMOVE)) {
                     if (id == gCache.getMutedRoleId()) {
-                        vortex.getHibernate().modlogs.logUnmute(g.getIdLong(), targetId, userId, timeNowSec);
+                        vortex.getHibernate().modlogs.logUnmute(g.getIdLong(), targetId, userId, timeCreated);
                     } else if (id == gCache.getGraveledRoleId()) {
-                        vortex.getHibernate().modlogs.logUngravel(g.getIdLong(), targetId, userId, timeNowSec);
+                        vortex.getHibernate().modlogs.logUngravel(g.getIdLong(), targetId, userId, timeCreated);
                     }
                 }
             }

@@ -126,6 +126,7 @@ class GuildAuditLogReader {
      * This should only be called once after the initial {@link net.dv8tion.jda.api.events.session.ReadyEvent}
      * @param g The guild
      */
+    // TODO: Make sure no one left the guild while the bot was down to evade persists
     public void bulkRead(Guild g) {
         if (!willBulkRetrieve) {
             return;
@@ -134,6 +135,7 @@ class GuildAuditLogReader {
         queueIsOpen = true;
         stateWriteLock.lock();
         try {
+            // Reads from the modlogs
             if (!g.getSelfMember().hasPermission(Permission.VIEW_AUDIT_LOGS)) {
                 return;
             }
