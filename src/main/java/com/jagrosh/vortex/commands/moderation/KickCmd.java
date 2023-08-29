@@ -45,10 +45,10 @@ public class KickCmd extends PunishmentCmd {
         Member mod = event.getMember();
 
         Guild g = event.getGuild();
-        Role modrole = vortex.getDatabase().settings.getSettings(g).getModeratorRole(g);
+        Role modRole = vortex.getHibernate().guild_data.getGuildData(g.getIdLong()).getModRole(g);
+        Role adminRole = vortex.getHibernate().guild_data.getGuildData(g.getIdLong()).getAdminRole(g);
 
         Member targetMember = OtherUtil.getMemberCacheElseRetrieve(g, targetId);
-
         if (!g.getSelfMember().hasPermission(Permission.KICK_MEMBERS)) {
             throw new CommandExceptionListener.CommandErrorException("I do not have any roles with permissions to kick users.");
         }
@@ -60,7 +60,7 @@ public class KickCmd extends PunishmentCmd {
                 throw new CommandExceptionListener.CommandErrorException("You do not have permission to kick " + FormatUtil.formatUserMention(targetId));
             } else if (!g.getSelfMember().canInteract(targetMember)) {
                 throw new CommandExceptionListener.CommandErrorException("I am unable to kick " + FormatUtil.formatUserMention(targetId));
-            } else if (modrole != null && targetMember.getRoles().contains(modrole)) {
+            } else if ((modRole != null && targetMember.getRoles().contains(modRole)) || (adminRole != null && targetMember.getRoles().contains(adminRole))) {
                 throw new CommandExceptionListener.CommandErrorException("I won't kick " + FormatUtil.formatUserMention(targetId) + " because they are a mod");
             }
         } else {

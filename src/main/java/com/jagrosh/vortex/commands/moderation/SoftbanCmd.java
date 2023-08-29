@@ -46,7 +46,8 @@ public class SoftbanCmd extends PunishmentCmd {
         Member mod = event.getMember();
 
         Guild g = mod.getGuild();
-        Role modrole = vortex.getDatabase().settings.getSettings(g).getModeratorRole(g);
+        Role modrole = vortex.getHibernate().guild_data.getGuildData(g.getIdLong()).getModRole(g);
+        Role adminRole = vortex.getHibernate().guild_data.getGuildData(g.getIdLong()).getAdminRole(g);
         Member toBanMember = OtherUtil.getMemberCacheElseRetrieve(g, toBanId);
 
         if (!g.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
@@ -63,7 +64,7 @@ public class SoftbanCmd extends PunishmentCmd {
                 throw new CommandExceptionListener.CommandErrorException("You do not have permission to ban " + FormatUtil.formatUserMention(toBanId));
             } else if (!g.getSelfMember().canInteract(toBanMember)) {
                 throw new CommandExceptionListener.CommandErrorException("I am unable to ban " + FormatUtil.formatUserMention(toBanId));
-            } else if (modrole != null && toBanMember.getRoles().contains(modrole)) {
+            } else if ((modrole != null && toBanMember.getRoles().contains(modrole)) || (adminRole != null && toBanMember.getRoles().contains(adminRole))) {
                 throw new CommandExceptionListener.CommandErrorException("I won't ban " + FormatUtil.formatUserMention(toBanId) + " because they are a mod");
             }
         }

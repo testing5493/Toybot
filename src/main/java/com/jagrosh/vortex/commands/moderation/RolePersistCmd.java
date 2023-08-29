@@ -4,8 +4,8 @@ import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener;
 import com.jagrosh.vortex.commands.HybridEvent;
-import com.jagrosh.vortex.database.managers.GuildSettingsDataManager;
 import com.jagrosh.vortex.hibernate.api.ModlogManager;
+import com.jagrosh.vortex.hibernate.entities.GuildData;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.LogUtil;
 import com.jagrosh.vortex.utils.OtherUtil;
@@ -32,8 +32,8 @@ public abstract sealed class RolePersistCmd extends PunishmentCmd permits Gravel
         Guild g = event.getGuild();
         Member targetMember = OtherUtil.getMemberCacheElseRetrieve(g, targetId);
         String userMention = FormatUtil.formatUserMention(targetId);
-        GuildSettingsDataManager.GuildSettings guildSettings = vortex.getDatabase().settings.getSettings(g);
-        Role persistRole = isGravel ? guildSettings.getGravelRole(g) : guildSettings.getMutedRole(g);
+        GuildData guildData = vortex.getHibernate().guild_data.getGuildData(g.getIdLong());
+        Role persistRole = isGravel ? guildData.getGravelRole(g) : guildData.getMutedRole(g);
 
         if (persistRole == null) {
             throw new CommandExceptionListener.CommandErrorException(String.format("No %s role exists!", isGravel ? "Graveled" : "Muted"));

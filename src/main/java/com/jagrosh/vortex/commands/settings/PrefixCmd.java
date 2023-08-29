@@ -17,13 +17,17 @@ package com.jagrosh.vortex.commands.settings;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
+import com.jagrosh.vortex.Constants;
 import com.jagrosh.vortex.Vortex;
-import com.jagrosh.vortex.database.managers.GuildSettingsDataManager;
+import com.jagrosh.vortex.hibernate.api.GuildDataManager;
+import com.jagrosh.vortex.hibernate.entities.GuildData;
+import jakarta.persistence.PersistenceException;
 import net.dv8tion.jda.api.Permission;
 
 /**
  * @author John Grosh (john.a.grosh@gmail.com)
  */
+// FIXME
 public class PrefixCmd extends Command {
     private final Vortex vortex;
 
@@ -45,17 +49,32 @@ public class PrefixCmd extends Command {
         }
 
         if (event.getArgs().equalsIgnoreCase("none")) {
-            vortex.getDatabase().settings.setPrefix(event.getGuild(), null);
-            event.replySuccess("The server prefix has been reset.");
+            if (setPrefix(event, Constants.PREFIX)) {
+                event.replySuccess("The server prefix has been reset.");
+            }
             return;
         }
 
-        if (event.getArgs().length() > GuildSettingsDataManager.PREFIX_MAX_LENGTH) {
-            event.replySuccess("Prefixes cannot be longer than `" + GuildSettingsDataManager.PREFIX_MAX_LENGTH + "` characters.");
+        if (event.getArgs().length() > GuildData.PREFIX_MAX_LENGTH) {
+            event.replyError("Prefixes cannot be longer than `" + GuildData.PREFIX_MAX_LENGTH + "` characters.");
             return;
         }
 
-        vortex.getDatabase().settings.setPrefix(event.getGuild(), event.getArgs());
-        event.replySuccess("The server prefix has been set to `" + event.getArgs() + "`\n" + "Note that the default prefix (`" + event.getClient().getPrefix() + "`) cannot be removed and will work in addition to the custom prefix.");
+        if (setPrefix(event, event.getArgs())) {
+            event.replySuccess("The server prefix has been set to `" + event.getArgs() + "`\n" + "Note that the default prefix (`" + event.getClient().getPrefix() + "`) cannot be removed and will work in addition to the custom prefix.");
+        }
+    }
+
+    private boolean setPrefix(CommandEvent event, String prefix) {
+        try {
+            GuildDataManager guildDataManager = vortex.getHibernate().guild_data;
+            GuildData guildData = guildDataManager.getGuildData(event.getGuild().getIdLong());
+            guildData.setPrefix(prefix);
+            guildDataManager.updateGuildData(guildData);
+            return true;
+        } catch (PersistenceException e) {
+            event.replyError("Something went wrong. Please try again later");
+            return false;
+        }
     }
 }

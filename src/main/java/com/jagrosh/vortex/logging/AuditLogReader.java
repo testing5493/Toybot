@@ -2,6 +2,7 @@ package com.jagrosh.vortex.logging;
 
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.hibernate.api.ModlogManager;
+import com.jagrosh.vortex.hibernate.entities.GuildData;
 import com.jagrosh.vortex.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.audit.AuditLogChange;
@@ -58,7 +59,7 @@ public class AuditLogReader {
         }
 
         Guild g = entry.getGuild();
-        GuildSettingsCache gCache = new GuildSettingsCache(vortex, g);
+        GuildData guildData = vortex.getHibernate().guild_data.getGuildData(g.getIdLong());
         String reason = entry.getReason() == null ? "" : entry.getReason();
         long userId = entry.getUserIdLong();
         long targetId = entry.getTargetIdLong();
@@ -71,17 +72,17 @@ public class AuditLogReader {
             case UNBAN -> vortex.getHibernate().modlogs.logUnban(g.getIdLong(), targetId, userId, timeCreated);
             case MEMBER_ROLE_UPDATE -> {
                 for (long id : getPartialRoles(entry, AuditLogKey.MEMBER_ROLES_ADD)) {
-                    if (id == gCache.getMutedRoleId()) {
+                    if (id == guildData.getMutedRoleId()) {
                         vortex.getHibernate().modlogs.logMute(g.getIdLong(), targetId, userId, timeCreated, ModlogManager.INDEFINITE_TIME, reason);
-                    } else if (id == gCache.getGraveledRoleId()) {
+                    } else if (id == guildData.getGravelRoleId()) {
                         vortex.getHibernate().modlogs.logGravel(g.getIdLong(), targetId, userId, timeCreated, ModlogManager.INDEFINITE_TIME, reason);
                     }
                 }
 
                 for (long id : getPartialRoles(entry, AuditLogKey.MEMBER_ROLES_REMOVE)) {
-                    if (id == gCache.getMutedRoleId()) {
+                    if (id == guildData.getMutedRoleId()) {
                         vortex.getHibernate().modlogs.logUnmute(g.getIdLong(), targetId, userId, timeCreated);
-                    } else if (id == gCache.getGraveledRoleId()) {
+                    } else if (id == guildData.getGravelRoleId()) {
                         vortex.getHibernate().modlogs.logUngravel(g.getIdLong(), targetId, userId, timeCreated);
                     }
                 }

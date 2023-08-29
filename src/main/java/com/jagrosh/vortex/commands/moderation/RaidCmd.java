@@ -41,7 +41,7 @@ public class RaidCmd extends ModCommand {
 
     @Override
     protected void execute(CommandEvent event) {
-        boolean active = vortex.getDatabase().settings.getSettings(event.getGuild()).isInRaidMode();
+        boolean active = vortex.getHibernate().guild_data.getGuildData(event.getGuild().getIdLong()).isInRaidMode();
         String[] parts = event.getArgs().split("\\s+", 2);
         if (parts[0].equalsIgnoreCase("off") || parts[0].equalsIgnoreCase("stop") || parts[0].equalsIgnoreCase("disable")) {
             if (active) {

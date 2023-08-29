@@ -47,7 +47,8 @@ public class VoicekickCmd extends PunishmentCmd {
             throw new CommandErrorException("I need permission to connect to voice channels and move members to do that!");
         }
 
-        Role modrole = vortex.getDatabase().settings.getSettings(g).getModeratorRole(g);
+        Role modrole = vortex.getHibernate().guild_data.getGuildData(g.getIdLong()).getModRole(g);
+        Role adminRole = vortex.getHibernate().guild_data.getGuildData(g.getIdLong()).getAdminRole(g);
         Member targetMember = OtherUtil.getMemberCacheElseRetrieve(g, userId);
         String userMention = FormatUtil.formatUserMention(userId);
 
@@ -59,7 +60,7 @@ public class VoicekickCmd extends PunishmentCmd {
             throw new CommandErrorException("I am unable to voicekick " + userMention);
         } else if (targetMember.getVoiceState() == null || !targetMember.getVoiceState().inAudioChannel()) {
             throw new CommandErrorException(userMention + " is not in a voice channel!");
-        } else if (modrole != null && targetMember.getRoles().contains(modrole)) {
+        } else if ((modrole != null && targetMember.getRoles().contains(modrole)) || (adminRole != null && targetMember.getRoles().contains(adminRole))) {
             throw new CommandErrorException(" I won't voicekick " + userMention + " because they are a mod");
         }
 

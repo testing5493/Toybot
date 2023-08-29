@@ -148,32 +148,6 @@ public class TempMuteManager extends DataManager implements ModlogManager {
         });
     }
 
-    public void checkUnmutes(JDA jda, GuildSettingsDataManager data) {
-        readWrite(selectAll(FINISH.isLessThan(Instant.now().getEpochSecond()) + " AND IS_MUTED=TRUE"), rs -> {
-            while (rs.next()) {
-                // TODO: Do we really want g.getMemberCache().isEmpty()?
-                Guild g = jda.getGuildById(GUILD_ID.getValue(rs));
-                if (g == null || jda.isUnavailable(g.getIdLong()) || !g.getSelfMember().hasPermission(Permission.MANAGE_ROLES)) {
-                    continue;
-                }
-
-                Role mRole = data.getSettings(g).getMutedRole(g);
-                if (mRole == null || !g.getSelfMember().canInteract(mRole)) {
-                    continue;
-                }
-
-                Member m = g.getMemberById(USER_ID.getValue(rs));
-                if (m != null && m.getRoles().contains(mRole)) {
-                    g.removeRoleFromMember(m, mRole).reason("Temporary Mute Completed").queue();
-                }
-
-                FINISH.updateValue(rs, Instant.now().minusSeconds(1));
-                IS_MUTED.updateValue(rs, false);
-                rs.updateRow();
-            }
-        });
-    }
-
     @Override
     public int getMaxId(long guildId) {
         String query = selectAll(GUILD_ID.is(guildId) + " ORDER BY CASE_ID DESC NULLS LAST");

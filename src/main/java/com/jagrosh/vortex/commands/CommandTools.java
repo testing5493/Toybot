@@ -3,6 +3,7 @@ package com.jagrosh.vortex.commands;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.jagrosh.vortex.Vortex;
+import com.jagrosh.vortex.hibernate.entities.GuildData;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
@@ -34,18 +35,24 @@ public class CommandTools {
 
     public static boolean hasGeneralCommandPerms(Vortex vortex, Member member, GuildChannel channel, Permission... perms) {
         if (member == null) {
-            return true; // Imples this is from DM
+            return true; // Implies this is from DM
         }
 
         Guild g = member.getGuild();
-        Role rtcRole = vortex.getDatabase().settings.getSettings(g).getRtcRole(g);
-        Role modRole = vortex.getDatabase().settings.getSettings(g).getModeratorRole(g);
+        GuildData guildData = vortex.getHibernate().guild_data.getGuildData(g.getIdLong());
 
+        Role modRole = guildData.getModRole(g);
         if (modRole != null && member.getRoles().contains(modRole)) {
             return true;
         }
 
+        Role rtcRole = guildData.getRtcRole(g);
         if (rtcRole != null && member.getRoles().contains(rtcRole)) {
+            return true;
+        }
+
+        Role adminRole = guildData.getAdminRole(g);
+        if (adminRole != null && member.getRoles().contains(adminRole)) {
             return true;
         }
 

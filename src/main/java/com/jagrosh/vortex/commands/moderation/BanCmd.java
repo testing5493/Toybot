@@ -46,9 +46,8 @@ public class BanCmd extends PunishmentCmd {
         Member mod = event.getMember();
         Member toBanMember = OtherUtil.getMemberCacheElseRetrieve(g, toBanId);
 
-        Role modrole = vortex.getDatabase().settings.getSettings(g).getModeratorRole(g);
-
-
+        Role modrole = vortex.getHibernate().guild_data.getGuildData(g.getIdLong()).getModRole(g);
+        Role adminRole = vortex.getHibernate().guild_data.getGuildData(g.getIdLong()).getAdminRole(g);
         if (!g.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
             throw new CommandErrorException("I do not have any roles with permissions to ban users.");
         }
@@ -63,7 +62,7 @@ public class BanCmd extends PunishmentCmd {
                 throw new CommandErrorException("You do not have permission to ban " + FormatUtil.formatUserMention(toBanId));
             } else if (!g.getSelfMember().canInteract(toBanMember)) {
                 throw new CommandErrorException("I am unable to ban " + FormatUtil.formatUserMention(toBanId));
-            } else if (modrole != null && toBanMember.getRoles().contains(modrole)) {
+            } else if ((modrole != null && toBanMember.getRoles().contains(modrole)) || (adminRole != null && toBanMember.getRoles().contains(adminRole))) {
                 throw new CommandErrorException("I won't ban " + FormatUtil.formatUserMention(toBanId) + " because they are a mod");
             }
         }

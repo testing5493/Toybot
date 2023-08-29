@@ -60,8 +60,9 @@ public abstract class ModCommand extends SlashCommand {
            return false;
        }
 
-       Role modrole = vortex.getDatabase().settings.getSettings(event.getGuild()).getModeratorRole(event.getGuild());
-       if (modrole != null && event.getMember().getRoles().contains(modrole)) {
+       Role modrole = vortex.getHibernate().guild_data.getGuildData(event.getGuild().getIdLong()).getModRole(event.getGuild());
+       Role adminRole = vortex.getHibernate().guild_data.getGuildData(event.getGuild().getIdLong()).getAdminRole(event.getGuild());
+       if ((modrole != null && event.getMember().getRoles().contains(modrole)) || (adminRole != null && event.getMember().getRoles().contains(adminRole))) {
            return true;
        }
 

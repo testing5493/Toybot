@@ -316,7 +316,7 @@ public class ModlogGenerator {
     // TODO: Make look pretty
     public void logAvatarChange(UserUpdateAvatarEvent event) {
         OffsetDateTime now = OffsetDateTime.now();
-        List<TextChannel> logs = event.getUser().getMutualGuilds().stream().map(guild -> vortex.getDatabase().settings.getSettings(guild).getAvatarLogChannel(guild)).filter(Objects::nonNull).collect(Collectors.toList());
+        List<TextChannel> logs = event.getUser().getMutualGuilds().stream().map(guild -> vortex.getHibernate().guild_data.getGuildData(guild.getIdLong()).getModlogsChannel(guild)).filter(Objects::nonNull).toList();
         if (logs.isEmpty()) {
             return;
         }
@@ -407,7 +407,7 @@ public class ModlogGenerator {
     // TODO: Refactor
     public void logAuditLogEntry(AuditLogEntry entry) {
         Guild guild = entry.getGuild();
-        TextChannel tc = vortex.getDatabase().settings.getSettings(guild).getModLogChannel(guild);
+        TextChannel tc = vortex.getHibernate().guild_data.getGuildData(guild.getIdLong()).getModlogsChannel(guild);
         if (tc == null) {
             return;
         }
@@ -465,7 +465,7 @@ public class ModlogGenerator {
     }
 
     public void log(Guild guild, Function<EmbedBuilder, EmbedBuilder> builderFunction) {
-        TextChannel tc = vortex.getDatabase().settings.getSettings(guild).getModLogChannel(guild);
+        TextChannel tc = vortex.getHibernate().guild_data.getGuildData(guild.getIdLong()).getModlogsChannel(guild);
         if (tc == null || builderFunction == null) {
             return;
         }
@@ -491,7 +491,7 @@ public class ModlogGenerator {
     }
 
     public void log(Guild guild, EmbedBuilder embedBuilder) {
-        TextChannel tc = vortex.getDatabase().settings.getSettings(guild).getModLogChannel(guild);
+        TextChannel tc = vortex.getHibernate().guild_data.getGuildData(guild.getIdLong()).getModlogsChannel(guild);
         if (tc == null || embedBuilder == null) {
             return;
         }
@@ -510,7 +510,7 @@ public class ModlogGenerator {
     }
 
     public TextChannel getModlogsChannel(Guild g) {
-        TextChannel channel =  vortex.getDatabase().settings.getSettings(g).getModLogChannel(g);
+        TextChannel channel = vortex.getHibernate().guild_data.getGuildData(g.getIdLong()).getModlogsChannel(g);
         return channel == null || !channel.canTalk() ? null : channel;
     }
 }

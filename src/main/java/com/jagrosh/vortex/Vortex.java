@@ -17,10 +17,7 @@ package com.jagrosh.vortex;
 
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.WebhookClientBuilder;
-import com.jagrosh.jdautilities.command.Command;
-import com.jagrosh.jdautilities.command.CommandClient;
-import com.jagrosh.jdautilities.command.CommandClientBuilder;
-import com.jagrosh.jdautilities.command.SlashCommand;
+import com.jagrosh.jdautilities.command.*;
 import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 import com.jagrosh.vortex.automod.AutoMod;
 import com.jagrosh.vortex.commands.CommandExceptionListener;
@@ -33,6 +30,7 @@ import com.jagrosh.vortex.commands.owner.ReloadCmd;
 import com.jagrosh.vortex.commands.settings.*;
 import com.jagrosh.vortex.commands.tools.*;
 import com.jagrosh.vortex.database.Database;
+import com.jagrosh.vortex.hibernate.entities.GuildData;
 import com.jagrosh.vortex.logging.*;
 import com.jagrosh.vortex.utils.BlockingSessionController;
 import com.jagrosh.vortex.utils.FormatUtil;
@@ -124,12 +122,8 @@ public class Vortex {
 
                 // Settings
                 new SetupCmd(this),
-                new MessagelogCmd(this),
                 new ModlogCmd(this),
-                new ServerlogCmd(this),
-                new VoicelogCmd(this),
-                new AvatarlogCmd(this),
-                new ModroleCmd(this),
+                new SetRoleCmd(this),
                 new PrefixCmd(this),
                 new SettingsCmd(this),
                 new AddTagCmd(this),
@@ -179,7 +173,7 @@ public class Vortex {
                 .setOwnerId(Constants.OWNER_ID)
                 .setEmojis(Constants.SUCCESS, Constants.WARNING, Constants.ERROR)
                 .setLinkedCacheSize(0)
-                .setGuildSettingsManager(database.settings)
+                .setGuildSettingsManager((GuildSettingsManager<GuildData>) guild -> hibernate.guild_data.getGuildData(guild.getIdLong()))
                 .setListener(listener)
                 .setScheduleExecutor(threadpool)
                 .setShutdownAutomatically(false)

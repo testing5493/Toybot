@@ -33,7 +33,7 @@ import java.util.List;
  */
 public class Database extends DatabaseConnector {
     public final AutomodManager automod; // automod settings
-    public final GuildSettingsDataManager settings; // logs and other settings
+    // public final GuildSettingsDataManager settings; // logs and other settings
     public final IgnoreManager ignores; // ignored roles and channels
     public final AuditCacheManager auditcache; // cache of latest audit logs
     /*public final TempMuteManager tempmutes;
@@ -87,7 +87,7 @@ public class Database extends DatabaseConnector {
         super(host, user, pass);
 
         automod = new AutomodManager(this);
-        settings = new GuildSettingsDataManager(this);
+        // settings = new GuildSettingsDataManager(this);
         ignores = new IgnoreManager(this);
         auditcache = new AuditCacheManager(this);
         // tempmutes = new TempMuteManager(this);

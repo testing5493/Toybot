@@ -18,6 +18,7 @@ package com.jagrosh.vortex.commands.moderation;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.jagrosh.vortex.Vortex;
+import com.jagrosh.vortex.commands.CommandExceptionListener;
 import com.jagrosh.vortex.commands.CommandExceptionListener.CommandWarningException;
 import com.jagrosh.vortex.utils.LogUtil;
 import net.dv8tion.jda.api.Permission;
@@ -35,6 +36,7 @@ import java.util.regex.Pattern;
 /**
  * @author John Grosh (jagrosh)
  */
+// TODO: Limit to 1 day for non-admins
 public class CleanCmd extends ModCommand {
     private final Pattern LINK_PATTERN = Pattern.compile("https?:\\/\\/.+");
     private final Pattern QUOTES_PATTERN = Pattern.compile("[\"“”](.*?)[\"“”]", Pattern.DOTALL);
@@ -67,9 +69,9 @@ public class CleanCmd extends ModCommand {
             throw new CommandWarningException(noparams);
         }
 
-        TextChannel modlog = vortex.getDatabase().settings.getSettings(event.getGuild()).getModLogChannel(event.getGuild());
-        if (modlog != null && event.getChannel().getIdLong() == modlog.getIdLong()) {
-            throw new CommandWarningException("This command cannot be used in the modlog!");
+        TextChannel modlogsChannel = vortex.getHibernate().guild_data.getGuildData(event.getGuild().getIdLong()).getModlogsChannel(event.getGuild());
+        if (modlogsChannel != null && event.getChannel().getIdLong() == modlogsChannel.getIdLong()) {
+            throw new CommandExceptionListener.CommandErrorException("This command cannot be used in the modlogs channel");
         }
 
         int num = -1;
@@ -212,7 +214,7 @@ public class CleanCmd extends ModCommand {
 
             event.replySuccess("Cleaned **" + del.size() + "** messages." + (week2 ? week2limit : ""));
             event.getClient().applyCooldown(getCooldownKey(event), 1);
-            if (vortex.getDatabase().settings.getSettings(event.getGuild()).getModLogChannel(event.getGuild()) == null) {
+            if (modlogsChannel == null) {
                 return;
             }
 

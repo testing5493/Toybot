@@ -8,6 +8,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
+import org.hibernate.cfg.Configuration;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -25,8 +26,7 @@ import java.util.function.Function;
 public final class Database {
     public final TagManager tags = new TagManager(this);
     public final ModlogManager modlogs = new ModlogManager(this);
-
-
+    public final GuildDataManager guild_data = new GuildDataManager(this);
 
 
     /* INTERNALS */
@@ -45,6 +45,8 @@ public final class Database {
                 .addAnnotatedClass(GravelLog.class)
                 .addAnnotatedClass(MuteLog.class)
                 .addAnnotatedClass(WarnLog.class)
+                .addAnnotatedClass(SoftbanLog.class)
+                .addAnnotatedClass(GuildData.class)
                 .buildMetadata();
 
         try (SessionFactory sessionFactory = metadata.buildSessionFactory()) {
@@ -56,6 +58,13 @@ public final class Database {
     }
 
     private SessionFactory jpaBootstrap() {
+        try {
+            // FIXME
+            getClass().getClassLoader().loadClass("com.github.benmanes.caffeine.jcache.spi.CaffeineCachingProvider");
+        } catch (Exception e) {
+            log.warn("Failed to load second level cache provider", e);
+        }
+
         EntityManagerFactory emf = Persistence.createEntityManagerFactory("experimental-unit");
         return emf.unwrap(SessionFactory.class);
     }

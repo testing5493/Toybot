@@ -133,31 +133,6 @@ public class GravelManager extends DataManager implements ModlogManager {
         });
     }
 
-    public void checkGravels(JDA jda, GuildSettingsDataManager data) {
-        readWrite(selectAll(FINISH.isLessThan(Instant.now().getEpochSecond()) + " AND IS_GRAVELED=TRUE"), rs -> {
-            while (rs.next()) {
-                Guild g = jda.getGuildById(GUILD_ID.getValue(rs));
-                if (g == null || jda.isUnavailable(g.getIdLong()) || !g.getSelfMember().hasPermission(Permission.MANAGE_ROLES)) {
-                    continue;
-                }
-
-                Role gRole = data.getSettings(g).getGravelRole(g);
-                if (gRole == null || !g.getSelfMember().canInteract(gRole)) {
-                    continue;
-                }
-
-                Member m = g.getMemberById(USER_ID.getValue(rs));
-                if (m != null && m.getRoles().contains(gRole)) {
-                    g.removeRoleFromMember(m, gRole).reason("Temporary Gravel Completed").queue();
-                }
-
-                FINISH.updateValue(rs, Instant.now().minusSeconds(1));
-                IS_GRAVELED.updateValue(rs, false);
-                rs.updateRow();
-            }
-        });
-    }
-
     @Override
     public String updateReason(long guildId, int caseId, String reason) {
         return readWrite(selectAll(CASE_ID.is(caseId) + " AND " + GUILD_ID.is(guildId)), rs -> {
