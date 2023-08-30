@@ -7,6 +7,7 @@ import com.jagrosh.vortex.commands.CommandTools;
 import com.jagrosh.vortex.database.Database;
 import com.jagrosh.vortex.database.Database.Modlog;
 import com.jagrosh.vortex.utils.FormatUtil;
+import com.jagrosh.vortex.utils.OtherUtil;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
@@ -69,7 +70,7 @@ public class ModlogsCmd extends ModCommand {
             return MessageCreateData.fromContent("Could not find any modlogs for that user");
         }
 
-        EmbedBuilder[] embeds = new EmbedBuilder[size / 25 + 1];
+        EmbedBuilder[] embeds = new EmbedBuilder[OtherUtil.pagintatorSize(size, 25)];
         for (int i = 0; i < embeds.length; i++) {
             embeds[i] = new EmbedBuilder();
         }

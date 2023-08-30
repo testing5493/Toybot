@@ -210,4 +210,8 @@ public class OtherUtil {
     public static long timeToSnowflake(long timeSinceUnixEpochMilli) {
         return (timeSinceUnixEpochMilli - Constants.DISCORD_EPOCH) << Constants.SNOWFLAKE_TIME_OFFSET;
     }
+
+    public static int pagintatorSize(int total, int pageMax) {
+        return total / pageMax + (total % pageMax == 0 ? 0 : 1);
+    }
 }

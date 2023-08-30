@@ -24,7 +24,6 @@ import com.jagrosh.vortex.commands.CommandExceptionListener.CommandErrorExceptio
 import com.jagrosh.vortex.commands.CommandTools;
 import com.jagrosh.vortex.utils.DiscordPallete;
 import com.jagrosh.vortex.utils.FormatUtil;
-import com.jagrosh.vortex.utils.ToycatPallete;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Role;
@@ -40,10 +39,10 @@ import java.util.Objects;
 /**
  * @author John Grosh (jagrosh)
  */
-public class RoleinfoCmd extends SlashCommand {
+public class RoleInfoCmd extends SlashCommand {
     private final Vortex vortex;
 
-    public RoleinfoCmd(Vortex vortex) {
+    public RoleInfoCmd(Vortex vortex) {
         this.name = "roleinfo";
         this.aliases = new String[]{"rinfo", "rankinfo"};
         this.help = "shows info about a role";

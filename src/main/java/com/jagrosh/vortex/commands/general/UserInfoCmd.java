@@ -25,7 +25,6 @@ import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandTools;
 import com.jagrosh.vortex.utils.DiscordPallete;
 import com.jagrosh.vortex.utils.FormatUtil;
-import com.jagrosh.vortex.utils.ToycatPallete;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.OnlineStatus;
@@ -50,10 +49,11 @@ import java.util.stream.Stream;
 /**
  * @author John Grosh (jagrosh)
  */
-public class UserinfoCmd extends SlashCommand {
+// FIXME so this work with webhooks
+public class UserInfoCmd extends SlashCommand {
     private final Vortex vortex;
 
-    public UserinfoCmd(Vortex vortex) {
+    public UserInfoCmd(Vortex vortex) {
         this.name = "whois";
         this.aliases = new String[]{"user", "uinfo", "memberinfo", "userinfo", "whothis", "newphonewhothis"};
         this.help = "shows info on a member";
@@ -146,11 +146,12 @@ public class UserinfoCmd extends SlashCommand {
         }
 
         if (id != -1) {
-            u = jda.retrieveUserById(id).complete();
+            try {
+                 u = jda.retrieveUserById(id).complete();
+            } catch (Exception ignore) {}
 
             if (u == null) {
                 event.replyError("A user with that ID could not be found");
-                return;
             }
         }
 
@@ -161,23 +162,6 @@ public class UserinfoCmd extends SlashCommand {
         }
 
         event.reply(generateInfoEmbed(u, m));
-    }
-
-    private static String statusToEmote(OnlineStatus status, List<Activity> activities) {
-        for (Activity activity : activities) {
-            if (activity != null && activity.getType() == Activity.ActivityType.STREAMING && Activity.isValidStreamingUrl(activity.getUrl())) {
-                return "<:streaming:313956277132853248>";
-            }
-        }
-
-        return switch (status) {
-            case ONLINE -> Emoji.STATUS_ONLINE;
-            case IDLE -> Emoji.STATUS_IDLE;
-            case DO_NOT_DISTURB -> Emoji.STATUS_DO_NOT_DISTURB;
-            case INVISIBLE -> Emoji.STATUS_INVISIBLE;
-            case OFFLINE -> Emoji.STATUS_OFFLINE;
-            default -> "";
-        };
     }
 
     private static String formatActivity(Activity activity) {
@@ -324,7 +308,7 @@ public class UserinfoCmd extends SlashCommand {
     // TODO: Double check this works properly because I written this while very tired
     private static <T> List<T> matchName(List<T> objs, String name, Function<T, String> nameMap, Predicate<T> initialFilter) {
         String desymboled = desymbol(name);
-        boolean symbolHeavy = name.length() / desymboled.length() >= 2;
+        boolean symbolHeavy = desymboled.length() != 0 && (name.length() / desymboled.length() >= 2);
         Predicate<String> containsName = Pattern.compile(".*(?i)" + (symbolHeavy ? name : desymboled) + ".*").asMatchPredicate();
 
         Stream<T> stream = objs.parallelStream();
