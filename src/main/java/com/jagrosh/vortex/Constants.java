@@ -24,6 +24,7 @@ public class Constants {
     public final static OffsetDateTime STARTUP = OffsetDateTime.now();
     public final static String PREFIX = "?";
     public final static String SUCCESS = ":white_check_mark:";
+    public final static char ZWSP = '\u200B';
     public final static String WARNING = ":warning:";
     public final static String ERROR = ":x:";
     public final static String LOADING = ":alarm_clock:";

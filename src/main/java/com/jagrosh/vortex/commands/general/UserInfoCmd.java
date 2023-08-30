@@ -34,6 +34,7 @@ import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.utils.TimeFormat;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -247,8 +248,8 @@ public class UserInfoCmd extends SlashCommand {
 
         builder.addField("Images", getIconURLList(m, u, p), true);
 
-        StringBuilder statusBuilder = new StringBuilder();
-        if (m != null) {
+        if (m != null && m.getJDA().getCacheFlags().contains(CacheFlag.ONLINE_STATUS)) {
+            StringBuilder statusBuilder = new StringBuilder().append(Constants.ZWSP); // ZWSP for mobile rendering
             switch (m.getOnlineStatus(ClientType.DESKTOP)) {
                 case ONLINE -> statusBuilder.append(Emoji.DESKTOP_ONLINE);
                 case IDLE -> statusBuilder.append(Emoji.DESKTOP_IDLE);
@@ -269,9 +270,7 @@ public class UserInfoCmd extends SlashCommand {
                 case DO_NOT_DISTURB -> statusBuilder.append(Emoji.BROWSER_DND);
                 case OFFLINE, INVISIBLE -> statusBuilder.append(Emoji.BROWSER_OFFLINE);
             }
-        }
 
-        if (m != null) {
             builder.addField("Status", statusBuilder.toString(), true);
         }
 
