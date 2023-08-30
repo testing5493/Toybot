@@ -98,9 +98,9 @@ public class Vortex {
                 // General
                 new AboutCmd(this),
                 new PingCmd(this),
-                new RoleinfoCmd(this),
-                new ServerinfoCmd(this),
-                new UserinfoCmd(this),
+                new RoleInfoCmd(this),
+                new ServerInfoCmd(this),
+                new UserInfoCmd(this),
                 new RatCmd(this),
                 new MemberCountCmd(this),
 
@@ -120,6 +120,7 @@ public class Vortex {
                 new RaidCmd(this),
                 new WarnCmd(this),
                 new SlowmodeCmd(this),
+                new RoleMembersCmd(this),
 
                 // Settings
                 new SetupCmd(this),
@@ -145,7 +146,6 @@ public class Vortex {
                 new AnnounceCmd(),
                 new AuditCmd(),
                 new DehoistCmd(),
-             // new InvitepruneCmd(this),
                 new LookupCmd(this),
                 new TagCmd(this),
                 new TagsCmd(this),
@@ -189,7 +189,7 @@ public class Vortex {
                             } catch (PermissionException ignore) {}
                         }
                     }, t -> e.replyWarning("Help cannot be sent because you are blocking Direct Messages."))).build();
-        MessageRequest.setDefaultMentions(Arrays.asList(Message.MentionType.CHANNEL, Message.MentionType.EMOJI, Message.MentionType.SLASH_COMMAND));
+        MessageRequest.setDefaultMentions(Arrays.asList(Message.MentionType.CHANNEL, Message.MentionType.EMOJI, Message.MentionType.SLASH_COMMAND)); // Makes sure the bot does not ping @everyone/roles/random users etc
         jda = JDABuilder.create(config.getString("bot-token"), GatewayIntent.GUILD_MEMBERS,
                                                                     GatewayIntent.GUILD_MESSAGE_REACTIONS,
                                                                     GatewayIntent.GUILD_MESSAGES,

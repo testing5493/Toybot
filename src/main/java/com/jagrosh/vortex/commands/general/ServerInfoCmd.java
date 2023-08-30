@@ -28,12 +28,12 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 /**
  * @author John Grosh (jagrosh)
  */
-public class ServerinfoCmd extends GeneralHybridCmd {
+public class ServerInfoCmd extends GeneralHybridCmd {
     private final static String LINESTART = "\u25AB"; // ▫
     private final static String GUILD_EMOJI = "\uD83D\uDDA5"; // 🖥
     private final static String NO_REGION = "\u2754"; // ❔
 
-    public ServerinfoCmd(Vortex vortex) {
+    public ServerInfoCmd(Vortex vortex) {
         super(vortex);
         this.aliases = new String[]{"server", "guildinfo"};
         this.name = "serverinfo";

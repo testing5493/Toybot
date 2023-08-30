@@ -14,6 +14,7 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 
 /**
  * Tries to unify slash and regular commands by providing a common wrapper
@@ -53,22 +54,39 @@ public sealed interface HybridEvent permits HybridEvent.SlashHybridEvent, Hybrid
 
         @Override
         public void reply(String msg) {
-            e.reply(msg).queue();
+            if (!e.isAcknowledged()) {
+                e.reply(msg).queue();
+            } else {
+                e.getHook().editOriginal(msg).queue();
+            }
         }
 
         @Override
         public void reply(MessageCreateData data) {
-            e.reply(data).queue();
+            if (!e.isAcknowledged()) {
+                e.reply(data).queue();
+            } else {
+                e.getHook().editOriginal(new MessageEditBuilder().applyCreateData(data).build()).queue();
+            }
         }
 
         @Override
         public void replyError(MessageCreateData data) {
             e.reply(data).setEphemeral(true).queue();
+            if (!e.isAcknowledged()) {
+                e.reply(data).setEphemeral(true).queue();
+            } else {
+                e.getHook().editOriginal(new MessageEditBuilder().applyCreateData(data).build()).queue();
+            }
         }
 
         @Override
         public void replyError(String msg) {
-            e.reply(msg).setEphemeral(true).queue();
+            if (!e.isAcknowledged()) {
+                e.reply(msg).setEphemeral(true).queue();
+            } else {
+                e.getHook().editOriginal(msg).queue();
+            }
         }
 
         @Override

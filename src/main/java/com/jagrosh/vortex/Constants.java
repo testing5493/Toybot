@@ -39,6 +39,8 @@ public class Constants {
     public final static long DISCORD_COMMUNITY_UPDATES_ID = 669627189624307712L;
     public final static long DISCORD_EPOCH = 1420070400000L;
     public final static int SNOWFLAKE_TIME_OFFSET = 22;
+
+    public final static int MAX_NAME_LENGTH = 32;
     public final static String DONATION_LINK = "https://patreon.com/jagrosh";
 
     public final static class Wiki {

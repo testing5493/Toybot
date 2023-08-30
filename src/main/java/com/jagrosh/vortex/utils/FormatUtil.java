@@ -20,6 +20,7 @@ import com.jagrosh.jdautilities.command.CommandClient;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.vortex.Constants;
 import com.jagrosh.vortex.Vortex;
+import com.jagrosh.vortex.commands.general.RoleInfoCmd;
 import com.jagrosh.vortex.database.Database;
 import com.jagrosh.vortex.hibernate.api.ModlogManager;
 import com.jagrosh.vortex.hibernate.entities.ModLog;
@@ -40,9 +41,7 @@ import java.awt.*;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -68,20 +67,25 @@ public class FormatUtil {
             return "";
         }
 
-        if (role.getPermissions().isEmpty()) {
+        long defaultPerms = role.getGuild().getPublicRole().getPermissionsRaw();
+        long rolePerms = role.getPermissionsRaw();
+        EnumSet<Permission> permissions = role.isPublicRole() ? role.getPermissions() : Permission.getPermissions(rolePerms ^ (rolePerms & defaultPerms));
+
+        if (permissions.isEmpty()) {
             return "None";
         }
 
-        if (role.getPermissions().contains(Permission.ADMINISTRATOR)) {
+        if (permissions.contains(Permission.ADMINISTRATOR)) {
             return "Administrator";
         }
 
-        String seperator = ", ";
-        StringBuilder str = new StringBuilder();
-        role.getPermissions().stream().filter(p -> p != Permission.UNKNOWN).forEach(p -> str.append(p).append(seperator));
+        String[] formattedArray = permissions.stream()
+            .filter(p -> p != Permission.UNKNOWN)
+            .sorted(RoleInfoCmd.PERMISSION_COMPARATOR)
+            .map(RoleInfoCmd.PERMISSION_NAME_MAP::get)
+            .toArray(String[]::new);
 
-        str.deleteCharAt(str.length() - seperator.length());
-        return str.toString();
+        return formatList(", ", formattedArray);
     }
 
     public static String filterEveryone(String input) {
