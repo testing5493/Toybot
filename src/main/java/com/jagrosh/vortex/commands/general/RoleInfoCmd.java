@@ -26,21 +26,86 @@ import com.jagrosh.vortex.utils.DiscordPallete;
 import com.jagrosh.vortex.utils.FormatUtil;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.utils.TimeFormat;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import org.apache.commons.collections4.map.ListOrderedMap;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author John Grosh (jagrosh)
  */
 public class RoleInfoCmd extends SlashCommand {
+    public static final ListOrderedMap<Permission, String> PERMISSION_NAME_MAP;
+    public static final Comparator<Permission> PERMISSION_COMPARATOR;
+
     private final Vortex vortex;
+
+    static {
+         PERMISSION_NAME_MAP = new ListOrderedMap<>() {{
+            put(Permission.ADMINISTRATOR, "Administrator");
+            put(Permission.MANAGE_SERVER, "Manage Server");
+            put(Permission.MANAGE_CHANNEL, "Manage Channels");
+            put(Permission.MANAGE_ROLES, "Manage Roles");
+            put(Permission.MESSAGE_MANAGE, "Manage Messages");
+            put(Permission.MANAGE_GUILD_EXPRESSIONS, "Manage Expressions");
+            put(Permission.MANAGE_WEBHOOKS, "Manage Webhooks");
+            put(Permission.MANAGE_EVENTS, "Manage Events");
+            put(Permission.MANAGE_THREADS, "Manage Threads");
+            put(Permission.MESSAGE_MENTION_EVERYONE, "Ping @everyone");
+            put(Permission.KICK_MEMBERS, "Kick");
+            put(Permission.BAN_MEMBERS, "Ban");
+            put(Permission.MODERATE_MEMBERS, "Timeout");
+            put(Permission.VOICE_MUTE_OTHERS, "Voice Mute");
+            put(Permission.VOICE_DEAF_OTHERS, "Deafen");
+            put(Permission.VOICE_MOVE_OTHERS, "Voice Move");
+            put(Permission.CREATE_PUBLIC_THREADS, "Create Public Threads");
+            put(Permission.CREATE_PRIVATE_THREADS, "Create Private Threads");
+            put(Permission.NICKNAME_MANAGE, "Manage Nicks");
+            put(Permission.VIEW_AUDIT_LOGS, "View Auditlog");
+            put(Permission.VIEW_GUILD_INSIGHTS, "View Server Insights");
+            put(Permission.VIEW_CREATOR_MONETIZATION_ANALYTICS, "View Creator Analytics");
+            put(Permission.CREATE_INSTANT_INVITE, "Create Invites");
+            put(Permission.NICKNAME_CHANGE, "Change Nick");
+            put(Permission.MESSAGE_ADD_REACTION, "React");
+            put(Permission.MESSAGE_EMBED_LINKS, "Embed");
+            put(Permission.MESSAGE_ATTACH_FILES, "Upload Files");
+            put(Permission.MESSAGE_ATTACH_VOICE_MESSAGE, "Upload Voice Messages");
+            put(Permission.MESSAGE_TTS, "Use TTS");
+            put(Permission.MESSAGE_EXT_EMOJI, "External Emojis");
+            put(Permission.MESSAGE_EXT_STICKER, "External Stickers");
+            put(Permission.VOICE_STREAM, "Stream");
+            put(Permission.VOICE_USE_SOUNDBOARD, "Use Soundboard");
+            put(Permission.VOICE_USE_EXTERNAL_SOUNDS, "Use External Sounds");
+            put(Permission.PRIORITY_SPEAKER, "Priority Speaker");
+            put(Permission.REQUEST_TO_SPEAK, "Request To Speak");
+            put(Permission.VOICE_USE_VAD, "Use Voice Activity");
+            put(Permission.VOICE_SPEAK, "Speak In VC");
+            put(Permission.VOICE_CONNECT, "Connect To VC");
+            put(Permission.VOICE_START_ACTIVITIES, "Use Activities");
+            put(Permission.USE_APPLICATION_COMMANDS, "Use Slash Commands");
+            put(Permission.MESSAGE_HISTORY, "See History");
+            put(Permission.MESSAGE_SEND, "Send Messages");
+            put(Permission.MESSAGE_SEND_IN_THREADS, "Send Messages In Threads");
+            put(Permission.VIEW_CHANNEL, "View Channels");
+        }};
+
+        PERMISSION_COMPARATOR = Comparator.comparingInt(permission -> {
+            if (permission == Permission.UNKNOWN) {
+                return Integer.MAX_VALUE;
+            } else {
+                int index = PERMISSION_NAME_MAP.indexOf(permission);
+                if (index == -1) {
+                    index = PERMISSION_NAME_MAP.size() + permission.ordinal();
+                }
+                return index;
+            }
+        });
+    }
 
     public RoleInfoCmd(Vortex vortex) {
         this.name = "roleinfo";
@@ -84,11 +149,26 @@ public class RoleInfoCmd extends SlashCommand {
     }
 
     public MessageCreateData getRoleInfoEmbed(Role role) {
-        EmbedBuilder builder = new EmbedBuilder().setColor(role.getColor() == null ? DiscordPallete.DEFAULT_ROLE_WHITE : role.getColor()).setDescription("## Showing Info For " + role.getAsMention()).addField("ID", role.getId(), true).addField("Color", FormatUtil.formatRoleColor(role), true).addField("Created", TimeFormat.DATE_SHORT.format(role.getTimeCreated()), true).addField("Hoisted", role.isHoisted() ? "Yes" : "No", true).addField("Position", role.getPosition() + "/" + role.getGuild().getRoles().size(), true).addField("Permissions", FormatUtil.formatRolePermissions(role), false);
+        Guild g = role.getGuild();
+        int totalRoles = (int) g.getRoleCache().size();
+        int position = totalRoles - role.getPosition() - 1;
+        EmbedBuilder builder = new EmbedBuilder().setColor(role.getColor() == null ? DiscordPallete.DEFAULT_ROLE_WHITE : role.getColor())
+                .setDescription("## Showing Info For " + role.getAsMention())
+                .addField("ID", role.getId(), true)
+                .addField("Color", FormatUtil.formatRoleColor(role), true)
+                .addField("Created", TimeFormat.DATE_SHORT.format(role.getTimeCreated()), true)
+                .addField("Hoisted", role.isHoisted() ? "Yes" : "No", true)
+                .addField("Position", (position + "/" + totalRoles), true);
+        if (role.getIcon() != null) {
+            builder.addField("Images", "[Icon](" + role.getIcon().getIconUrl() + ")", true);
+        }
+
+        String formattedPermissions = FormatUtil.formatRolePermissions(role);
+        builder.addField("Permissions", formattedPermissions, formattedPermissions.length() < 16); // Arbitrary # for formatting
 
         if (role.isPublicRole()) {
             builder.appendDescription("\nThis is the special @everyone role, which everyone technically has");
-        } else if (Objects.equals(role, role.getGuild().getBoostRole())) {
+        } else if (Objects.equals(role, g.getBoostRole())) {
             builder.appendDescription("\nThis is the server booster role");
         } else if (role.isManaged()) {
             builder.appendDescription("\nThis role is managed by an integration");
