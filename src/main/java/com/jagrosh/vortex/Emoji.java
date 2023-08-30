@@ -21,13 +21,6 @@ import lombok.AllArgsConstructor;
  * @author John Grosh (john.a.grosh@gmail.com)
  */
 public class Emoji {
-    // vortex general icons
-    public final static String TOYBOT  = "<:vortex:850113634859483176>";
-    public final static String SUCCESS = "<:vSuccess:850102850491121725>";
-    public final static String WARNING = "<:vWarning:850102850855895110>";
-    public final static String ERROR   = "<:vError:850102850846457879>";
-    public final static String LOADING = "<a:typing:850124618932944937>";
-
     // badges
     public final static String ACTIVE_DEVELOPER     = "<:active_developer:1109963459929587713>";
     public final static String BOT                  = "<:bot_1:1117663424873246810>\u2060<:bot_2:1117663423631728670>";
@@ -64,6 +57,7 @@ public class Emoji {
     public final static String BROWSER_OFFLINE      = "<:browser_offline:1112513493262925935>";
 
     // status
+    // FIXME: Bot doesn't have access to these emojis
     public final static String STATUS_STREAMING      = "<:statusStreaming:850113664873922560>";
     public final static String STATUS_ONLINE         = "<:statusOnline:850113664694353941>";
     public final static String STATUS_IDLE           = "<:statusAway:850113664873660427>";
