@@ -19,12 +19,10 @@ import com.jagrosh.vortex.Constants;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.automod.URLResolver.ActiveURLResolver;
 import com.jagrosh.vortex.automod.URLResolver.DummyURLResolver;
-import com.jagrosh.vortex.database.managers.AutomodManager;
 import com.jagrosh.vortex.database.managers.AutomodManager.AutomodSettings;
 import com.jagrosh.vortex.logging.MessageCache.CachedMessage;
 import com.jagrosh.vortex.utils.FixedCache;
 import com.jagrosh.vortex.utils.OtherUtil;
-import com.jagrosh.vortex.utils.Usage;
 import com.typesafe.config.Config;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
@@ -68,7 +66,6 @@ public class AutoMod {
     private final CopypastaResolver copypastaResolver = new CopypastaResolver();
     private final FixedCache<String, DupeStatus> spams = new FixedCache<>(3000);
     private final HashMap<Long, OffsetDateTime> latestGuildJoin = new HashMap<>();
-    private final Usage usage = new Usage();
 
     public AutoMod(Vortex vortex, Config config) {
         this.vortex = vortex;
@@ -223,7 +220,6 @@ public class AutoMod {
         }
 
         try {
-            usage.increment(member.getGuild().getIdLong());
             OtherUtil.dehoist(member, settings.dehoistChar);
         } catch (Exception ignore) {
         }
@@ -251,7 +247,6 @@ public class AutoMod {
         boolean preventInvites = (topic == null || !topic.toLowerCase().contains("{invites}")) && settings.filterInvites;
 
         List<Long> inviteWhitelist = !preventInvites ? Collections.emptyList() : vortex.getDatabase().inviteWhitelist.readWhitelist(message.getGuild());
-        usage.increment(message.getGuild().getIdLong());
 
         boolean shouldDelete = false;
         String channelWarning = null;

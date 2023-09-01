@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.audit.AuditLogChange;
 import net.dv8tion.jda.api.audit.AuditLogEntry;
 import net.dv8tion.jda.api.audit.AuditLogKey;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.MessageType;
 
 import java.time.Instant;
 import java.util.*;
@@ -70,7 +71,10 @@ public class AuditLogReader {
             case BAN -> vortex.getDatabase().tempbans.setBan(vortex, g, targetId, userId, Instant.MAX, reason);
             case UNBAN -> vortex.getDatabase().tempbans.clearBan(vortex, g, targetId, userId);
             case MEMBER_ROLE_UPDATE -> {
-                for (long id : getPartialRoles(entry, AuditLogKey.MEMBER_ROLES_ADD)) {
+                List<Long> addedRoles = extractPartialIds(entry, AuditLogKey.MEMBER_ROLES_ADD);
+                List<Long> removedRoles = extractPartialIds(entry, AuditLogKey.MEMBER_ROLES_REMOVE);
+
+                for (long id : addedRoles) {
                     if (id == gCache.getMutedRoleId()) {
                         vortex.getDatabase().tempmutes.overrideMute(g, targetId, userId, Instant.MAX, reason);
                     } else if (id == gCache.getGraveledRoleId()) {
@@ -78,48 +82,53 @@ public class AuditLogReader {
                     }
                 }
 
-                for (long id : getPartialRoles(entry, AuditLogKey.MEMBER_ROLES_REMOVE)) {
+                for (long id : removedRoles) {
                     if (id == gCache.getMutedRoleId()) {
                         vortex.getDatabase().tempmutes.removeMute(g, targetId, userId);
                     } else if (id == gCache.getGraveledRoleId()) {
                         vortex.getDatabase().gravels.removeGravel(g, targetId, userId);
                     }
                 }
+
+                if (!addedRoles.isEmpty() || !removedRoles.isEmpty()) {
+                    vortex.getBasicLogger().logMemberRoleUpdate(g, targetId, userId, addedRoles, removedRoles, entry.getTimeCreated());
+                }
+            }
+            case ROLE_CREATE -> {
+
             }
         }
-
-        vortex.getBasicLogger().logAuditLogEntry(entry);
     }
 
-    public static List<Long> getPartialRoles(AuditLogEntry entry, AuditLogKey key) {
+    public static List<Long> extractPartialIds(AuditLogEntry entry, AuditLogKey key) {
         AuditLogChange change = entry.getChangeByKey(key);
         if (change == null) {
             return Collections.emptyList();
         }
 
-        List<Map<String, ?>> partialRoles = change.getNewValue();
-        if (partialRoles == null || partialRoles.isEmpty()) {
+        List<Map<String, ?>> partialEntityList = change.getNewValue();
+        if (partialEntityList == null || partialEntityList.isEmpty()) {
             return Collections.emptyList();
         }
 
-        List<Long> roleIds = new ArrayList<>(partialRoles.size());
-        for (Map<String, ?> partialRole : partialRoles) {
-            long roleId = switch(partialRole.get("id")) {
+        List<Long> roleIds = new ArrayList<>(partialEntityList.size());
+        for (Map<String, ?> partialEntity : partialEntityList) {
+            long roleId = switch(partialEntity.get("id")) {
                 case Long id -> id;
                 case String id -> {
                     try {
                         yield Long.parseLong(id);
                     } catch (NumberFormatException e) {
-                        log.error("Could not resolve role id", e);
+                        log.error("Could not resolve id", e);
                         yield -1;
                     }
                 }
                 case null -> {
-                    log.error("Could not resolve role id");
+                    log.error("Could not resolve id");
                     yield -1;
                 }
                 case Object o -> {
-                    log.error("Could not resolve role id from Object: " + o.getClass().getName() + " with toString " + o);
+                    log.error("Could not resolve id from Object: " + o.getClass().getName() + " with toString " + o);
                     yield -1;
                 }
             };

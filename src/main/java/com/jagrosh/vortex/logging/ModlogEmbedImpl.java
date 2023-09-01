@@ -1,11 +1,15 @@
 package com.jagrosh.vortex.logging;
 
+import com.jagrosh.vortex.Constants;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.OtherUtil;
 import com.jagrosh.vortex.utils.ToycatPallete;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.entities.automod.AutoModResponse;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.utils.FileUpload;
 
 import java.awt.Color;
@@ -46,7 +50,7 @@ public non-sealed class ModlogEmbedImpl implements ModlogEmbed {
 
     @Override
     public ModlogEmbed setDescription(String description) {
-        this.description = FormatUtil.clamp(description, MessageEmbed.DESCRIPTION_MAX_LENGTH);
+        this.description = FormatUtil.clamp("### " + description, MessageEmbed.DESCRIPTION_MAX_LENGTH);
         return this;
     }
 
@@ -103,7 +107,7 @@ public non-sealed class ModlogEmbedImpl implements ModlogEmbed {
 
         int charRemaining = MessageEmbed.EMBED_MAX_LENGTH_BOT;
         EmbedBuilder builder = new EmbedBuilder().setColor(color == null ? ToycatPallete.DARK_BLUE : color)
-                                                 .  setThumbnail(iconUrl)
+                                                 .setThumbnail(iconUrl)
                                                  .setTimestamp(time != null ? time : Instant.now());
 
 

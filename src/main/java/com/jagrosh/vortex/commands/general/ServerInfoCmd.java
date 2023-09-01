@@ -19,6 +19,7 @@ import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.HybridEvent;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.ToycatPallete;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Guild;
@@ -28,6 +29,7 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 /**
  * @author John Grosh (jagrosh)
  */
+@Slf4j
 public class ServerInfoCmd extends GeneralHybridCmd {
     private final static String LINESTART = "\u25AB"; // ▫
     private final static String GUILD_EMOJI = "\uD83D\uDDA5"; // 🖥
@@ -44,15 +46,34 @@ public class ServerInfoCmd extends GeneralHybridCmd {
     @Override
     protected void execute(HybridEvent e) {
         Guild g = e.getGuild();
-        long onlineCount = g.getMembers().stream().filter((u) -> (u.getOnlineStatus() != OnlineStatus.OFFLINE)).count();
-        long botCount = g.getMembers().stream().filter(m -> m.getUser().isBot()).count();
+        Guild.MetaData metaData = null;
+        try {
+            metaData = g.retrieveMetaData().complete();
+        } catch (Throwable t) {
+            log.error("Failed to load metadata for guild " + g.getId(), t);
+        }
+
+        long botCount = g.getMemberCache().stream().filter(m -> m.getUser().isBot()).count();
+        long onlineCount = metaData != null ? metaData.getApproximatePresences() : g.getMemberCache()
+                                                                                    .stream()
+                                                                                    .filter((u) -> u.getOnlineStatus() != OnlineStatus.OFFLINE)
+                                                                                    .count();
+
         String verif = switch (g.getVerificationLevel()) {
             case VERY_HIGH -> "┻━┻ミヽ(ಠ益ಠ)ノ彡┻━┻";
             case HIGH -> "(╯°□°）╯︵ ┻━┻";
             default -> FormatUtil.capitalize(g.getVerificationLevel().toString()).trim();
         };
 
-        EmbedBuilder builder = new EmbedBuilder().setColor(ToycatPallete.LIGHT_BROWN).setTitle("Showing Info For " + g.getName()).setThumbnail(g.getIconUrl()).addField("ID", g.getId(), true).addField("Owner", g.getOwner() == null ? "Unkown" : g.getOwner().getAsMention(), true).addField("Created At", TimeFormat.DATE_SHORT.format(g.getTimeCreated()), true).addField("Cached Users", String.format("%d (%d online, %d bots)", g.getMemberCount(), onlineCount, botCount), true).addField("Verification", verif, true).addField("Roles", "" + g.getRoles().size(), true);
+        EmbedBuilder builder = new EmbedBuilder()
+                .setColor(ToycatPallete.LIGHT_BROWN)
+                .setTitle("Showing Info For " + g.getName())
+                .setThumbnail(g.getIconUrl())
+                .addField("ID", g.getId(), true)
+                .addField("Owner", g.getOwner() == null ? "Unknown" : g.getOwner().getAsMention(), true)
+                .addField("Created At", TimeFormat.DATE_SHORT.format(g.getTimeCreated()), true)
+                .addField("Cached Users", String.format("%d (%d online, %d bots)", g.getMemberCount(), onlineCount, botCount), true)
+                .addField("Verification", verif, true).addField("Roles", "" + g.getRoles().size(), true);
 
         if (g.getBoostRole() != null) {
             int boosters = g.getBoosters().size();
@@ -65,7 +86,13 @@ public class ServerInfoCmd extends GeneralHybridCmd {
             builder.addField("Rules Channel", g.getRulesChannel().getAsMention(), true);
         }
 
-        FormatUtil.IconURLFieldBuilder urlBuilder = new FormatUtil.IconURLFieldBuilder().add("Icon", g.getIconUrl()).add("Banner", g.getBannerUrl()).add("Invite Splash", g.getSplashUrl());
+        if (g.getVanityCode() != null) {
+            builder.addField("Vanity Invite", String.format("[discord.gg/%s](%s)", g.getVanityCode(), g.getVanityUrl()), true);
+        }
+
+        FormatUtil.IconURLFieldBuilder urlBuilder = new FormatUtil.IconURLFieldBuilder().add("Icon", g.getIconUrl())
+                .add("Banner", g.getBannerUrl())
+                .add("Invite Splash", g.getSplashUrl());
         if (!urlBuilder.isEmpty()) {
             builder.addField("Images", urlBuilder.toString(), true);
         }

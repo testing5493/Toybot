@@ -25,7 +25,7 @@ public class CommandTools {
      * @return Returns true if the person has perms to use a general command, false if not
      */
     public static boolean hasGeneralCommandPerms(Vortex vortex, CommandEvent event, Permission... perms) {
-        return hasGeneralCommandPerms(vortex, event.getMember(), (event.getGuildChannel()), perms);
+        return hasGeneralCommandPerms(vortex, event.getMember(), event.getGuildChannel(), perms);
     }
 
     public static boolean hasGeneralCommandPerms(Vortex vortex, SlashCommandEvent event, Permission... perms) {
@@ -34,7 +34,7 @@ public class CommandTools {
 
     public static boolean hasGeneralCommandPerms(Vortex vortex, Member member, GuildChannel channel, Permission... perms) {
         if (member == null) {
-            return true; // Imples this is from DM
+            return true; // Implies this is from DM
         }
 
         Guild g = member.getGuild();

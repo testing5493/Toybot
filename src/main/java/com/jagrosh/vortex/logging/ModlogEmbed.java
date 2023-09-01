@@ -1,5 +1,7 @@
 package com.jagrosh.vortex.logging;
 
+import net.dv8tion.jda.api.entities.IMentionable;
+import net.dv8tion.jda.api.entities.ISnowflake;
 import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.utils.FileUpload;
 
@@ -86,15 +88,24 @@ public sealed interface ModlogEmbed permits ModlogEmbedImpl {
     ModlogEmbed setDescription(String description);
 
     /**
-     * Printf style setter for the {@link #setDescription(String)}
+     * Printf style setter for the {@link #setDescription(String)}. Passing in a {@link IMentionable} will call its
+     * {@link IMentionable#getAsMention() getAsMention()} method opposed to {@link Object#toString() toString}
      * @param format The string to be formatted using {@link String#format(String, Object...)}
      * @param args The arguments for the formatter
+     * @implNote
      *
      * @return {@link ModlogEmbed}, for chaining convenience
      */
     default ModlogEmbed formatDescription(String format, Object... args) {
-        setDescription(String.format(format, args));
-        return this;
+        if (args != null) {
+            for (int i = 0; i < args.length; i++) {
+                if (args[i] instanceof IMentionable mentionable) {
+                    args[i] = mentionable.getAsMention();
+                }
+            }
+        }
+
+        return setDescription(String.format(format, args));
     }
 
     /**
@@ -171,4 +182,22 @@ public sealed interface ModlogEmbed permits ModlogEmbedImpl {
      * @return {@link ModlogEmbed}, for chaining convenience
      */
     ModlogEmbed appendIdToFooter(String objectName, long id);
+
+    /**
+     * Appends an ID to the footer of the modlog. <em>Note that {@link #setTargetUser(UserSnowflake)} (long)}</em> and {@link #setModerator(UserSnowflake)} (long)}
+     * already append their respective IDs</em>. Example:
+     * <pre>{@code
+     * modLog.setTargetUser(userObject)
+     *       .setModerator(modMember)
+     *       .appendIdToFooter("VC Channel", vcChannel);
+     * }</pre>
+     * Will result in "User ID: 1000003400304343 | Mod ID: 23429342000303344 | VC Channel ID: 49230149234023943"
+     * being generated
+     * @param objectName The name of the object. Omit "ID"
+     * @param id An {@link ISnowflake}
+     * @return {@link ModlogEmbed}, for chaining convenience
+     */
+    default ModlogEmbed appendIdToFooter(String objectName, ISnowflake id) {
+        return appendIdToFooter(objectName, id.getIdLong());
+    }
 }
