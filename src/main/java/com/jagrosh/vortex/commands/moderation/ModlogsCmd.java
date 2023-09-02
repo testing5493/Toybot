@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.List;
 
 // TODO: Potentially merge this with the case command?
-// TODO: make this paged because right now it only supports 250 modlogs
+// TODO: make this paged because right now it only supports 250 modlogs max
 public class ModlogsCmd extends ModCommand {
     public ModlogsCmd(Vortex vortex) {
         super(vortex, Permission.MANAGE_ROLES);

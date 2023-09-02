@@ -26,7 +26,7 @@ public class CommandTools {
      * @return Returns true if the person has perms to use a general command, false if not
      */
     public static boolean hasGeneralCommandPerms(Vortex vortex, CommandEvent event, Permission... perms) {
-        return hasGeneralCommandPerms(vortex, event.getMember(), (event.getGuildChannel()), perms);
+        return hasGeneralCommandPerms(vortex, event.getMember(), event.getGuildChannel(), perms);
     }
 
     public static boolean hasGeneralCommandPerms(Vortex vortex, SlashCommandEvent event, Permission... perms) {

@@ -23,14 +23,16 @@ import com.jagrosh.vortex.database.managers.AutomodManager.AutomodSettings;
 import com.jagrosh.vortex.hibernate.api.ModlogManager;
 import com.jagrosh.vortex.hibernate.entities.*;
 import com.jagrosh.vortex.logging.MessageCache.CachedMessage;
-import com.jagrosh.vortex.utils.*;
+import com.jagrosh.vortex.utils.FixedCache;
+import com.jagrosh.vortex.utils.OtherUtil;
 import com.typesafe.config.Config;
 import jakarta.persistence.PersistenceException;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.Guild.VerificationLevel;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
@@ -314,7 +316,6 @@ public class AutoMod {
         }
 
         try {
-            usage.increment(member.getGuild().getIdLong());
             OtherUtil.dehoist(member, settings.dehoistChar);
         } catch (Exception ignore) {
         }
@@ -342,7 +343,6 @@ public class AutoMod {
         boolean preventInvites = (topic == null || !topic.toLowerCase().contains("{invites}")) && settings.filterInvites;
 
         List<Long> inviteWhitelist = !preventInvites ? Collections.emptyList() : vortex.getDatabase().inviteWhitelist.readWhitelist(message.getGuild());
-        usage.increment(message.getGuild().getIdLong());
 
         boolean shouldDelete = false;
         String channelWarning = null;

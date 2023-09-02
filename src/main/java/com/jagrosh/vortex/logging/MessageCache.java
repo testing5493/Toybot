@@ -58,7 +58,7 @@ public class MessageCache {
 
     public List<CachedMessage> getMessages(Guild guild, Predicate<CachedMessage> predicate) {
         if (!cache.containsKey(guild.getIdLong())) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
 
         return cache.get(guild.getIdLong()).getValues().stream().filter(predicate).collect(Collectors.toList());
