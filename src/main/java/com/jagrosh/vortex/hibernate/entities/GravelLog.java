@@ -20,4 +20,9 @@ public class GravelLog extends TimedLog {
     public Action actionType() {
         return Action.GRAVEL;
     }
+
+    @Override
+    public Action pardonActionType() {
+        return Action.UNGRAVEL;
+    }
 }

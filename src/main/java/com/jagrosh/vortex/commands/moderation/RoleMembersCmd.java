@@ -41,7 +41,7 @@ public class RoleMembersCmd extends ModCommand {
     }
 
     @Override
-    protected void execute(SlashCommandEvent event) {
+    protected void execute1(SlashCommandEvent event) {
         InteractionHook hook = event.deferReply().complete();
         paginate(event.optRole("role", event.getGuild().getPublicRole()), HybridEvent.of(event));
     }

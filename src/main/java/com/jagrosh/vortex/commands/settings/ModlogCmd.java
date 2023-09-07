@@ -27,6 +27,7 @@ import java.util.Objects;
 /**
  * @author John Grosh (john.a.grosh@gmail.com)
  */
+// TOOO: Restrict to admin only
 public class ModlogCmd extends LogCommand {
     public ModlogCmd(Vortex vortex) {
         super(vortex);

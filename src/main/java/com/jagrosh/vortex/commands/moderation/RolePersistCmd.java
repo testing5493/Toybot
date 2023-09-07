@@ -51,7 +51,8 @@ public abstract sealed class RolePersistCmd extends PunishmentCmd permits Gravel
             }
         }
 
-        Instant finishTime = min == -1 ? Instant.MAX : Instant.now().plus(min, ChronoUnit.MINUTES);
+        Instant startTime = event.getTimeCreated().toInstant();
+        Instant finishTime = min == -1 ? Instant.MAX : startTime.plus(min, ChronoUnit.MINUTES);
 
         String message;
         if (isGravel) {
@@ -70,25 +71,25 @@ public abstract sealed class RolePersistCmd extends PunishmentCmd permits Gravel
 
         if (targetMember == null) {
             // TODO: Account for member already being graveled
-            logPersist(isGravel, g, targetId, mod.getIdLong(), finishTime, reason);
+            logPersist(isGravel, g, targetId, mod.getIdLong(), startTime, finishTime, reason);
             event.reply(message);
         } else {
             g.addRoleToMember(targetMember, persistRole).reason(LogUtil.auditReasonFormat(mod, min, reason)).queue(success -> {
                 event.reply(message);
-                logPersist(isGravel, g, targetId, mod.getIdLong(), finishTime, reason);
+                logPersist(isGravel, g, targetId, mod.getIdLong(), startTime, finishTime, reason);
             }, failure -> {
                 handleError(event, failure, action, targetId);
             });
         }
     }
 
-    private void logPersist(boolean isGravel, Guild g, long targetId, long modId, Instant finishTime, String reason) {
+    private void logPersist(boolean isGravel, Guild g, long targetId, long modId, Instant startTime, Instant finishTime, String reason) {
         ModlogManager modlogManager = vortex.getHibernate().modlogs;
 
         if (isGravel) {
-            modlogManager.logGravel(g.getIdLong(), targetId, modId, Instant.now(), finishTime, reason);
+            modlogManager.logGravel(g.getIdLong(), targetId, modId, startTime, finishTime, reason);
         } else {
-            modlogManager.logMute(g.getIdLong(), targetId, modId, Instant.now(), finishTime, reason);
+            modlogManager.logMute(g.getIdLong(), targetId, modId, startTime, finishTime, reason);
         }
     }
 }

@@ -63,6 +63,14 @@ public abstract class ModLog {
     private String reason;
 
     /**
+     * If a reason was provided to the modlog
+     * @return {@code true} if {@link #getReason()} will not be blank or {@code null}
+     */
+    public boolean hasReason() {
+        return reason != null && !reason.isBlank();
+    }
+
+    /**
      * The corresponding action type of the modlog
      */
     public abstract Action actionType();

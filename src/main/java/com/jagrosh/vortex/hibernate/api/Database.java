@@ -1,14 +1,15 @@
 package com.jagrosh.vortex.hibernate.api;
 
+import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.hibernate.entities.*;
 import jakarta.persistence.*;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
-import org.hibernate.cfg.Configuration;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -24,6 +25,7 @@ import java.util.function.Function;
 // TODO: Hide so things are hidden jda api/implementation style
 @Slf4j(topic = "Database")
 public final class Database {
+    public final @Getter Vortex vortex;
     public final TagManager tags = new TagManager(this);
     public final ModlogManager modlogs = new ModlogManager(this);
     public final GuildDataManager guild_data = new GuildDataManager(this);
@@ -32,7 +34,8 @@ public final class Database {
     /* INTERNALS */
     private final SessionFactory SESSION_FACTORY;
 
-    public Database() {
+    public Database(Vortex vortex) {
+        this.vortex = vortex;
         this.SESSION_FACTORY = jpaBootstrap();
         modlogs.init();
     }

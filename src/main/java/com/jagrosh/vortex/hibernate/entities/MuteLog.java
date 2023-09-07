@@ -20,4 +20,9 @@ public class MuteLog extends TimedLog {
     public Action actionType() {
         return Action.MUTE;
     }
+
+    @Override
+    public Action pardonActionType() {
+        return Action.UNMUTE;
+    }
 }

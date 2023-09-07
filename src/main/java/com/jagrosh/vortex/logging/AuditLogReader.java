@@ -9,7 +9,6 @@ import net.dv8tion.jda.api.audit.AuditLogChange;
 import net.dv8tion.jda.api.audit.AuditLogEntry;
 import net.dv8tion.jda.api.audit.AuditLogKey;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.MessageType;
 
 import java.time.Instant;
 import java.util.*;
@@ -75,32 +74,31 @@ public class AuditLogReader {
                 List<Long> addedRoles = extractPartialIds(entry, AuditLogKey.MEMBER_ROLES_ADD);
                 List<Long> removedRoles = extractPartialIds(entry, AuditLogKey.MEMBER_ROLES_REMOVE);
 
-
-
-
-
-                for (long id : addedRoles) {
+                for (int i = 0; i < addedRoles.size(); i++) {
+                    long id = addedRoles.get(i);
                     if (id == guildData.getMutedRoleId()) {
                         vortex.getHibernate().modlogs.logMute(g.getIdLong(), targetId, userId, timeCreated, ModlogManager.INDEFINITE_TIME, reason);
-                    } else if (id == gCache.getGraveledRoleId()) {
+                        addedRoles.remove(i--);
+                    } else if (id == guildData.getGravelRoleId()) {
                         vortex.getHibernate().modlogs.logGravel(g.getIdLong(), targetId, userId, timeCreated, ModlogManager.INDEFINITE_TIME, reason);
+                        addedRoles.remove(i--);
                     }
                 }
 
-                for (long id : removedRoles) {
+                for (int i = 0; i < removedRoles.size(); i++) {
+                    long id = removedRoles.get(i);
                     if (id == guildData.getMutedRoleId()) {
                         vortex.getHibernate().modlogs.logUnmute(g.getIdLong(), targetId, userId, timeCreated);
+                        removedRoles.remove(i--);
                     } else if (id == guildData.getGravelRoleId()) {
                         vortex.getHibernate().modlogs.logUngravel(g.getIdLong(), targetId, userId, timeCreated);
+                        removedRoles.remove(i--);
                     }
                 }
 
                 if (!addedRoles.isEmpty() || !removedRoles.isEmpty()) {
                     vortex.getBasicLogger().logMemberRoleUpdate(g, targetId, userId, addedRoles, removedRoles, entry.getTimeCreated());
                 }
-            }
-        }
-
             }
         }
     }

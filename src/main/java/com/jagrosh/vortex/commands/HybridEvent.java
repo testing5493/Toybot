@@ -16,6 +16,8 @@ import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 
+import java.time.OffsetDateTime;
+
 /**
  * Tries to unify slash and regular commands by providing a common wrapper
  */
@@ -28,6 +30,7 @@ public sealed interface HybridEvent permits HybridEvent.SlashHybridEvent, Hybrid
     Member getMember();
     Guild getGuild();
     GuildChannel getGuildChannel();
+    OffsetDateTime getTimeCreated();
     default JDA getJDA() {
         return getUser().getJDA();
     }
@@ -110,6 +113,11 @@ public sealed interface HybridEvent permits HybridEvent.SlashHybridEvent, Hybrid
         }
 
         @Override
+        public OffsetDateTime getTimeCreated() {
+            return e.getTimeCreated();
+        }
+
+        @Override
         public SlashCommandEvent getSlashCommandEvent() {
             return e;
         }
@@ -176,6 +184,11 @@ public sealed interface HybridEvent permits HybridEvent.SlashHybridEvent, Hybrid
         @Override
         public GuildMessageChannel getGuildChannel() {
             return e.getGuildChannel();
+        }
+
+        @Override
+        public OffsetDateTime getTimeCreated() {
+            return e.getMessage().getTimeCreated();
         }
 
         @Override

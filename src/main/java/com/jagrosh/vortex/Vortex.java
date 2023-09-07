@@ -158,13 +158,13 @@ public class Vortex {
         };
 
         SlashCommand[] slashCommands = Arrays.stream(commands).filter(command -> command instanceof SlashCommand).toArray(SlashCommand[]::new);
-        hibernate = new com.jagrosh.vortex.hibernate.api.Database();
         eventWaiter = new EventWaiter(Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "eventwaiter")), false);
+        basicLogger = new ModlogGenerator(this, config);
+        hibernate = new com.jagrosh.vortex.hibernate.api.Database(this);
         threadpool = Executors.newScheduledThreadPool(30, r -> new Thread(r, "vortex"));
         database = new Database(config.getString("database.host"), config.getString("database.username"), config.getString("database.password"));
         textUploader = new TextUploader(config.getStringList("upload-webhooks"));
         auditLogReader = new AuditLogReader(this);
-        basicLogger = new ModlogGenerator(this, config);
         messageCache = new MessageCache();
         logWebhook = new WebhookClientBuilder(config.getString("webhook-url")).build();
         autoMod = new AutoMod(this, config);

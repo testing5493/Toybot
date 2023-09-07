@@ -7,6 +7,7 @@ import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceException;
 import jakarta.persistence.Tuple;
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.entities.Guild;
 import org.hibernate.Session;
 import org.jetbrains.annotations.Nullable;
 
@@ -367,9 +368,10 @@ public class ModlogManager {
 
         ReentrantLock lock = guildLock.get(modLog.getGuildId());
         lock.lock();
+        int caseId = -1;
         try {
-            return database.doTransaction(session -> {
-                int caseId = idProvider.get(modLog.getGuildId()).incrementAndGet();
+            caseId = database.doTransaction(session -> {
+                int caseId1 = idProvider.get(modLog.getGuildId()).incrementAndGet();
                 if (timedType != null) {
                     session.createMutationQuery("update " + timedType + " t set t.pardoningTime = :now, t.pardoningModId = :unknownModId where t.guildId = :guildId and t.userId = :userId and t.pardoningModId = 0")
                            .setParameter("now", Instant.now())
@@ -379,17 +381,25 @@ public class ModlogManager {
                            .executeUpdate();
                 }
 
-                modLog.setCaseId(caseId);
+                modLog.setCaseId(caseId1);
                 session.persist(modLog);
-                return caseId;
+                return caseId1;
             });
         } finally {
             lock.unlock();
         }
+
+        // TODO: Make it so it doesn't look up a guild
+        Guild g = database.getVortex().getJda().getGuildById(modLog.getGuildId());
+        if (g != null) {
+            database.getVortex().getBasicLogger().logPunish(g, modLog);
+        }
+        return caseId;
     }
 
+    @DoNotUseForVerifiedBots
     private <T extends TimedLog> T logPardon(Class<T> clazz, long guildId, long userId, long pardoningModId, Instant pardoningTime) throws PersistenceException {
-        return database.doTransaction(session -> {
+        T timedLog = database.doTransaction(session -> {
             try {
                 T modLog = session.createQuery("select t from TimedLog t where type(t) = :type and t.guildId = :guildId and t.userId = :userId and t.pardoningModId = 0", clazz)
                         .setParameter("type", clazz)
@@ -406,5 +416,15 @@ public class ModlogManager {
                 return null;
             }
         });
+
+        // TODO: Make it so it doesn't look up a guild
+        if (timedLog != null) {
+            Guild g = database.getVortex().getJda().getGuildById(timedLog.getGuildId());
+            if (g != null) {
+                database.getVortex().getBasicLogger().logPardon(g, timedLog);
+            }
+        }
+
+        return timedLog;
     }
 }

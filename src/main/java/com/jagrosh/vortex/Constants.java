@@ -40,13 +40,12 @@ public class Constants {
     public static final long DISCORD_COMMUNITY_UPDATES_ID = 669627189624307712L;
     public static final long DISCORD_EPOCH = 1420070400000L;
     public static final int SNOWFLAKE_TIME_OFFSET = 22;
-
+    public static final int DEFAULT_MAX_INLINE = 32;
     public static final int MAX_NAME_LENGTH = 32;
     public static final String DONATION_LINK = "https://patreon.com/jagrosh";
 
     public static final class Wiki {
         public static final String PRIMARY_LINK = "https://jagrosh.com/vortex";
-
         public static final String WIKI_BASE = "https://github.com/jagrosh/Vortex/wiki";
         public static final String START = WIKI_BASE + "/Getting-Started";
         public static final String RAID_MODE = WIKI_BASE + "/Raid-Mode";

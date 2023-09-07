@@ -41,6 +41,8 @@ import java.awt.*;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalAmount;
+import java.time.temporal.TemporalField;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
@@ -459,8 +461,18 @@ public class FormatUtil {
 
     public static String formatCreationTime(TemporalAccessor temporal) {
         Instant creationTime = Instant.from(temporal);
-        boolean recent = Instant.now().minus(1, ChronoUnit.MONTHS).isBefore(creationTime);
-        return (recent ? TimeFormat.DATE_TIME_SHORT : TimeFormat.DATE_SHORT).format(temporal);
+        Instant now = Instant.now();
+
+        TimeFormat timeFormat;
+        if (now.minus(1, ChronoUnit.DAYS).isBefore(creationTime)) {
+            timeFormat = TimeFormat.TIME_SHORT;
+        } else if (now.minus(30, ChronoUnit.DAYS).isBefore(creationTime)) {
+            timeFormat = TimeFormat.DATE_TIME_SHORT;
+        } else {
+            timeFormat = TimeFormat.DATE_SHORT;
+        }
+
+        return timeFormat.format(temporal);
     }
 
     public static String toMentionableRoles(List<Long> roles) {

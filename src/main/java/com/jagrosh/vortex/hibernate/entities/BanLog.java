@@ -20,4 +20,9 @@ public class BanLog extends TimedLog {
     public Action actionType() {
         return Action.BAN;
     }
+
+    @Override
+    public Action pardonActionType() {
+        return Action.UNBAN;
+    }
 }

@@ -1,5 +1,6 @@
 package com.jagrosh.vortex.logging;
 
+import com.jagrosh.vortex.Constants;
 import net.dv8tion.jda.api.entities.IMentionable;
 import net.dv8tion.jda.api.entities.ISnowflake;
 import net.dv8tion.jda.api.entities.UserSnowflake;
@@ -115,8 +116,22 @@ public sealed interface ModlogEmbed permits ModlogEmbedImpl {
      * @param value The value of the field
      * @param inline Whether the field will show on the same line as other fields given enough space
      * @return {@link ModlogEmbed}, for chaining convenience
+     *
+     * @see #addField(String, String)
      */
     ModlogEmbed addField(String name, String value, boolean inline);
+
+    /**
+     * Adds a field to the modlog. The field will be inline if the value is less than or equal to {@value ConstantsDEFAULT_MAX_INLINE} characters.
+     *
+     * @param name The name of the field
+     * @param value The value of the field
+     *
+     * @see #addField(String, String, boolean)
+     */
+    default ModlogEmbed addField(String name, String value) {
+        return addField(name, value, value != null && value.length() <= Constants.DEFAULT_MAX_INLINE);
+    }
 
     /**
      * Sets an image for the field. Note that this method should be used for, and not one of the smaller log icons that should be

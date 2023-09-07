@@ -17,12 +17,11 @@ package com.jagrosh.vortex.logging;
 
 import com.jagrosh.vortex.Emoji;
 import com.jagrosh.vortex.Vortex;
-import com.jagrosh.vortex.database.Database.Modlog;
+import com.jagrosh.vortex.hibernate.api.ModlogManager;
+import com.jagrosh.vortex.hibernate.entities.ModLog;
+import com.jagrosh.vortex.hibernate.entities.TimedLog;
 import com.jagrosh.vortex.logging.MessageCache.CachedMessage;
-import com.jagrosh.vortex.utils.DiscordPallete;
-import com.jagrosh.vortex.utils.DoNotUseForVerifiedBots;
-import com.jagrosh.vortex.utils.FormatUtil;
-import com.jagrosh.vortex.utils.LogUtil;
+import com.jagrosh.vortex.utils.*;
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
@@ -78,8 +77,9 @@ public class ModlogGenerator {
         UserSnowflake author = newMessage.getMember() == null ? newMessage.getAuthor() : newMessage.getMember();
         ModlogEmbed modlogEmbed = ModlogEmbed.createForSingleGuild()
                 .setTargetUser(author)
-                .formatDescription("[Message](%s) edited in %s",
+                .formatDescription("[Message](%s) sent by %s edited in %s",
                         newMessage.getJumpUrl(),
+                        author,
                         newMessage.getChannel()
                 ).appendIdToFooter("Message", newMessage.getIdLong())
                 .addField("Before", FormatUtil.formatMessage(oldMessage), false) // TODO: Ditch FormatUtil#formatMessage
@@ -116,7 +116,7 @@ public class ModlogGenerator {
                 .setColor(DiscordPallete.YELLOW)
                 .setIcon(Emoji.LOGS.DELETE.yellowIcon(false))
                 .setTargetUser(User.fromId(oldMessage.getAuthorId()))
-                .formatDescription("Message sent by <@%d> deleted in <#%d>%n%s", oldMessage.getAuthorId(), oldMessage.getTextChannelId(), formatted)
+                .formatDescription("[Message](%s) sent by <@%d> deleted in <#%d>%n%s", oldMessage.getJumpUrl(), oldMessage.getAuthorId(), oldMessage.getTextChannelId(), formatted)
                 .appendIdToFooter("Message", oldMessage.getIdLong())
                 .appendIdToFooter("Channel", oldMessage.getTextChannelId());
 
@@ -304,49 +304,90 @@ public class ModlogGenerator {
         });
     }
 
-    public void logModlog(Guild guild, Modlog modlog) {
-        /*String verb;
-        boolean punishing = modlog.getSaviorId() == -1;
+    public static final String NO_REASON_PROVIDED = "_No Reason Provided_";
 
-        verb = switch (modlog.getType()) {
-            case GRAVEL -> "graveled";
-            case MUTE -> "muted";
-            case WARN -> "warned";
-            case BAN -> "banned";
-            case SOFTBAN -> "softbanned";
-            case KICK -> "kicked";
-            default -> "";
-        };
-
-
-        String howLong = "";
-        Instant finish = modlog.getFinnish(), start = modlog.getStart();
-        if (finish != null && start != null && finish.getEpochSecond() != Instant.MAX.getEpochSecond()) {
-            howLong = " for " + FormatUtil.secondsToTimeCompact(finish.getEpochSecond() - start.getEpochSecond());
-            if (!punishing) {
-                howLong = " after they were " + verb + " " + howLong;
-            }
+    public void logPunish(Guild guild, ModLog modLog) {
+        TextChannel modlogsChannl = getModlogsChannel(guild);
+        if (modlogsChannl == null) {
+            return;
         }
 
-
-        User user = OtherUtil.getUserCacheElseRetrieve(guild.getJDA(), modlog.getUserId());
-        final String HOW_LONG = howLong;
-
-        EmbedBuilder builder = new EmbedBuilder();
-
-        if (user != null) {
-            builder.setAuthor(getLoggingName(guild, user), null, user.getEffectiveAvatarUrl());
+        UserSnowflake targetUserSnowflake = OtherUtil.getMostRelevent(guild, User.fromId(modLog.getUserId()));
+        UserSnowflake modUserSnowflake;
+        long punishingModId = modLog.getPunishingModId();
+        String modMention;
+        if (punishingModId == ModlogManager.NOT_YET_PARDONED_MOD_ID || punishingModId == ModlogManager.UNKNOWN_MOD_ID) {
+            modUserSnowflake = null;
+            modMention = "an unknown moderator";
+        } else if (punishingModId == ModlogManager.AUTOMOD_ID) {
+            modUserSnowflake = null;
+            modMention = "automod";
+        } else {
+            modUserSnowflake = OtherUtil.getMostRelevent(guild, User.fromId(punishingModId));
+            modMention = modUserSnowflake.getAsMention();
         }
 
-        builder.appendDescription(String.format("<@%d> %s <@%d>%s", punishing ? modlog.getModId() : modlog.getSaviorId(), punishing ? verb : "un" + verb, modlog.getUserId(), HOW_LONG))
-               .addField("Case ID", "" + modlog.getId(), true)
-               .setTimestamp(punishing ? modlog.getStart() : modlog.getFinnish())
-               .setFooter(String.format("User ID: %d | %s ID: %d", modlog.getUserId(), punishing ? "Punisher" : "Pardoner", punishing ? modlog.getModId() : modlog.getSaviorId()), null);
+        ModlogEmbed modlogEmbed = ModlogEmbed.createForSingleGuild()
+                                             .setColor(DiscordPallete.RED)
+                                             .setTargetUser(targetUserSnowflake)
+                                             .setModerator(modUserSnowflake)
+                                             .setIcon(modLog.actionType().getEmoji().redIcon(false))
+                                             .setTimestamp(modLog.getPunishmentTime());
 
-        String reason = modlog.getReason();
-        if (reason != null && !reason.isBlank()) {
-            builder.addField("Reason", FormatUtil.clamp(reason, MessageEmbed.VALUE_MAX_LENGTH), true);
-        }*/
+        if (!(modLog instanceof TimedLog timedLog && !timedLog.isPunishedIndefinitely())) {
+            modlogEmbed.formatDescription("%s was %s by %s", targetUserSnowflake, modLog.actionType().getPastVerb(), modMention);
+        } else {
+            long length = timedLog.getPardoningTime().getEpochSecond() - timedLog.getPunishmentTime().getEpochSecond();
+            modlogEmbed.formatDescription("%s was %s by %s for %s", targetUserSnowflake, modLog.actionType().getPastVerb(), modMention, FormatUtil.secondsToTimeCompact(length));
+        }
+
+        modlogEmbed.addField("Case", "" + modLog.getCaseId(), true)
+                .addField(FormatUtil.capitalize(modLog.actionType().getVerb()) + " Reason", !modLog.hasReason() ? NO_REASON_PROVIDED : modLog.getReason());
+        log(modlogsChannl, modlogEmbed);
+    }
+
+    public void logPardon(Guild guild, TimedLog timedLog) {
+        TextChannel modlogsChannl = getModlogsChannel(guild);
+        if (modlogsChannl == null || timedLog.getPardoningModId() == ModlogManager.NOT_YET_PARDONED_MOD_ID) {
+            return;
+        }
+
+        UserSnowflake targetUserSnowflake = OtherUtil.getMostRelevent(guild, User.fromId(timedLog.getUserId()));
+        UserSnowflake targetModUserSnowflake;
+        String punishingModMention, pardoningModMention;
+
+        if (timedLog.getPunishingModId() == ModlogManager.NOT_YET_PARDONED_MOD_ID || timedLog.getPunishingModId() == ModlogManager.UNKNOWN_MOD_ID) {
+            punishingModMention = "an unknown moderator";
+        } else if (timedLog.getPunishingModId() == ModlogManager.AUTOMOD_ID) {
+            punishingModMention = "_Automod_";
+        } else {
+            punishingModMention = "<@" + timedLog.getPunishingModId() + ">";
+        }
+
+        if (timedLog.getPardoningModId() == ModlogManager.UNKNOWN_MOD_ID) {
+            targetModUserSnowflake = null;
+            pardoningModMention = "an unknown moderator";
+        } else if (timedLog.getPardoningModId() == ModlogManager.AUTOMOD_ID) {
+            targetModUserSnowflake = null;
+            pardoningModMention = "automod";
+        } else {
+            targetModUserSnowflake = OtherUtil.getMostRelevent(guild, User.fromId(timedLog.getPardoningModId()));
+            pardoningModMention = "<@" + timedLog.getPardoningModId() + ">";
+        }
+
+        ModlogEmbed modlogEmbed = ModlogEmbed.createForSingleGuild()
+                .setColor(DiscordPallete.RED)
+                .setTargetUser(targetUserSnowflake)
+                .setModerator(targetModUserSnowflake)
+                .setIcon(timedLog.pardonActionType().getEmoji().redIcon(false))
+                .setTimestamp(timedLog.getPardoningTime())
+                .formatDescription("%s was %s by %s", targetUserSnowflake, timedLog.pardonActionType().getPastVerb(), pardoningModMention)
+                .addField("Case", "" + timedLog.getCaseId(), true)
+                .addField("Punishing Mod", punishingModMention, true)
+                .addField("Time " + FormatUtil.capitalize(timedLog.actionType().getPastVerb()), FormatUtil.formatCreationTime(timedLog.getPunishmentTime()), true)
+                .addField(FormatUtil.capitalize(timedLog.actionType().getVerb()) + " Reason", !timedLog.hasReason() ? NO_REASON_PROVIDED : timedLog.getReason());
+
+        log(modlogsChannl, modlogEmbed);
     }
 
     // TODO: Potentially add more case specific information
@@ -434,6 +475,10 @@ public class ModlogGenerator {
     }
 
     public TextChannel getModlogsChannel(Guild g) {
+        if (g == null) {
+            return null;
+        }
+
         TextChannel channel = vortex.getHibernate().guild_data.getGuildData(g.getIdLong()).getModlogsChannel(g);
         return channel == null || !channel.canTalk() ? null : channel;
     }

@@ -1,5 +1,6 @@
 package com.jagrosh.vortex.hibernate.entities;
 
+import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.hibernate.internal.PreciseToSecondInstantConverter;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -43,4 +44,19 @@ public abstract class TimedLog extends ModLog {
         // is precise to the nanosecond
         return pardoningTime.getEpochSecond() >= Instant.MAX.getEpochSecond();
     }
+
+    /**
+     * The corresponding punishing ction type for the modlog
+     *
+     * @see #pardonActionType()
+     */
+    @Override
+    public abstract Action actionType();
+
+    /**
+     * The corresponding pardoning action type for the modlog
+     *
+     * @see #actionType()
+     */
+    public abstract Action pardonActionType();
 }
