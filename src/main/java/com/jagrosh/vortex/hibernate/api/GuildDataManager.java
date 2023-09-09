@@ -26,4 +26,12 @@ public class GuildDataManager {
             session.merge(guildData);
         });
     }
+
+    public void setLastParsed(long guildId, long lastParsedId) {
+        database.doTransaction(session -> {
+            GuildData guildData = session.get(GuildData.class, guildId);
+            guildData.setLastParsedAuditId(lastParsedId);
+            session.merge(guildData);
+        });
+    }
 }

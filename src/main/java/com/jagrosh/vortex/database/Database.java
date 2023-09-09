@@ -33,7 +33,7 @@ public class Database extends DatabaseConnector {
     public final AutomodManager automod; // automod settings
     // public final GuildSettingsDataManager settings; // logs and other settings
     public final IgnoreManager ignores; // ignored roles and channels
-    public final AuditCacheManager auditcache; // cache of latest audit logs
+    // public final AuditCacheManager auditcache; // cache of latest audit logs
     /*public final TempMuteManager tempmutes;
     public final GravelManager gravels;
     public final TempBanManager tempbans;*/
@@ -85,7 +85,7 @@ public class Database extends DatabaseConnector {
         automod = new AutomodManager(this);
         // settings = new GuildSettingsDataManager(this);
         ignores = new IgnoreManager(this);
-        auditcache = new AuditCacheManager(this);
+        // auditcache = new AuditCacheManager(this);
         // tempmutes = new TempMuteManager(this);
         // gravels = new GravelManager(this);
         // tempbans = new TempBanManager(this);
@@ -105,17 +105,7 @@ public class Database extends DatabaseConnector {
         return param;
     }
 
-    /*public static List<Modlog> getAllModlogs(long guildId, long userId) {
-        List<Modlog> modlogs = new ArrayList<>();
-        for (ModlogManager manager : managers) {
-            modlogs.addAll(manager.getModlogs(guildId, userId));
-        }
-
-        modlogs.sort(Database.Modlog::compareTo);
-        return modlogs;
-    }
-
-
+    /*
      * Updates a reason
      *
      * @param guildId Guild Id

@@ -215,6 +215,8 @@ public class AutoMod {
         }
     }
 
+
+
     public void memberJoin(GuildMemberJoinEvent event) {
         // completely ignore bots for raidmode
         if (event.getMember().getUser().isBot()) {

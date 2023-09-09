@@ -32,6 +32,9 @@ public class GuildData {
     @Column(name = "PREFIX", length = PREFIX_MAX_LENGTH)
     private String prefix = Constants.PREFIX;
 
+    @Column(name = "LAST_PARSED_AUDIT_ID")
+    private long lastParsedAuditId;
+
     @Column(name = "MOD_ROLE_ID")
     private long modRoleId;
 

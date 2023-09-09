@@ -52,7 +52,7 @@ class GuildAuditLogReader {
         long localLastParsedId;
         if (Vortex.BULK_PARSE_ON_START) {
             try {
-                localLastParsedId = vortex.getDatabase().auditcache.getLastParsed(guildId); // TODO: Handle first time joining guild
+                localLastParsedId = vortex.getHibernate().guild_data.getGuildData(guildId).getLastParsedAuditId(); // TODO: Handle first time joining guild
                 willBulkRetrieve = localLastParsedId != 0L;
             } catch (Exception e) {
                 log.warn("Could not get the id of the last audit log parsed for guild " + guildId, e);
