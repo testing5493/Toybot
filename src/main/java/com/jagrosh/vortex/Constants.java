@@ -18,13 +18,14 @@ package com.jagrosh.vortex;
 import java.time.OffsetDateTime;
 
 /**
+ * @see Emoji
  * @author John Grosh (jagrosh)
  */
 public class Constants {
     public static final OffsetDateTime STARTUP = OffsetDateTime.now();
     public static final String PREFIX = "?";
     public static final String SUCCESS = ":white_check_mark:";
-    public static final char ZWSP = '\u200B';
+    public static final char   ZWSP = '\u200B';
     public static final String WARNING = ":warning:";
     public static final String ERROR = ":x:";
     public static final String LOADING = ":alarm_clock:";

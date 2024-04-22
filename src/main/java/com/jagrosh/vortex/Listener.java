@@ -27,10 +27,7 @@ import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
-import net.dv8tion.jda.api.events.message.MessageBulkDeleteEvent;
-import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
+import net.dv8tion.jda.api.events.message.*;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.events.user.update.UserUpdateAvatarEvent;
 import net.dv8tion.jda.api.events.user.update.UserUpdateDiscriminatorEvent;
@@ -149,7 +146,7 @@ public class Listener implements EventListener {
                 // Log the shard that has finished loading
                 ShardInfo si = genericEvent.getJDA().getShardInfo();
                 String shardinfo = si == null ? "N/A" : (si.getShardId() + 1) + "/" + si.getShardTotal();
-                LOG.info("Shard " + shardinfo + " is ready.");
+                LOG.info("Shard {} is ready.", shardinfo);
 
                 // TODO: Make sure gravels and mutes are checked from before the bot is on
                 vortex.getLogWebhook().send("\uD83C\uDF00 Shard `" + shardinfo + "` has connected. Guilds: `" // 🌀

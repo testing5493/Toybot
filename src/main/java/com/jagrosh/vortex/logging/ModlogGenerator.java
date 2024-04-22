@@ -24,14 +24,12 @@ import com.jagrosh.vortex.utils.DoNotUseForVerifiedBots;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.LogUtil;
 import com.typesafe.config.Config;
-import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.UserSnowflake;
-import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
@@ -421,7 +419,9 @@ public class ModlogGenerator {
 
         FileUpload fileUpload = modlogEmbedImpl.getFileUpload();
         if (fileUpload != null) {
-            modlogsChannel.sendFiles(fileUpload).addEmbeds(modlogEmbedImpl.build(modlogsChannel.getGuild())).queue(s -> {}, t -> log.error("Error uploading modlog with file", t));
+            modlogsChannel.sendFiles(fileUpload)
+                    .addEmbeds(modlogEmbedImpl.build(modlogsChannel.getGuild()))
+                    .queue(s -> {}, t -> log.error("Error uploading modlog with file", t));
         } else {
             modlogsChannel.sendMessageEmbeds(modlogEmbedImpl.build(modlogsChannel.getGuild())).queue();
         }

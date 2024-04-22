@@ -66,7 +66,7 @@ public class RoleMembersCmd extends ModCommand {
     private void paginate(Role role, HybridEvent event) {
         role.getGuild().findMembersWithRoles(role).onError(t -> {
             event.replyError("Something went wrong. Please try again");
-            log.error("Failed to resolve users with role " + role.getId() + " in guild " + role.getGuild().getId(), t);
+            log.error("Failed to resolve users with role {} in guild {}", role.getId(), role.getGuild().getId(), t);
         }).onSuccess(members -> {
             try {
                 if (members.isEmpty()) {
@@ -120,7 +120,7 @@ public class RoleMembersCmd extends ModCommand {
                 }
             } catch (Exception e) {
                 event.replyError("Something went wrong. Please try again");
-                log.error("Failed to generate paginator for users with role " + role.getId() + " in guild " + role.getGuild().getId(), e);
+                log.error("Failed to generate paginator for users with role {} in guild {}", role.getId(), role.getGuild().getId(), e);
             }
         });
     }

@@ -158,7 +158,7 @@ public class OtherUtil {
                 int num = Integer.parseInt(vals[j]);
 
                 // Parses units, if any
-                if (vals.length > j + 1 && vals[j + 1].length() != 0) {
+                if (vals.length > j + 1 && !vals[j + 1].isEmpty()) {
                     char timeUnit = vals[j + 1].toLowerCase().charAt(0);
                     num *= switch (timeUnit) {
                         case 'm' -> 60;
@@ -195,10 +195,10 @@ public class OtherUtil {
                 list[i] = values.get(i);
             }
 
-            log.info("Successfully read " + list.length + " entries from '" + filename + "'");
+            log.info("Successfully read {} entries from '{}'", list.length, filename);
             return list;
         } catch (Exception ex) {
-            log.warn("Failed to read '" + filename, ex);
+            log.warn("Failed to read '{}", filename, ex);
             return new String[0];
         }
     }

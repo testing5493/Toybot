@@ -77,7 +77,7 @@ public abstract class ModCommand extends SlashCommand {
         }
 
         if (errMsg == null) {
-            log.warn("Failed to " + action.getVerb() + " a user", t);
+            log.warn("Failed to {} a user", action.getVerb(), t);
             errMsg = String.format("Failed to %s %s", action.getVerb(), mention);
         }
 
@@ -89,7 +89,7 @@ public abstract class ModCommand extends SlashCommand {
         String errMsg = getErrorMessage(e, action, mention);
 
         if (errMsg == null) {
-            log.warn("Failed to " + action.getVerb() + " a user", new RuntimeException(e.getMeaning()));
+            log.warn("Failed to {} a user", action.getVerb(), new RuntimeException(e.getMeaning()));
             errMsg = String.format("Failed to %s %s", action.getVerb(), mention);
         }
 

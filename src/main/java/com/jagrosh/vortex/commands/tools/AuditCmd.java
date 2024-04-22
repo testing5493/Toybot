@@ -59,7 +59,7 @@ public class AuditCmd extends Command {
             sb.append(type.name()).append("`, `");
         }
 
-        actions = sb.toString().substring(0, sb.length() - 3);
+        actions = sb.substring(0, sb.length() - 3);
     }
 
     @Override
@@ -67,9 +67,8 @@ public class AuditCmd extends Command {
         String[] parts = event.getArgs().split("\\s+", 2);
         AuditLogPaginationAction action = event.getGuild().retrieveAuditLogs().cache(false).limit(10);
         switch (parts[0].toLowerCase()) {
-            case "all":
-                break;
-            case "from":
+            case "all" -> {}
+            case "from" -> {
                 if (parts.length == 1) {
                     throw new CommandErrorException("Please include a user");
                 }
@@ -84,8 +83,8 @@ public class AuditCmd extends Command {
                 }
 
                 action = action.user(list.get(0));
-                break;
-            case "action":
+            }
+            case "action" -> {
                 if (parts.length == 1) {
                     throw new CommandErrorException("Please include an action" + actions);
                 }
@@ -103,9 +102,15 @@ public class AuditCmd extends Command {
                 }
 
                 action = action.type(type);
-                break;
-            default:
-                throw new CommandErrorException("Valid subcommands:\n\n" + "`" + event.getClient().getPrefix() + name + " all` - shows recent audit log entries\n" + "`" + event.getClient().getPrefix() + name + " from <user>` - shows recent entries by a user\n" + "`" + event.getClient().getPrefix() + name + " action <action>` shows recent entries of a certain action");
+            }
+            default -> {
+                throw new CommandErrorException(
+                        "Valid subcommands:\n\n" +
+                        "`" + event.getClient().getPrefix() + name + " all` - shows recent audit log entries\n" +
+                        "`" + event.getClient().getPrefix() + name + " from <user>` - shows recent entries by a user\n" +
+                        "`" + event.getClient().getPrefix() + name + " action <action>` shows recent entries of a certain action"
+                );
+            }
         }
 
         event.getChannel().sendTyping().queue();
@@ -120,31 +125,27 @@ public class AuditCmd extends Command {
                 StringBuilder sb = new StringBuilder();
                 sb.append(LINESTART).append("User: ").append(FormatUtil.formatFullUser(ale.getUser()));
                 switch (ale.getTargetType()) {
-                    case CHANNEL:
+                    case CHANNEL -> {
                         TextChannel tc = event.getGuild().getTextChannelById(ale.getTargetIdLong());
                         sb.append("\n").append(LINESTART).append("Channel: ").append(tc == null ? UNKNOWN : "**#" + tc.getName() + "**").append(" (ID:").append(ale.getTargetId()).append(")");
-                        break;
-                    case EMOJI:
+                    }
+                    case EMOJI -> {
                         Emoji e = event.getGuild().getEmojiById(ale.getTargetIdLong());
                         sb.append("\n").append(LINESTART).append("Emote: ").append(e == null ? UNKNOWN : e.getFormatted()).append(" (ID:").append(ale.getTargetId()).append(")");
-                        break;
-                    case GUILD:
-                        break;
-                    case INVITE:
-                        break;
-                    case MEMBER:
+                        }
+                    case GUILD, INVITE -> {}
+                    case MEMBER -> {
                         User u = event.getJDA().getUserById(ale.getTargetIdLong());
                         sb.append("\n").append(LINESTART).append("Member: ").append(u == null ? UNKNOWN : FormatUtil.formatUser(u)).append(" (ID:").append(ale.getTargetId()).append(")");
-                        break;
-                    case ROLE:
+                    }
+                    case ROLE -> {
                         Role r = event.getGuild().getRoleById(ale.getTargetIdLong());
                         sb.append("\n").append(LINESTART).append("Role: ").append(r == null ? UNKNOWN : "**" + r.getName() + "**").append(" (ID:").append(ale.getTargetId()).append(")");
-                        break;
-                    case WEBHOOK:
+                    }
+                    case WEBHOOK -> {
                         sb.append("\n").append(LINESTART).append("Webhook ID: ").append(ale.getTargetId());
-                        break;
-                    case UNKNOWN:
-                    default:
+                    }
+                    default ->
                         sb.append("\n").append(LINESTART).append("Target ID: ").append(ale.getTargetId());
                 }
 

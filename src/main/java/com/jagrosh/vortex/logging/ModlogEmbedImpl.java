@@ -1,9 +1,9 @@
 package com.jagrosh.vortex.logging;
 
-import com.jagrosh.vortex.Constants;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.OtherUtil;
 import com.jagrosh.vortex.utils.ToycatPallete;
+import lombok.Getter;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -21,6 +21,7 @@ import java.util.List;
 public non-sealed class ModlogEmbedImpl implements ModlogEmbed {
     private UserSnowflake targetUserSnowflake, modUserSnowflake;
     private String title, description;
+    @Getter
     private FileUpload fileUpload;
     private Color color;
     private TemporalAccessor time;
@@ -175,10 +176,6 @@ public non-sealed class ModlogEmbedImpl implements ModlogEmbed {
         return builder.build();
     }
 
-    public FileUpload getFileUpload() {
-        return fileUpload;
-    }
-
     private int setAuthor(EmbedBuilder builder, Guild g, UserSnowflake userSnowflake) {
         userSnowflake = OtherUtil.getMostRelevent(g, userSnowflake);
 
@@ -196,11 +193,11 @@ public non-sealed class ModlogEmbedImpl implements ModlogEmbed {
                 nickname = u.getEffectiveName();
                 avatar   = u.getEffectiveAvatarUrl();
             }
-            case default -> {
+            default -> {
                 username = "Unknown User";
-                discrim  = null;
+                discrim = null;
                 nickname = null;
-                avatar   = userSnowflake.getDefaultAvatarUrl();
+                avatar = userSnowflake.getDefaultAvatarUrl();
             }
         }
 

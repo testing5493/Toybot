@@ -35,7 +35,7 @@ public class CommandExceptionListener implements CommandListener {
         } else if (throwable instanceof CommandWarningException) {
             event.replyWarning(FormatUtil.filterEveryone(throwable.getMessage()));
         } else {
-            log.error("An exception occurred in a command: " + command, throwable);
+            log.error("An exception occurred in a command: {}", command, throwable);
         }
     }
 

@@ -97,7 +97,7 @@ public class InviteWhitelistManager extends DataManager {
 
             stmt.executeUpdate();
         } catch (SQLException e) {
-            log.error("Exception in SQL: " + e);
+            log.error("Exception in SQL", e);
         }
     }
 

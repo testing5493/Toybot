@@ -46,7 +46,6 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.exceptions.PermissionException;
@@ -90,7 +89,6 @@ public class Vortex {
         BULK_PARSE_ON_START = config.getBoolean("check-for-missed-logs-on-start");
         DEVELOPER_MODE = config.getBoolean("developer-mode"); // TODO: Maybe make dev mode a bit better
     }
-
 
     public Vortex() throws Exception {
         Command[] commands = new Command[]{
@@ -240,7 +238,7 @@ public class Vortex {
 
                 reader.close();
                 writer.close();
-                log.info("A configuration file named " + System.getProperty("config.file") + " was created. Please fill it out and rerun the bot");
+                log.info("A configuration file named {} was created. Please fill it out and rerun the bot", System.getProperty("config.file"));
                 System.exit(0);
             }
         } catch (IOException e) {

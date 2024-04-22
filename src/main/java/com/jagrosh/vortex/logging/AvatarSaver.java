@@ -24,7 +24,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.net.URLConnection;
 
 /**
@@ -89,11 +89,13 @@ public class AvatarSaver {
         }
 
         try {
-            URL u = new URL(url.replace(".gif", ".png"));
-            URLConnection urlConnection = u.openConnection();
+            // TODO: Consider saving gifs
+            URLConnection urlConnection = new URI(url.replace(".gif", ".png"))
+                    .toURL()
+                    .openConnection();
             urlConnection.setRequestProperty("user-agent", userAgent);
             return ImageIO.read(urlConnection.getInputStream());
-        } catch (IOException | IllegalArgumentException e) {
+        } catch (Exception e) {
             return null;
         }
     }
