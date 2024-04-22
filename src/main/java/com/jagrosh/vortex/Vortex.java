@@ -57,6 +57,8 @@ import net.dv8tion.jda.api.utils.messages.MessageRequest;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -82,6 +84,17 @@ public class Vortex {
     private final @Getter WebhookClient logWebhook;
     private final @Getter AutoMod autoMod;
     private final @Getter CommandExceptionListener listener;
+
+    /** The default intents the bot starts with */
+    private final GatewayIntent[] defaultGatewayIntents = {
+            GatewayIntent.GUILD_MEMBERS,
+            GatewayIntent.GUILD_MESSAGE_REACTIONS,
+            GatewayIntent.GUILD_MESSAGES,
+            GatewayIntent.GUILD_MODERATION,
+            GatewayIntent.GUILD_VOICE_STATES,
+            GatewayIntent.MESSAGE_CONTENT,
+            GatewayIntent.GUILD_PRESENCES
+    };
 
     static {
         config = loadConfiguration();
@@ -189,23 +202,18 @@ public class Vortex {
                             } catch (PermissionException ignore) {}
                         }
                     }, t -> e.replyWarning("Help cannot be sent because you are blocking Direct Messages."))).build();
-        MessageRequest.setDefaultMentions(Arrays.asList(Message.MentionType.CHANNEL, Message.MentionType.EMOJI, Message.MentionType.SLASH_COMMAND)); // Makes sure the bot does not ping @everyone/roles/random users etc
-        jda = JDABuilder.create(config.getString("bot-token"), GatewayIntent.GUILD_MEMBERS,
-                                                                    GatewayIntent.GUILD_MESSAGE_REACTIONS,
-                                                                    GatewayIntent.GUILD_MESSAGES,
-                                                                    GatewayIntent.GUILD_MODERATION,
-                                                                    GatewayIntent.GUILD_VOICE_STATES,
-                                                                    GatewayIntent.MESSAGE_CONTENT,
-                                                                    GatewayIntent.GUILD_PRESENCES
-                         ).disableCache(CacheFlag.EMOJI, CacheFlag.SCHEDULED_EVENTS, CacheFlag.STICKER)
-                          .addEventListeners(new Listener(this), client, eventWaiter)
-                         .setStatus(OnlineStatus.ONLINE)
-                         .setActivity(Activity.playing("loading...")) // TODO: Replace with custom status once supported
-                         .setBulkDeleteSplittingEnabled(false)
-                         .setRequestTimeoutRetry(true)
-                         .setSessionController(new BlockingSessionController())
-                         .setCompression(Compression.NONE)
-                         .build();
+
+        MessageRequest.setDefaultMentions(List.of()); // Makes sure the bot does not ping @everyone/roles/random users etc
+        jda = JDABuilder.create(config.getString("bot-token"), List.of(defaultGatewayIntents))
+                        .disableCache(CacheFlag.EMOJI, CacheFlag.SCHEDULED_EVENTS, CacheFlag.STICKER)
+                        .addEventListeners(new Listener(this), client, eventWaiter)
+                        .setStatus(OnlineStatus.ONLINE)
+                        .setActivity(Activity.playing("loading...")) // TODO: Replace with custom status once supported
+                        .setBulkDeleteSplittingEnabled(false)
+                        .setRequestTimeoutRetry(true)
+                        .setSessionController(new BlockingSessionController())
+                        .setCompression(Compression.NONE)
+                        .build();
     }
 
     /**
@@ -221,7 +229,9 @@ public class Vortex {
         File configFile = new File(System.getProperty("config.file"));
         try {
             if (configFile.createNewFile()) {
-                InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("reference.conf");
+                InputStream inputStream = Thread.currentThread()
+                        .getContextClassLoader()
+                        .getResourceAsStream("reference.conf");
 
                 if (inputStream == null) {
                     log.error("Unable to load reference.conf in resources");
