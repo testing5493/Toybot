@@ -17,7 +17,10 @@ package com.jagrosh.vortex;
 
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.WebhookClientBuilder;
-import com.jagrosh.jdautilities.command.*;
+import com.jagrosh.jdautilities.command.Command;
+import com.jagrosh.jdautilities.command.CommandClient;
+import com.jagrosh.jdautilities.command.CommandClientBuilder;
+import com.jagrosh.jdautilities.command.SlashCommand;
 import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 import com.jagrosh.vortex.automod.AutoMod;
 import com.jagrosh.vortex.commands.CommandExceptionListener;
@@ -56,6 +59,7 @@ import net.dv8tion.jda.api.utils.messages.MessageRequest;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -85,6 +89,17 @@ public class Vortex {
     private final @Getter AutoMod autoMod;
     private final @Getter CommandExceptionListener listener;
 
+    /** The default intents the bot starts with */
+    private final GatewayIntent[] defaultGatewayIntents = {
+            GatewayIntent.GUILD_MEMBERS,
+            GatewayIntent.GUILD_MESSAGE_REACTIONS,
+            GatewayIntent.GUILD_MESSAGES,
+            GatewayIntent.GUILD_MODERATION,
+            GatewayIntent.GUILD_VOICE_STATES,
+            GatewayIntent.MESSAGE_CONTENT,
+            GatewayIntent.GUILD_PRESENCES
+    };
+
     static {
         config = loadConfiguration();
 
@@ -92,7 +107,6 @@ public class Vortex {
         DEVELOPER_MODE = config.getBoolean("developer-mode"); // TODO: Maybe make dev mode a bit better
         AUTO_CREATE_DB = config.getBoolean("auto-create-database");
     }
-
 
     public Vortex() throws Exception {
         Command[] commands = new Command[]{
@@ -190,23 +204,18 @@ public class Vortex {
                             } catch (PermissionException ignore) {}
                         }
                     }, t -> e.replyWarning("Help cannot be sent because you are blocking Direct Messages."))).build();
-        MessageRequest.setDefaultMentions(Arrays.asList(Message.MentionType.CHANNEL, Message.MentionType.EMOJI, Message.MentionType.SLASH_COMMAND)); // Makes sure the bot does not ping @everyone/roles/random users etc
-        jda = JDABuilder.create(config.getString("bot-token"), GatewayIntent.GUILD_MEMBERS,
-                                                                    GatewayIntent.GUILD_MESSAGE_REACTIONS,
-                                                                    GatewayIntent.GUILD_MESSAGES,
-                                                                    GatewayIntent.GUILD_MODERATION,
-                                                                    GatewayIntent.GUILD_VOICE_STATES,
-                                                                    GatewayIntent.MESSAGE_CONTENT,
-                                                                    GatewayIntent.GUILD_PRESENCES
-                         ).disableCache(CacheFlag.EMOJI, CacheFlag.SCHEDULED_EVENTS, CacheFlag.STICKER, CacheFlag.ROLE_TAGS)
-                          .addEventListeners(new Listener(this), client, eventWaiter)
-                         .setStatus(OnlineStatus.ONLINE)
-                         .setActivity(Activity.playing("loading...")) // TODO: Replace with custom status once supported
-                         .setBulkDeleteSplittingEnabled(false)
-                         .setRequestTimeoutRetry(true)
-                         .setSessionController(new BlockingSessionController())
-                         .setCompression(Compression.NONE)
-                         .build();
+
+        MessageRequest.setDefaultMentions(List.of()); // Makes sure the bot does not ping @everyone/roles/random users etc
+        jda = JDABuilder.create(config.getString("bot-token"), List.of(defaultGatewayIntents))
+                        .disableCache(CacheFlag.EMOJI, CacheFlag.SCHEDULED_EVENTS, CacheFlag.STICKER)
+                        .addEventListeners(new Listener(this), client, eventWaiter)
+                        .setStatus(OnlineStatus.ONLINE)
+                        .setActivity(Activity.playing("loading...")) // TODO: Replace with custom status once supported
+                        .setBulkDeleteSplittingEnabled(false)
+                        .setRequestTimeoutRetry(true)
+                        .setSessionController(new BlockingSessionController())
+                        .setCompression(Compression.NONE)
+                        .build();
     }
 
     /**
@@ -222,7 +231,9 @@ public class Vortex {
         File configFile = new File(System.getProperty("config.file"));
         try {
             if (configFile.createNewFile()) {
-                InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("reference.conf");
+                InputStream inputStream = Thread.currentThread()
+                        .getContextClassLoader()
+                        .getResourceAsStream("reference.conf");
 
                 if (inputStream == null) {
                     log.error("Unable to load reference.conf in resources");
@@ -239,7 +250,7 @@ public class Vortex {
 
                 reader.close();
                 writer.close();
-                log.info("A configuration file named " + System.getProperty("config.file") + " was created. Please fill it out and rerun the bot");
+                log.info("A configuration file named {} was created. Please fill it out and rerun the bot", System.getProperty("config.file"));
                 System.exit(0);
             }
         } catch (IOException e) {

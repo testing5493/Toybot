@@ -55,7 +55,7 @@ class GuildAuditLogReader {
                 localLastParsedId = vortex.getHibernate().guild_data.getGuildData(guildId).getLastParsedAuditId(); // TODO: Handle first time joining guild
                 willBulkRetrieve = localLastParsedId != 0L;
             } catch (Exception e) {
-                log.warn("Could not get the id of the last audit log parsed for guild " + guildId, e);
+                log.warn("Could not get the id of the last audit log parsed for guild {}", guildId, e);
                 localLastParsedId = 0L;
                 willBulkRetrieve = false;
             }
@@ -161,7 +161,7 @@ class GuildAuditLogReader {
             readFromQueue(null);
         } catch (Throwable t) {
             readFromQueue(null);
-            log.error("Could not bulk retrieve audit logs from guild " + g.getId(), t);
+            log.error("Could not bulk retrieve audit logs from guild {}", g.getId(), t);
         } finally {
             willBulkRetrieve = false;
             stateWriteLock.unlock();
@@ -187,7 +187,7 @@ class GuildAuditLogReader {
             try {
                 logsToSyncQueue.put(entry);
             } catch (InterruptedException e) {
-                log.error("Could not sync last parsed audit log id " + entry.getId() + " for guild " + entry.getGuild().getId(), e);
+                log.error("Could not sync last parsed audit log id {} for guild {}", entry.getId(), entry.getGuild().getId(), e);
             }
         }
     }

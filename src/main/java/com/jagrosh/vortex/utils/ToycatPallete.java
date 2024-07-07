@@ -1,6 +1,6 @@
 package com.jagrosh.vortex.utils;
 
-import java.awt.*;
+import java.awt.Color;
 
 public class ToycatPallete {
     public static final Color GREEN = new Color(0x119313);

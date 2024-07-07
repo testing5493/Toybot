@@ -46,18 +46,10 @@ public class WhitelistInvitesCmd extends Command {
     protected void execute(CommandEvent event) {
         String[] args = event.getArgs().toLowerCase().split("\\s+");
         switch (args[0]) {
-            case "show":
-                handleShow(event, args);
-                break;
-            case "add":
-                handleAdd(event, args);
-                break;
-            case "remove":
-                handleRemove(event, args);
-                break;
-            default:
-                event.replyWarning(DESCRIPTION);
-                break;
+            case "show" -> handleShow(event, args);
+            case "add" -> handleAdd(event, args);
+            case "remove" -> handleRemove(event, args);
+            default -> event.replyWarning(DESCRIPTION);
         }
     }
 

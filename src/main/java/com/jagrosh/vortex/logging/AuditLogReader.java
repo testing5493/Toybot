@@ -131,7 +131,7 @@ public class AuditLogReader {
                     yield -1;
                 }
                 case Object o -> {
-                    log.error("Could not resolve id from Object: " + o.getClass().getName() + " with toString " + o);
+                    log.error("Could not resolve id from Object: {} with toString {}", o.getClass().getName(), o);
                     yield -1;
                 }
             };

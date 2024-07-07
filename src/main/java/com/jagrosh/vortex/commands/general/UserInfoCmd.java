@@ -298,7 +298,7 @@ public class UserInfoCmd extends SlashCommand {
 
         ibuilder.add("PFP", u.getEffectiveAvatarUrl() + "?size=4096");
         if (p.getBannerUrl() != null) {
-            ibuilder.add("Banner", p.getBannerUrl());
+            ibuilder.add("Banner", p.getBannerUrl() + "?size=4096");
         }
 
         return ibuilder.toString();

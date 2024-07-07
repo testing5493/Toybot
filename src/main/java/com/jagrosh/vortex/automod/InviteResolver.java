@@ -29,7 +29,7 @@ public class InviteResolver {
     private final FixedCache<String, Long> cached = new FixedCache<>(5000);
 
     public long resolve(String code, JDA jda) {
-        log.debug("Attempting to resolve " + code);
+        log.debug("Attempting to resolve {}", code);
         if (cached.contains(code)) {
             return cached.get(code);
         }

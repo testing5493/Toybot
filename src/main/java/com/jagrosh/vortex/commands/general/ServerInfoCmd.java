@@ -50,7 +50,7 @@ public class ServerInfoCmd extends GeneralHybridCmd {
         try {
             metaData = g.retrieveMetaData().complete();
         } catch (Throwable t) {
-            log.error("Failed to load metadata for guild " + g.getId(), t);
+            log.error("Failed to load metadata for guild {}", g.getId(), t);
         }
 
         long botCount = g.getMemberCache().stream().filter(m -> m.getUser().isBot()).count();

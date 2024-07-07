@@ -460,7 +460,9 @@ public class ModlogGenerator {
 
         FileUpload fileUpload = modlogEmbedImpl.getFileUpload();
         if (fileUpload != null) {
-            modlogsChannel.sendFiles(fileUpload).addEmbeds(modlogEmbedImpl.build(modlogsChannel.getGuild())).queue(s -> {}, t -> log.error("Error uploading modlog with file", t));
+            modlogsChannel.sendFiles(fileUpload)
+                    .addEmbeds(modlogEmbedImpl.build(modlogsChannel.getGuild()))
+                    .queue(s -> {}, t -> log.error("Error uploading modlog with file", t));
         } else {
             modlogsChannel.sendMessageEmbeds(modlogEmbedImpl.build(modlogsChannel.getGuild())).queue();
         }
