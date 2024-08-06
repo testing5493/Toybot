@@ -1,4 +1,4 @@
-package com.jagrosh.vortex.commands.moderation;
+package com.jagrosh.vortex.commands.moderation.pardon;
 
 import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
@@ -17,7 +17,7 @@ import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import java.time.Instant;
 
 // TODO: Abstract this so sealing is unneccessary
-public abstract sealed class RolePersistPardonCmd extends PardonCommand permits UngravelCmd, UnmuteCmd {
+public abstract sealed class RolePersistPardonCmd extends PardonCmd permits UngravelCmd, UnmuteCmd {
 
     public RolePersistPardonCmd(Vortex vortex, Action action) {
         super(vortex, action, Permission.MANAGE_ROLES);
@@ -59,17 +59,17 @@ public abstract sealed class RolePersistPardonCmd extends PardonCommand permits 
         }
 
         // TODO: do async maybe
-        logPersistPardon(isGravel, g, targetId, mod.getIdLong());
+        logPersistPardon(isGravel, g, targetId, mod);
         return userMention + " was " + (isGravel ? "ungraveled" : "unmuted");
     }
 
-    private void logPersistPardon(boolean isGravel, Guild g, long targetId, long modId) {
+    private void logPersistPardon(boolean isGravel, Guild g, long targetId, Member mod) {
         ModlogManager modlogManager = vortex.getHibernate().modlogs;
 
         if (isGravel) {
-            modlogManager.logUngravel(g.getIdLong(), targetId, modId, Instant.now());
+            modlogManager.logUngravel(g.getIdLong(), targetId, mod.getIdLong(), FormatUtil.formatUser(mod), Instant.now());
         } else {
-            modlogManager.logUnmute(g.getIdLong(), targetId, modId, Instant.now());
+            modlogManager.logUnmute(g.getIdLong(), targetId, mod.getIdLong(), FormatUtil.formatUser(mod), Instant.now());
         }
     }
 }

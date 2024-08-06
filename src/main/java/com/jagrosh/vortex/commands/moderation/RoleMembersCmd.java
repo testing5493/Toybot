@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class RoleMembersCmd extends ModCommand {
+public class RoleMembersCmd extends ModCmd {
     public RoleMembersCmd(Vortex vortex) {
         super(vortex, Permission.MANAGE_ROLES);
         this.name = "userswith";

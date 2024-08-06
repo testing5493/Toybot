@@ -56,7 +56,7 @@ public class UserInfoCmd extends SlashCommand {
 
     public UserInfoCmd(Vortex vortex) {
         this.name = "whois";
-        this.aliases = new String[]{"user", "uinfo", "memberinfo", "userinfo", "whothis", "newphonewhothis"};
+        this.aliases = new String[]{"whos", "user", "uinfo", "memberinfo", "userinfo", "whothis", "newphonewhothis"};
         this.help = "shows info on a member";
         this.arguments = "[user]";
         this.guildOnly = true;
@@ -101,7 +101,7 @@ public class UserInfoCmd extends SlashCommand {
         // Tries to find member/user/id etc.
         if (QUERY.isEmpty()) {
             m = event.getMember();
-        } else if (QUERY.matches("<@?!?\\d{17,20}>")) {
+        } else if (QUERY.matches("<@?!?\\d{17,20}>") || QUERY.matches("\\d{17,20}")) {
             id = Long.parseLong(QUERY.replaceAll("\\D", ""));
 
             if (id == Constants.DELETED_USER_ID) {
@@ -128,6 +128,7 @@ public class UserInfoCmd extends SlashCommand {
                 if (potentialUsers.isEmpty()) {
                     List<Member> potentialMembers = matchName(event.getGuild().getMembers(), QUERY, Member::getNickname, mbr -> mbr.getNickname() != null);
                     if (potentialMembers.isEmpty()) {
+                        // TODO: Potentially search from modlog records for matching user id and retrieve that
                         event.replyError("A user with that name could not be found. Please double check your spelling or enter an ID or mention");
                         return;
                     } else if (potentialMembers.size() == 1) {
@@ -194,13 +195,12 @@ public class UserInfoCmd extends SlashCommand {
         username = discrim == 0 ? "@" + username : u.getAsTag();
 
         StringBuilder badges = new StringBuilder();
-
-        if (u.isBot()) {
+        if (u.isBot() || u.isSystem()) {
             badges.append(' ');
-            if (u.getIdLong() == Constants.CLYDE_AI_ID) {
-                badges.append(Emoji.VERIFIED_AI);
-            } else if (u.getIdLong() == Constants.DISCORD_SYSTEM_ID || u.getIdLong() == Constants.DISCORD_COMMUNITY_UPDATES_ID) {
+            if (u.isSystem()) {
                 badges.append(Emoji.VERIFIED_SYSTEM);
+            } else if (u.getIdLong() == Constants.CLYDE_AI_ID) {
+                 badges.append(Emoji.VERIFIED_AI);
             } else if (u.getFlags().contains(User.UserFlag.VERIFIED_BOT)) {
                 badges.append(Emoji.VERIFIED_BOT);
             } else {
@@ -209,24 +209,28 @@ public class UserInfoCmd extends SlashCommand {
         }
 
         badges.append((m != null && m.isOwner()) ? Emoji.SERVER_OWNER : "")
-              .append(u.getFlags().contains(User.UserFlag.STAFF) || u.getIdLong() == Constants.DISCORD_COMMUNITY_UPDATES_ID ? Emoji.DISCORD_STAFF : "")
-              .append(u.getFlags().contains(User.UserFlag.PARTNER) ? Emoji.PARTNERED_USER : "")
-              .append(m != null && OffsetDateTime.now().minusWeeks(1).isBefore(m.getTimeJoined()) ? Emoji.NEW_MEMBER : "");
+              .append(u.getFlags().contains(User.UserFlag.STAFF) || u.getIdLong() == Constants.DISCORD_COMMUNITY_UPDATES_ID ? Emoji.DISCORD_STAFF : "");
 
         for (User.UserFlag flag : u.getFlags()) {
+            System.out.println(flag.getName());
             badges.append(switch (flag) {
-                case EARLY_SUPPORTER -> Emoji.EARLY_NITRO_SUB;
+                case PARTNER -> Emoji.PARTNERED_USER;
+                case CERTIFIED_MODERATOR -> Emoji.MODERATOR_ALUMNI;
+                case VERIFIED_DEVELOPER -> Emoji.VERIFIED_EARLY_DEV;
                 case ACTIVE_DEVELOPER -> Emoji.ACTIVE_DEVELOPER;
+                case BUG_HUNTER_LEVEL_1 -> Emoji.BUG_HUNTER_LEVEL_1;
+                case BUG_HUNTER_LEVEL_2 -> Emoji.BUG_HUNTER_LEVEL_2;
+                case EARLY_SUPPORTER -> Emoji.EARLY_NITRO_SUB;
+                case HYPESQUAD -> Emoji.HYPESQUAD_EVENTS;
                 case HYPESQUAD_BALANCE -> Emoji.HYPESQUAD_BALANCE;
                 case HYPESQUAD_BRAVERY -> Emoji.HYPESQUAD_BRAVERY;
                 case HYPESQUAD_BRILLIANCE -> Emoji.HYPESQUAD_BRILIANCE;
-                case HYPESQUAD -> Emoji.HYPESQUAD_EVENTS;
-                case BUG_HUNTER_LEVEL_1 -> Emoji.BUG_HUNTER_LEVEL_1;
-                case BUG_HUNTER_LEVEL_2 -> Emoji.BUG_HUNTER_LEVEL_2;
-                case CERTIFIED_MODERATOR -> Emoji.MODERATOR_ALUMNI;
                 default -> "";
             });
         }
+
+        badges.append(m != null && OffsetDateTime.now().minusWeeks(1).isBefore(m.getTimeJoined()) ? Emoji.NEW_MEMBER : "");
+
 
         List<String> formattedActivities = new ArrayList<>();
         if (m != null) {
@@ -280,6 +284,7 @@ public class UserInfoCmd extends SlashCommand {
 
         if (m != null && m.isBoosting()) {
             builder.addField("Boosting Since", TimeFormat.DATE_TIME_SHORT.format(m.getTimeBoosted()), true);
+            badges.append(Emoji.SERVER_BOOSTER);
         }
 
         if (m != null) {
@@ -307,21 +312,22 @@ public class UserInfoCmd extends SlashCommand {
     // TODO: Double check this works properly because I written this while very tired
     private static <T> List<T> matchName(List<T> objs, String name, Function<T, String> nameMap, Predicate<T> initialFilter) {
         String desymboled = desymbol(name);
-        boolean symbolHeavy = desymboled.length() != 0 && (name.length() / desymboled.length() >= 2);
-        Predicate<String> containsName = Pattern.compile(".*(?i)" + (symbolHeavy ? name : desymboled) + ".*").asMatchPredicate();
+        boolean symbolHeavy = !desymboled.isEmpty() && name.length() /desymboled.length() >= 2;
+        String effectiveNameInsensitive = (symbolHeavy ? desymboled : name).toLowerCase();
+        Predicate<String> containsName = s -> s.toLowerCase().contains(effectiveNameInsensitive);
 
         Stream<T> stream = objs.parallelStream();
         if (initialFilter != null) {
             stream = stream.filter(initialFilter);
         }
 
-        List<InterimName<T>> filtered = stream.map(t -> new InterimName<T>(t, nameMap.apply(t), !symbolHeavy ? desymbol(nameMap.apply(t)) : null)).filter(iName -> containsName.test(symbolHeavy ? iName.name() : iName.desymboled())).toList();
+        List<InterimName<T>> filtered = stream.map(t -> new InterimName<T>(t, nameMap.apply(t), symbolHeavy ? desymbol(nameMap.apply(t)) : null)).filter(iName -> containsName.test(!symbolHeavy ? iName.name() : iName.desymboled())).toList();
 
         if (filtered.size() <= 1) {
             return toTList(filtered);
         }
 
-        if (!symbolHeavy && !desymboled.equals(name)) {
+        if (symbolHeavy && !desymboled.equals(name)) {
             filtered = getMatchingNames(filtered, iName -> desymboled.equalsIgnoreCase(iName.desymboled()));
             if (objs.size() <= 1) {
                 return toTList(filtered);

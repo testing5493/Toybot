@@ -1,10 +1,11 @@
-package com.jagrosh.vortex.commands.moderation;
+package com.jagrosh.vortex.commands.moderation.pardon;
 
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener;
+import com.jagrosh.vortex.commands.moderation.ModCmd;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
@@ -16,9 +17,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class PardonCommand extends ModCommand {
+public abstract class PardonCmd extends ModCmd {
     protected Action action;
-    public PardonCommand(Vortex vortex, Action action, Permission... altPerms) {
+    public PardonCmd(Vortex vortex, Action action, Permission... altPerms) {
         super(vortex, altPerms);
         this.action = action;
         this.arguments = "<@user>";

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jagrosh.vortex.commands.moderation;
+package com.jagrosh.vortex.commands.moderation.pardon;
 
 import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
@@ -32,7 +32,7 @@ import java.time.Instant;
 /**
  * @author John Grosh (jagrosh)
  */
-public class UnbanCmd extends PardonCommand {
+public class UnbanCmd extends PardonCmd {
     public UnbanCmd(Vortex vortex) {
         super(vortex, Action.UNBAN, Permission.BAN_MEMBERS);
         this.name = "unban";
@@ -66,7 +66,7 @@ public class UnbanCmd extends PardonCommand {
         }
 
         // TODO: Do later???
-        vortex.getHibernate().modlogs.logUnban(g.getIdLong(), targetId, mod.getIdLong(), Instant.now());
+        vortex.getHibernate().modlogs.logUnban(g.getIdLong(), targetId, mod.getIdLong(), FormatUtil.formatUser(mod), Instant.now());
         return "Unbanned <@" + targetId + ">";
     }
 }

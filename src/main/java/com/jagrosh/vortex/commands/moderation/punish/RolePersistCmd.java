@@ -1,4 +1,4 @@
-package com.jagrosh.vortex.commands.moderation;
+package com.jagrosh.vortex.commands.moderation.punish;
 
 import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
@@ -18,7 +18,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 // TODO: Abstract this so sealing is unneccessary
-public abstract sealed class RolePersistCmd extends PunishmentCmd permits GravelCmd, MuteCmd {
+public abstract sealed class RolePersistCmd extends PunishCmd permits GravelCmd, MuteCmd {
     public RolePersistCmd(Vortex vortex, Action action) {
         super(vortex, action, true, Permission.MANAGE_ROLES);
         this.botPermissions = new Permission[]{Permission.MANAGE_ROLES};

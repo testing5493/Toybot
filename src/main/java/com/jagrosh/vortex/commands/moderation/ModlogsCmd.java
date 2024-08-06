@@ -2,13 +2,8 @@ package com.jagrosh.vortex.commands.moderation;
 
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
-import com.jagrosh.vortex.Action;
-import com.jagrosh.vortex.Emoji;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandTools;
-import com.jagrosh.vortex.database.Database;
-import com.jagrosh.vortex.database.Database.Modlog;
-import com.jagrosh.vortex.hibernate.entities.BanLog;
 import com.jagrosh.vortex.hibernate.entities.ModLog;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.OtherUtil;
@@ -22,13 +17,12 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
-import javax.xml.crypto.Data;
 import java.util.Collections;
 import java.util.List;
 
 // TODO: Potentially merge this with the case command?
 // TODO: make this paged because right now it only supports 250 modlogs max
-public class ModlogsCmd extends ModCommand {
+public class ModlogsCmd extends ModCmd {
     public ModlogsCmd(Vortex vortex) {
         super(vortex, Permission.MANAGE_ROLES);
         this.name = "modlogs";

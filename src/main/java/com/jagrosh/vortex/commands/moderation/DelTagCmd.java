@@ -10,7 +10,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
 import java.util.Collections;
 
-public class DelTagCmd extends ModCommand {
+public class DelTagCmd extends ModCmd {
     public DelTagCmd(Vortex vortex) {
         super(vortex, Permission.MESSAGE_MANAGE);
         this.name = "deltag";

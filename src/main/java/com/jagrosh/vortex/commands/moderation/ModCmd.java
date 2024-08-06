@@ -24,10 +24,7 @@ import com.jagrosh.vortex.commands.HybridEvent;
 import com.jagrosh.vortex.utils.FormatUtil;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.channel.Channel;
-import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.exceptions.HierarchyException;
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
@@ -38,11 +35,11 @@ import net.dv8tion.jda.api.requests.ErrorResponse;
  */
 // TODO: Implement restricting moderator slash commands to be mods only
 @Slf4j
-public abstract class ModCommand extends SlashCommand {
+public abstract class ModCmd extends SlashCommand {
     protected final Vortex vortex;
     protected final Permission[] altPerms;
 
-    public ModCommand(Vortex vortex, Permission... altPerms) {
+    public ModCmd(Vortex vortex, Permission... altPerms) {
         this.vortex = vortex;
         this.guildOnly = true;
         this.altPerms = altPerms == null ? new Permission[]{} : altPerms;

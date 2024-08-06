@@ -19,6 +19,7 @@ import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener.CommandErrorException;
 import com.jagrosh.vortex.commands.HybridEvent;
+import com.jagrosh.vortex.commands.moderation.punish.PunishCmd;
 import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.OtherUtil;
 import net.dv8tion.jda.api.Permission;
@@ -29,8 +30,8 @@ import net.dv8tion.jda.api.entities.Role;
 /**
  * @author John Grosh (jagrosh)
  */
-// TODO: Make this log in the database/modlogs cmd?
-public class VoicekickCmd extends PunishmentCmd {
+// TODO: Make this log in the database/modlogs cmd? Or potentially disable
+public class VoicekickCmd extends PunishCmd {
     public VoicekickCmd(Vortex vortex) {
         super(vortex, Action.VOICE_KICK, false, Permission.VOICE_MOVE_OTHERS, Permission.MANAGE_CHANNEL);
         this.name = "voicekick";

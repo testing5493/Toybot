@@ -40,6 +40,12 @@ public final class Database {
         modlogs.init();
     }
 
+    /**
+     * Database bootstrapping using the native hibernate implementation.
+     * Currently using the JPA bootstrapping method as that is a more standardised approach for java databases.
+     * This method is kept just in case non JPA compliant bootstrapping becomes necessary
+     * @return A session factory object
+     */
     private SessionFactory nativeBootsrap() {
         Metadata metadata = new MetadataSources()
                 .addAnnotatedClass(Tag.class)
@@ -68,8 +74,9 @@ public final class Database {
             log.warn("Failed to load second level cache provider", e);
         }
 
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("experimental-unit");
-        return emf.unwrap(SessionFactory.class);
+        try (EntityManagerFactory emf = Persistence.createEntityManagerFactory("experimental-unit")) {
+            return emf.unwrap(SessionFactory.class);
+        }
     }
 
     /**

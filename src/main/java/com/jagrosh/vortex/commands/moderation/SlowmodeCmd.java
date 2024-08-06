@@ -40,7 +40,7 @@ import java.util.function.Function;
  */
 // TODO: Make it so you can optionally manage different channels than the one you're in
 // TODO: Add a submcommand to turn it on or off without specifying a time for slash commands
-public class SlowmodeCmd extends ModCommand {
+public class SlowmodeCmd extends ModCmd {
     private final static int MAX_SLOWMODE = 21600;
 
     public SlowmodeCmd(Vortex vortex) {

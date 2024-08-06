@@ -17,16 +17,17 @@ package com.jagrosh.vortex;
 
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.WebhookClientBuilder;
-import com.jagrosh.jdautilities.command.Command;
-import com.jagrosh.jdautilities.command.CommandClient;
-import com.jagrosh.jdautilities.command.CommandClientBuilder;
-import com.jagrosh.jdautilities.command.SlashCommand;
+import com.jagrosh.jdautilities.command.*;
 import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 import com.jagrosh.vortex.automod.AutoMod;
 import com.jagrosh.vortex.commands.CommandExceptionListener;
 import com.jagrosh.vortex.commands.automod.*;
 import com.jagrosh.vortex.commands.general.*;
 import com.jagrosh.vortex.commands.moderation.*;
+import com.jagrosh.vortex.commands.moderation.pardon.UnbanCmd;
+import com.jagrosh.vortex.commands.moderation.pardon.UngravelCmd;
+import com.jagrosh.vortex.commands.moderation.pardon.UnmuteCmd;
+import com.jagrosh.vortex.commands.moderation.punish.*;
 import com.jagrosh.vortex.commands.owner.DebugCmd;
 import com.jagrosh.vortex.commands.owner.EvalCmd;
 import com.jagrosh.vortex.commands.owner.ReloadCmd;
@@ -46,8 +47,6 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.exceptions.PermissionException;
@@ -125,7 +124,7 @@ public class Vortex {
                 new SoftbanCmd(this),
                 new UnbanCmd(this),
                 new ModlogsCmd(this),
-                new CleanCmd(this),
+                new PurgeCmd(this),
                 new VoicemoveCmd(this),
                 new VoicekickCmd(this),
                 new MuteCmd(this),

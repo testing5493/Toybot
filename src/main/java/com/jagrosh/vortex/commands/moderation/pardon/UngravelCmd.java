@@ -1,4 +1,4 @@
-package com.jagrosh.vortex.commands.moderation;
+package com.jagrosh.vortex.commands.moderation.pardon;
 
 import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;

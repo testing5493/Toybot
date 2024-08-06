@@ -23,7 +23,7 @@ import net.dv8tion.jda.api.Permission;
 /**
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class RaidCmd extends ModCommand {
+public class RaidCmd extends ModCmd {
     public RaidCmd(Vortex vortex) {
         super(vortex, Permission.MANAGE_SERVER, Permission.KICK_MEMBERS);
         this.name = "raidmode";

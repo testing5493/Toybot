@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jagrosh.vortex.commands.moderation;
+package com.jagrosh.vortex.commands.moderation.punish;
 
 import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author John Grosh (jagrosh)
  */
-public class BanCmd extends PunishmentCmd {
+public class BanCmd extends PunishCmd {
     public BanCmd(Vortex vortex) {
         super(vortex, Action.BAN, true, Permission.BAN_MEMBERS);
         this.name = "ban";

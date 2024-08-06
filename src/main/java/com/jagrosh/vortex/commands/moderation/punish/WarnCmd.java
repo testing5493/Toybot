@@ -1,4 +1,4 @@
-package com.jagrosh.vortex.commands.moderation;
+package com.jagrosh.vortex.commands.moderation.punish;
 
 import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
@@ -8,7 +8,7 @@ import net.dv8tion.jda.api.Permission;
 
 import java.time.Instant;
     
-public class WarnCmd extends PunishmentCmd {
+public class WarnCmd extends PunishCmd {
     public WarnCmd(Vortex vortex) {
         super(vortex, Action.WARN, false, Permission.ADMINISTRATOR);
         this.name = "warn";

@@ -37,22 +37,22 @@ import java.util.regex.Pattern;
  * @author John Grosh (jagrosh)
  */
 // TODO: Limit to 1 day for non-admins
-public class CleanCmd extends ModCommand {
+public class PurgeCmd extends ModCmd {
     private final Pattern LINK_PATTERN = Pattern.compile("https?:\\/\\/.+");
     private final Pattern QUOTES_PATTERN = Pattern.compile("[\"“”](.*?)[\"“”]", Pattern.DOTALL);
     private final Pattern CODE_PATTERN = Pattern.compile("`(.*?)`", Pattern.DOTALL);
     private final Pattern MENTION_PATTERN = Pattern.compile("<@!?(\\d{17,22})>");
     private final Pattern ID_PATTERN = Pattern.compile("\\b(\\d{17,22})\\b");
     private final Pattern NUM_PATTERN = Pattern.compile("\\b(\\d{1,4})\\b");
-    private final String week2limit = " Note: Messages older than 2 weeks cannot be cleaned.";
-    private final String noparams = "**No valid cleaning parameters included!**\n" + "This command is to remove many messages quickly. Pinned messages are ignored. " + "Messages can be filtered with various parameters. Mutliple arguments can be used and " + "the order of parameters does not matter. The following parameters are supported:\n" + " `<numPosts>` - number of posts to delete; between 2 and 1000. This is the only required parameter\n" + " `bots` - cleans messages by bots\n" + " `embeds` - cleans messages with embeds\n" + " `links` - cleans messages containing links\n" + " `images` - cleans messages with uploaded or embeded images or videos\n" + " `mentions` - cleans messages that mentions someone" + " `@user` - cleans messages only from the provided user\n" + " `userId` - cleans messages only from the provided user (via id)\n" + " `\"quotes\"` - cleans messages containing the text in quotes\n" + " `` `regex` `` - cleans messages that match the regex";
+    private final String week2limit = " Note: Messages older than 2 weeks cannot be purged.";
+    private final String noparams = "**No valid purge parameters included!**\n" + "This command is to remove many messages quickly. Pinned messages are ignored. " + "Messages can be filtered with various parameters. Mutliple arguments can be used and " + "the order of parameters does not matter. The following parameters are supported:\n" + " `<numPosts>` - number of posts to delete; between 2 and 1000. This is the only required parameter\n" + " `bots` - cleans messages by bots\n" + " `embeds` - cleans messages with embeds\n" + " `links` - cleans messages containing links\n" + " `images` - cleans messages with uploaded or embeded images or videos\n" + " `mentions` - cleans messages that mentions someone" + " `@user` - cleans messages only from the provided user\n" + " `userId` - cleans messages only from the provided user (via id)\n" + " `\"quotes\"` - cleans messages containing the text in quotes\n" + " `` `regex` `` - cleans messages that match the regex";
 
-    public CleanCmd(Vortex vortex) {
+    public PurgeCmd(Vortex vortex) {
         super(vortex, Permission.MESSAGE_MANAGE, Permission.MESSAGE_HISTORY);
-        this.name = "clean";
-        this.aliases = new String[]{"clear", "purge"};
+        this.name = "purge";
+        this.aliases = new String[]{"clear", "clean"};
         this.arguments = "<parameters>";
-        this.help = "cleans messages matching filters";
+        this.help = "purges messages matching filters";
         this.botPermissions = new Permission[]{Permission.MESSAGE_MANAGE, Permission.MESSAGE_HISTORY};
         this.guildOnly = true;
     }
@@ -186,7 +186,7 @@ public class CleanCmd extends ModCommand {
             }
 
             if (del.isEmpty()) {
-                event.replyWarning("There were no messages to clean!" + (week2 ? week2limit : ""));
+                event.replyWarning("There were no messages to purge!" + (week2 ? week2limit : ""));
                 event.getClient().applyCooldown(getCooldownKey(event), 1);
                 return;
             }
@@ -212,7 +212,7 @@ public class CleanCmd extends ModCommand {
                 return;
             }
 
-            event.replySuccess("Cleaned **" + del.size() + "** messages." + (week2 ? week2limit : ""));
+            event.replySuccess("Purged **" + del.size() + "** messages." + (week2 ? week2limit : ""));
             event.getClient().applyCooldown(getCooldownKey(event), 1);
             if (modlogsChannel == null) {
                 return;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jagrosh.vortex.commands.moderation;
+package com.jagrosh.vortex.commands.moderation.punish;
 
 import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
@@ -33,7 +33,7 @@ import java.time.Instant;
 /**
  * @author John Grosh (jagrosh)
  */
-public class KickCmd extends PunishmentCmd {
+public class KickCmd extends PunishCmd {
     public KickCmd(Vortex vortex) {
         super(vortex, Action.KICK, false, Permission.KICK_MEMBERS);
         this.name = "kick";
@@ -55,7 +55,11 @@ public class KickCmd extends PunishmentCmd {
 
         if (targetMember != null) {
             if (targetMember.getUser().isBot()) {
-                throw new CommandExceptionListener.CommandErrorException("Nice try bitslayn");
+                if (targetMember.getIdLong() == 83010416610906112L) {
+                    throw new CommandExceptionListener.CommandErrorException("[Nice try bitslayn](https://discord.com/channels/352726171101954058/352726171101954060/596951253838462976)");
+                } else {
+                    throw new CommandExceptionListener.CommandErrorException("Nice try bitslayn");
+                }
             } else if (!mod.canInteract(targetMember)) {
                 throw new CommandExceptionListener.CommandErrorException("You do not have permission to kick " + FormatUtil.formatUserMention(targetId));
             } else if (!g.getSelfMember().canInteract(targetMember)) {

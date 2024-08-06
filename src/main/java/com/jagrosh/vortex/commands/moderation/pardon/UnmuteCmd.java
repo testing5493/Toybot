@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jagrosh.vortex.commands.moderation;
+package com.jagrosh.vortex.commands.moderation.pardon;
 
 import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;

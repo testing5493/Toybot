@@ -42,10 +42,22 @@ public abstract class ModLog {
     private long userId;
 
     /**
+     * The username of the user being punished
+     */
+    @Column(name = "USER_NAME", nullable = false)
+    private String userName;
+
+    /**
      * The ID of the mod that punished the user
      */
     @Column(name = "PUNISHING_MOD_ID", nullable = false)
     private long punishingModId;
+
+    /**
+     * The username of the mod that punished the user
+     */
+    @Column(name = "PUNISHING_MOD_NAME", nullable = false)
+    private String punishingModName;
 
     /**
      * The unix timestamp of the punishments starting time, or when the punishment was logged.
@@ -61,6 +73,10 @@ public abstract class ModLog {
      */
     @Column(name = "REASON")
     private String reason;
+
+    public void setReason(String reason) {
+        this.reason = reason == null ? "" : reason;
+    }
 
     /**
      * If a reason was provided to the modlog

@@ -1,4 +1,4 @@
-package com.jagrosh.vortex.commands.moderation;
+package com.jagrosh.vortex.commands.moderation.punish;
 
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
@@ -6,6 +6,7 @@ import com.jagrosh.vortex.Action;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.CommandExceptionListener;
 import com.jagrosh.vortex.commands.HybridEvent;
+import com.jagrosh.vortex.commands.moderation.ModCmd;
 import com.jagrosh.vortex.utils.OtherUtil;
 import lombok.Value;
 import net.dv8tion.jda.api.Permission;
@@ -21,10 +22,10 @@ import java.util.regex.Pattern;
 
 import static com.jagrosh.vortex.utils.ArgsUtil.TIME_REGEX;
 
-public abstract class PunishmentCmd extends ModCommand {
+public abstract class PunishCmd extends ModCmd {
     protected boolean timed;
     protected Action action;
-    public PunishmentCmd(Vortex vortex, Action action, boolean timed, Permission... altPerms) {
+    public PunishCmd(Vortex vortex, Action action, boolean timed, Permission... altPerms) {
         super(vortex, altPerms);
         this.action = action;
         this.timed = timed;

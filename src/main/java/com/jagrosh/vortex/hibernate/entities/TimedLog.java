@@ -21,11 +21,19 @@ import java.time.Instant;
 @EqualsAndHashCode(callSuper = true)
 public abstract class TimedLog extends ModLog {
     /**
-     * The ID of the mod pardoning the user from the punishment (eg., ungraveling or unbanning them)
-     * A value of 0 represents that this was done by the bot automatically.
+     * The ID of the mod pardoning the user from the punishment (eg., ungraveling or unbanning them).
+     * A value of 0 represents that this was done by the bot automatically, or the user has not been pardoned yet.
      */
     @Column(name = "PARDONING_MOD_ID", nullable = false)
     private long pardoningModId;
+
+    /**
+     * The username of the mod pardoning the user from the punishment (eg., ungraveling or unbanning them)
+     * A value of n represents that this was done by the bot automatically.
+     * Value may be null when automatically pardoned, an unknown mod pardoned the user, or when the user has not been pardoned yet.
+     */
+    @Column(name = "PARDONING_MOD_NAME", nullable = true)
+    private String pardoningModName;
 
     /**
      * The time when the punishment is set to end or has ended at

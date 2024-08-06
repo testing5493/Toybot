@@ -11,7 +11,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
 import java.util.LinkedList;
 
-public class AddTagCmd extends ModCommand {
+public class AddTagCmd extends ModCmd {
     public AddTagCmd(Vortex vortex) {
         super(vortex, Permission.MESSAGE_MANAGE);
         this.name = "addtag";

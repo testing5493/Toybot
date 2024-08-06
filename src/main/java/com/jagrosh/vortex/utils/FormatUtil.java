@@ -118,13 +118,12 @@ public class FormatUtil {
         return filterEveryone("**" + msg.getUsername() + "**#" + msg.getDiscriminator() + " (ID:" + msg.getAuthorId() + ")");
     }
 
+    public static String formatUser(Member member) {
+        return formatUser(member.getUser());
+    }
+
     public static String formatUser(User user) {
-        String discrim = user.getDiscriminator();
-        String username = user.getName();
-        if (!discrim.matches("0*")) {
-            username += "#" + discrim;
-        }
-        return filterEveryone(username);
+        return formatUser(user.getName(), user.getDiscriminator());
     }
 
     public static String formatUser(String username, @Nullable String discrim) {

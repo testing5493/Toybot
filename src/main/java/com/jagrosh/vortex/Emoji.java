@@ -35,7 +35,7 @@ public class Emoji {
     public final static String DISCORD_STAFF        = "<:discord_staff:1109962360887722066>";
     public final static String EARLY_NITRO_SUB      = "<:early_nitro_supporter:1109965926826266694>";
     public final static String HYPESQUAD_BALANCE    = "<:hypesquad_balance:1109965531542470756>";
-    public final static String HYPESQUAD_BRAVERY    = "<:hypesquad_balance:1109965531542470756>";
+    public final static String HYPESQUAD_BRAVERY    = "<:hypesquad_bravery:1109962355787452457>";
     public final static String HYPESQUAD_BRILIANCE  = "<:hypesquad_brilliance:1109962357788115008>";
     public final static String HYPESQUAD_EVENTS     = "<:hypesquad_events:1112537171090489388>";
     public final static String MODERATOR_ALUMNI     = "<:moderator_alumni:1109966127842480172>";

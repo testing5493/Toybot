@@ -33,10 +33,10 @@ public class ModlogManager {
     public static final long AUTOMOD_ID = 9999999999L;
 
 
-    private final Database database;
-    private GuildResourceProvider<ReentrantLock> guildLock;
     @DoNotUseForVerifiedBots
     private GuildResourceProvider<AtomicInteger> idProvider;
+    private final Database database;
+    private final GuildResourceProvider<ReentrantLock> guildLock;
 
     ModlogManager(Database database) {
         this.database = database;
@@ -91,13 +91,12 @@ public class ModlogManager {
     /**
      * Deletes a modlog case from the database.
      *
-     * @param deletingModId The ID of the moderator deleting the log
      * @param guildId The ID of the guild
      * @param caseId The case ID to delete
      * @return A {@link ModLog} object representing the deleted case, or {@code null} if the case was not found
      * @throws PersistenceException If something went wrong while deleting the case
      */
-    public ModLog deleteCase(long deletingModId, long guildId, int caseId) throws PersistenceException {
+    public ModLog deleteCase(long guildId, int caseId) throws PersistenceException {
         return database.doTransaction(session -> {
             ModLog modLog = getModLog0(session, guildId, caseId);
             if (modLog == null) {
@@ -138,15 +137,17 @@ public class ModlogManager {
      *
      * @param guildId The ID of the guild
      * @param userId The ID of the user
+     * @param userName The username of the user
      * @param punishingModId The ID of the punishing moderator
+     * @param punishingModName The username of the punsihing moderator
      * @param punishingTime The time of the warning
      * @param reason The reason for the warning, or {@code null} if no reason was specified
      * @return The caseId
      * @throws PersistenceException if something went wrong while logging the warning
      */
-    public int logWarning(long guildId, long userId, long punishingModId, Instant punishingTime, String reason) throws PersistenceException {
+    public int logWarning(long guildId, long userId, String userName, long punishingModId, String punishingModName, Instant punishingTime, String reason) throws PersistenceException {
         WarnLog warnLog = new WarnLog();
-        populate(warnLog, guildId, userId, punishingModId, punishingTime, reason);
+        populate(warnLog, guildId, userId, userName, punishingModId, punishingModName, punishingTime, reason);
         return logPunish(warnLog);
     }
 
@@ -155,14 +156,16 @@ public class ModlogManager {
      *
      * @param guildId The ID of the guild
      * @param userId The ID of the user
+     * @param userName The username of the user
      * @param punishingModId The ID of the punishing moderator
+     * @param punishingModName The username of the punsihing moderator
      * @param punishingTime The time of the kick
      * @param reason The reason for the kick, or {@code null} if no reason was specified
      * @throws PersistenceException if something went wrong while logging the kick
      */
-    public int logKick(long guildId, long userId, long punishingModId, Instant punishingTime, String reason) throws PersistenceException {
+    public int logKick(long guildId, long userId, String userName, long punishingModId, String punishingModName, Instant punishingTime, String reason) throws PersistenceException {
         KickLog kickLog = new KickLog();
-        populate(kickLog, guildId, userId, punishingModId, punishingTime, reason);
+        populate(kickLog, guildId, userId, userName, punishingModId, punishingModName, punishingTime, reason);
         return logPunish(kickLog);
     }
 
@@ -171,14 +174,16 @@ public class ModlogManager {
      *
      * @param guildId The ID of the guild
      * @param userId The ID of the user
+     * @param userName The username of the user
      * @param punishingModId The ID of the punishing moderator
+     * @param punishingModName The username of the punsihing moderator
      * @param punishingTime The time of the softban
      * @param reason The reason for the softban, or {@code null} if no reason was specified
      * @throws PersistenceException if something went wrong while logging the softban
      */
-    public int logSoftban(long guildId, long userId, long punishingModId, Instant punishingTime, String reason) throws PersistenceException {
+    public int logSoftban(long guildId, long userId, String userName, long punishingModId, String punishingModName, Instant punishingTime, String reason) throws PersistenceException {
         SoftbanLog softbanLog = new SoftbanLog();
-        populate(softbanLog, guildId, userId, punishingModId, punishingTime, reason);
+        populate(softbanLog, guildId, userId, userName, punishingModId, punishingModName, punishingTime, reason);
         return logPunish(softbanLog);
     }
 
@@ -187,15 +192,17 @@ public class ModlogManager {
      *
      * @param guildId The ID of the guild
      * @param userId The ID of the user
+     * @param userName The username of the user
      * @param punishingModId The ID of the punishing moderator
+     * @param punishingModName The username of the punsihing moderator
      * @param punishingTime The time of the punishment in seconds after the unix epoch
      * @param pardoningTime The time the user will be auto-pardoned in seconds after the unix epoch, {@link #INDEFINITE_TIME ModlogManager.INDEFINITE_TIME}
      * @param reason The reason for the ban, or {@code null} if no reason was specified
      * @throws PersistenceException if something went wrong while logging the ban
      */
-    public int logBan(long guildId, long userId, long punishingModId, Instant punishingTime, Instant pardoningTime, String reason) throws PersistenceException {
+    public int logBan(long guildId, long userId, String userName, long punishingModId, String punishingModName, Instant punishingTime, Instant pardoningTime, String reason) throws PersistenceException {
         BanLog banLog = new BanLog();
-        populate(banLog, guildId, userId, punishingModId, punishingTime, pardoningTime, reason);
+        populate(banLog, guildId, userId, userName, punishingModId, punishingModName, punishingTime, pardoningTime, reason);
         return logPunish(banLog);
     }
 
@@ -204,15 +211,17 @@ public class ModlogManager {
      *
      * @param guildId The ID of the guild
      * @param userId The ID of the user
+     * @param userName The username of the user
      * @param punishingModId The ID of the punishing moderator
+     * @param punishingModName The username of the punsihing moderator
      * @param punishingTime The time of the punishment in seconds after the unix epoch
      * @param pardoningTime The time the user will be auto-pardoned in seconds after the unix epoch, {@link #INDEFINITE_TIME ModlogManager.INDEFINITE_TIME}
      * @param reason The reason for the gravel, or {@code null} if no reason was specified
      * @throws PersistenceException if something went wrong while logging the gravel
      */
-    public int logGravel(long guildId, long userId, long punishingModId, Instant punishingTime, Instant pardoningTime, String reason) throws PersistenceException {
+    public int logGravel(long guildId, long userId, String userName, long punishingModId, String punishingModName, Instant punishingTime, Instant pardoningTime, String reason) throws PersistenceException {
         GravelLog gravelLog = new GravelLog();
-        populate(gravelLog, guildId, userId, punishingModId, punishingTime, pardoningTime, reason);
+        populate(gravelLog, guildId, userId, userName, punishingModId, punishingModName, punishingTime, pardoningTime, reason);
         return logPunish(gravelLog);
     }
 
@@ -221,15 +230,17 @@ public class ModlogManager {
      *
      * @param guildId The ID of the guild
      * @param userId The ID of the user
+     * @param userName The username of the user
      * @param punishingModId The ID of the punishing moderator
+     * @param punishingModName The username of the punsihing moderator
      * @param punishingTime The time of the punishment in seconds after the unix epoch
      * @param pardoningTime The time the user will be auto-pardoned in seconds after the unix epoch, {@link #INDEFINITE_TIME ModlogManager.INDEFINITE_TIME}
      * @param reason The reason for the gravel, or {@code null} if no reason was specified
      * @throws PersistenceException if something went wrong while logging the mute
      */
-    public int logMute(long guildId, long userId, long punishingModId, Instant punishingTime, Instant pardoningTime, String reason) throws PersistenceException {
+    public int logMute(long guildId, long userId, String userName, long punishingModId, String punishingModName, Instant punishingTime, Instant pardoningTime, String reason) throws PersistenceException {
         MuteLog muteLog = new MuteLog();
-        populate(muteLog, guildId, userId, punishingModId, punishingTime, pardoningTime, reason);
+        populate(muteLog, guildId, userId, userName, punishingModId, punishingModName, punishingTime, pardoningTime, reason);
         return logPunish(muteLog);
     }
 
@@ -239,11 +250,12 @@ public class ModlogManager {
      * @param guildId The ID of the guild
      * @param userId The ID of the user
      * @param pardoningModId The ID of the unbanning mod
+     * @param pardoningModName The username of the unbanning mod
      * @param pardoningTime The time the user was unbanned
      * @throws PersistenceException if something went wrong while logging the unban
      */
-    public BanLog logUnban(long guildId, long userId, long pardoningModId, Instant pardoningTime) {
-        return logPardon(BanLog.class, guildId, userId, pardoningModId, pardoningTime);
+    public BanLog logUnban(long guildId, long userId, long pardoningModId, String pardoningModName, Instant pardoningTime) {
+        return logPardon(BanLog.class, guildId, userId, pardoningModId, pardoningModName, pardoningTime);
     }
 
     /**
@@ -251,11 +263,11 @@ public class ModlogManager {
      *
      * @param banLog A ban log object to mark as unbanned, with the guild, user, pardoning mod, and pardoning time
      * @return A complete ban log object
-     * @implNote This is purely a wrapper for {@link ModlogManager#logUnban(long, long, long, Instant)}
+     * @implNote This is purely a wrapper for {@link ModlogManager#logUnban(long, long, long, String, Instant)}
      * @throws PersistenceException if something went wrong while logging the unban
      */
     public BanLog logUnban(BanLog banLog) {
-        return logUnban(banLog.getGuildId(), banLog.getUserId(), banLog.getPardoningModId(), banLog.getPardoningTime());
+        return logUnban(banLog.getGuildId(), banLog.getUserId(), banLog.getPardoningModId(), banLog.getPardoningModName(), banLog.getPardoningTime());
     }
 
     /**
@@ -263,11 +275,11 @@ public class ModlogManager {
      *
      * @param gravelLog A gravel log object to mark as ungraveled, with the guild, user, pardoning mod, and pardoning time
      * @return A complete gravel log object
-     * @implNote This is purely a wrapper for {@link ModlogManager#logUngravel(long, long, long, Instant)}
+     * @implNote This is purely a wrapper for {@link ModlogManager#logUngravel(long, long, long, String, Instant)}
      * @throws PersistenceException if something went wrong while logging the ungravel
      */
     public GravelLog logUngravel(GravelLog gravelLog) {
-        return logUngravel(gravelLog.getGuildId(), gravelLog.getUserId(), gravelLog.getPardoningModId(), gravelLog.getPardoningTime());
+        return logUngravel(gravelLog.getGuildId(), gravelLog.getUserId(), gravelLog.getPardoningModId(), gravelLog.getPardoningModName(), gravelLog.getPardoningTime());
     }
 
     /**
@@ -275,11 +287,11 @@ public class ModlogManager {
      *
      * @param muteLog A mute log object to mark as unmuted, with the guild, user, pardoning mod, and pardoning time
      * @return A complete mute log object
-     * @implNote This is purely a wrapper for {@link ModlogManager#logUnmute(long, long, long, Instant)}
+     * @implNote This is purely a wrapper for {@link ModlogManager#logUnmute(long, long, long, String, Instant)}
      * @throws PersistenceException if something went wrong while logging the unmute
      */
     public MuteLog logUnmute(MuteLog muteLog) {
-        return logUnmute(muteLog.getGuildId(), muteLog.getUserId(), muteLog.getPardoningModId(), muteLog.getPardoningTime());
+        return logUnmute(muteLog.getGuildId(), muteLog.getUserId(), muteLog.getPardoningModId(), muteLog.getPardoningModName(), muteLog.getPardoningTime());
     }
 
     /**
@@ -288,11 +300,12 @@ public class ModlogManager {
      * @param guildId The ID of the guild
      * @param userId The ID of the user
      * @param pardoningModId The ID of the unmuting mod
+     * @param pardoningModName The username of the unmuting mod
      * @param pardoningTime The time the user was unmuted
      * @throws PersistenceException if something went wrong while logging the unmute
      */
-    public MuteLog logUnmute(long guildId, long userId, long pardoningModId, Instant pardoningTime) {
-        return logPardon(MuteLog.class, guildId, userId, pardoningModId, pardoningTime);
+    public MuteLog logUnmute(long guildId, long userId, long pardoningModId, String pardoningModName, Instant pardoningTime) {
+        return logPardon(MuteLog.class, guildId, userId, pardoningModId, pardoningModName, pardoningTime);
     }
 
     /**
@@ -301,11 +314,12 @@ public class ModlogManager {
      * @param guildId The ID of the guild
      * @param userId The ID of the user
      * @param pardoningModId The ID of the ungraveling mod
+     * @param pardoningModName The username of the ungraveling mod
      * @param pardoningTime The time the user was ungraveled
      * @throws PersistenceException if something went wrong while logging the ungravel
      */
-    public GravelLog logUngravel(long guildId, long userId, long pardoningModId, Instant pardoningTime) {
-        return logPardon(GravelLog.class, guildId, userId, pardoningModId, pardoningTime);
+    public GravelLog logUngravel(long guildId, long userId, long pardoningModId, String pardoningModName, Instant pardoningTime) {
+        return logPardon(GravelLog.class, guildId, userId, pardoningModId, pardoningModName, pardoningTime);
     }
 
     /**
@@ -337,16 +351,18 @@ public class ModlogManager {
         });
     }
 
-    private void populate(ModLog modLog, long guildId, long userId, long punishingModId, Instant punishingTime, String reason) {
+    private void populate(ModLog modLog, long guildId, long userId, String userName, long punishingModId, String punishingModName, Instant punishingTime, String reason) {
         modLog.setGuildId(guildId);
         modLog.setUserId(userId);
+        modLog.setUserName(userName);
         modLog.setPunishingModId(punishingModId);
+        modLog.setPunishingModName(punishingModName);
         modLog.setPunishmentTime(punishingTime);
         modLog.setReason(reason == null ? "" : reason);
     }
 
-    private void populate(TimedLog timedLog, long guildId, long userId, long punishingModId, Instant punishingTime, Instant pardoningTime, String reason) {
-        populate(timedLog, guildId, userId, punishingModId, punishingTime, reason);
+    private void populate(TimedLog timedLog, long guildId, long userId, String userName, long punishingModId, String punishingModName, Instant punishingTime, Instant pardoningTime, String reason) {
+        populate(timedLog, guildId, userId, userName, punishingModId, punishingModName, punishingTime, reason);
         timedLog.setPardoningTime(pardoningTime);
     }
 
@@ -372,10 +388,12 @@ public class ModlogManager {
         try {
             caseId = database.doTransaction(session -> {
                 int caseId1 = idProvider.get(modLog.getGuildId()).incrementAndGet();
+
+                // Deal with potential messed up states where someone is logged as having an active timed punishment (ie role persist), but is not actually
                 if (timedType != null) {
                     session.createMutationQuery("update " + timedType + " t set t.pardoningTime = :now, t.pardoningModId = :unknownModId where t.guildId = :guildId and t.userId = :userId and t.pardoningModId = 0")
                            .setParameter("now", Instant.now())
-                           .setParameter("unknownModId", UNKNOWN_MOD_ID)
+                           .setParameter("unknownModId", UNKNOWN_MOD_ID) //TODO: Check that unknown mod id, in general, is recognised by other parts of the program
                            .setParameter("guildId", modLog.getGuildId())
                            .setParameter("userId", modLog.getUserId())
                            .executeUpdate();
@@ -398,7 +416,7 @@ public class ModlogManager {
     }
 
     @DoNotUseForVerifiedBots
-    private <T extends TimedLog> T logPardon(Class<T> clazz, long guildId, long userId, long pardoningModId, Instant pardoningTime) throws PersistenceException {
+    private <T extends TimedLog> T logPardon(Class<T> clazz, long guildId, long userId, long pardoningModId, String pardoningModName, Instant pardoningTime) throws PersistenceException {
         T timedLog = database.doTransaction(session -> {
             try {
                 T modLog = session.createQuery("select t from TimedLog t where type(t) = :type and t.guildId = :guildId and t.userId = :userId and t.pardoningModId = 0", clazz)
@@ -408,6 +426,7 @@ public class ModlogManager {
                         .getSingleResult();
 
                 modLog.setPardoningModId(pardoningModId);
+                modLog.setPardoningModName(pardoningModName);
                 modLog.setPardoningTime(pardoningTime);
                 session.merge(modLog);
 
