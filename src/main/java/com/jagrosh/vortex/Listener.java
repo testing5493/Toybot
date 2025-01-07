@@ -151,9 +151,7 @@ public class Listener implements EventListener {
                 // TODO: Make sure gravels and mutes are checked from before the bot is on
                 vortex.getLogWebhook().send("\uD83C\uDF00 Shard `" + shardinfo + "` has connected. Guilds: `" // 🌀
                         + genericEvent.getJDA().getGuildCache().size() + "` Users: `" + genericEvent.getJDA().getUserCache().size() + "`");
-                vortex.getThreadpool().scheduleWithFixedDelay(() -> vortex.getDatabase().tempbans.checkUnbans(vortex, genericEvent.getJDA()), 0, 2, TimeUnit.MINUTES);
-                vortex.getThreadpool().scheduleWithFixedDelay(() -> vortex.getDatabase().tempmutes.checkUnmutes(genericEvent.getJDA(), vortex.getDatabase().settings), 0, 45, TimeUnit.SECONDS);
-                vortex.getThreadpool().scheduleWithFixedDelay(() -> vortex.getDatabase().gravels.checkGravels(genericEvent.getJDA(), vortex.getDatabase().settings), 0, 45, TimeUnit.SECONDS);
+                vortex.getThreadpool().scheduleWithFixedDelay(vortex.getAutoMod()::checkAutoPardons, 0, 45, TimeUnit.SECONDS); // TODO: Maybe make unban checking less frequent
                 vortex.getThreadpool().scheduleWithFixedDelay(() -> vortex.getDatabase().tempslowmodes.checkSlowmode(genericEvent.getJDA()), 0, 45, TimeUnit.SECONDS);
                 vortex.getThreadpool().execute(() -> vortex.getAuditLogReader().start());
             }

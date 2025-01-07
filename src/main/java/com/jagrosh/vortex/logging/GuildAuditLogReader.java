@@ -52,7 +52,7 @@ class GuildAuditLogReader {
         long localLastParsedId;
         if (Vortex.BULK_PARSE_ON_START) {
             try {
-                localLastParsedId = vortex.getDatabase().auditcache.getLastParsed(guildId); // TODO: Handle first time joining guild
+                localLastParsedId = vortex.getHibernate().guild_data.getGuildData(guildId).getLastParsedAuditId(); // TODO: Handle first time joining guild
                 willBulkRetrieve = localLastParsedId != 0L;
             } catch (Exception e) {
                 log.warn("Could not get the id of the last audit log parsed for guild {}", guildId, e);
@@ -126,6 +126,7 @@ class GuildAuditLogReader {
      * This should only be called once after the initial {@link net.dv8tion.jda.api.events.session.ReadyEvent}
      * @param g The guild
      */
+    // TODO: Make sure no one left the guild while the bot was down to evade persists
     public void bulkRead(Guild g) {
         if (!willBulkRetrieve) {
             return;
@@ -134,6 +135,7 @@ class GuildAuditLogReader {
         queueIsOpen = true;
         stateWriteLock.lock();
         try {
+            // Reads from the modlogs
             if (!g.getSelfMember().hasPermission(Permission.VIEW_AUDIT_LOGS)) {
                 return;
             }

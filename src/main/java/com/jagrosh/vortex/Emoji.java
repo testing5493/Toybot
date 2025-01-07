@@ -15,6 +15,8 @@
  */
 package com.jagrosh.vortex;
 
+import com.jagrosh.vortex.Emoji.LogEmoji;
+
 import lombok.AllArgsConstructor;
 
 /**
@@ -33,7 +35,7 @@ public class Emoji {
     public final static String DISCORD_STAFF        = "<:discord_staff:1109962360887722066>";
     public final static String EARLY_NITRO_SUB      = "<:early_nitro_supporter:1109965926826266694>";
     public final static String HYPESQUAD_BALANCE    = "<:hypesquad_balance:1109965531542470756>";
-    public final static String HYPESQUAD_BRAVERY    = "<:hypesquad_balance:1109965531542470756>";
+    public final static String HYPESQUAD_BRAVERY    = "<:hypesquad_bravery:1109962355787452457>";
     public final static String HYPESQUAD_BRILIANCE  = "<:hypesquad_brilliance:1109962357788115008>";
     public final static String HYPESQUAD_EVENTS     = "<:hypesquad_events:1112537171090489388>";
     public final static String MODERATOR_ALUMNI     = "<:moderator_alumni:1109966127842480172>";
@@ -65,10 +67,10 @@ public class Emoji {
     public final static String STATUS_INVISIBLE      = "<:statusInvisible:850113664643891262>";
     public final static String STATUS_OFFLINE        = "<:statusOffline:850113664556204124>";
 
-    public static class LOGS {
+    public static class LOGS {                                                           //red                 yellow                green                 blue                  blurple               neutral
         public static final LogEmoji BAN            = new LogEmoji("log_ban",            1118965051357921292L, 1118987411377102969L, 1118951198758797312L, 1118956271966638090L, 1118956677308366858L, 1118957191106404454L);
         public static final LogEmoji BOT            = new LogEmoji("log_bot",            1118965081389150309L, 1118987413507813386L, 1118951201204084857L, 1118956273942139043L, 1118956679195807865L, 1118957193178394737L);
-        public static final LogEmoji CONNECT        = new LogEmoji("log_connect",        1118965084115435620L, 1118987415256838164L, 1118951202793734204L, 1118956275347238912L, 1118956680688980028L, 1118957194965176320L);
+        public static final LogEmoji CONNECT        = new LogEmoji("log_connect",        1145236003032928326L, 1145235944769863730L, 1145235837336952912L, 1145236156963901441L, 1145236208058896394L, 1145236060490715146L);
         public static final LogEmoji DEAFEN         = new LogEmoji("log_deafen",         1118965085503762485L, 1118987418641633410L, 1118951204282712174L, 1118956276852981800L, 1118956682089877555L, 1118957196575780965L);
         public static final LogEmoji DELETE         = new LogEmoji("log_delete",         1118965087844192387L, 1118987420453572640L, 1118951206656679946L, 1118956279075979364L, 1118956684056985600L, 1118957198299635743L);
         public static final LogEmoji DISCONNECT     = new LogEmoji("log_disconnect",     1118965129732698264L, 1118987455966744586L, 1118951284846886982L, 1118956308750671983L, 1118956723869339779L, 1118957365232926720L);
@@ -88,7 +90,7 @@ public class Emoji {
         public static final LogEmoji MOVE           = new LogEmoji("log_move",           1118965282157895711L, 1118987565832355963L, 1118951411879776347L, 1118956433552191538L, 1118956835593015360L, 1118957464457588836L);
         public static final LogEmoji MUTE           = new LogEmoji("log_mute",           1118965336407023767L, 1118987610975633438L, 1118951467932471326L, 1118956517547323412L, 1118956882472738959L, 1118957535911743498L);
         public static final LogEmoji PROFILE_EDIT   = new LogEmoji("log_profile_edit",   1118965345517060186L, 1118987613890695258L, 1118951470000259253L, 1118956519577354381L, 1118956885660418128L, 1118957537916624976L);
-        public static final LogEmoji PURGE          = new LogEmoji("log_purge",          1118965348318851082L, 1118987616197562489L, 1118951471468249260L, 1118956520877588630L, 1118956887543648286L, 1118957539330109480L);
+        public static final LogEmoji PURGE          = new LogEmoji("log_purge",          1146181950877479033L, 1146182842477461594L, 1146182093211177051L, 1146182962472300614L, 1146183026766778499L, 1146182906184744990L);
         public static final LogEmoji REACT          = new LogEmoji("log_react",          1118965350445371533L, 1118987618961592492L, 1118951473070481418L, 1118956522408521851L, 1118956889951174677L, 1118957540718428270L);
         public static final LogEmoji ROLE           = new LogEmoji("log_role",           1118965353075200000L, 1118987621192978642L, 1118951474949542049L, 1118956524631511131L, 1118956891377238116L, 1118957542480027698L);
         public static final LogEmoji SERVER_EDIT    = new LogEmoji("log_server_edit",    1118965383064465509L, 1118987654126645318L, 1118951522861064274L, 1118956557430947963L, 1118956931709673493L, 1118957573530472529L);

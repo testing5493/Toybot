@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author John Grosh (jagrosh)
  */
-public class VoicemoveCmd extends ModCommand {
+public class VoicemoveCmd extends ModCmd {
     public VoicemoveCmd(Vortex vortex) {
         super(vortex, Permission.VOICE_MOVE_OTHERS);
         this.name = "voicemove";
@@ -42,7 +42,7 @@ public class VoicemoveCmd extends ModCommand {
     }
 
     @Override
-    protected void execute(SlashCommandEvent event) {
+    protected void execute1(SlashCommandEvent event) {
         // TODO: Implement maybe???
         event.reply("// TODO: Implement").queue();
     }

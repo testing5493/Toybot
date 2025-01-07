@@ -25,6 +25,7 @@ import net.dv8tion.jda.api.entities.Message.Attachment;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import net.dv8tion.jda.internal.utils.Helpers;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -143,6 +144,10 @@ public class MessageCache {
         @Override
         public long getIdLong() {
             return id;
+        }
+
+        public String getJumpUrl() {
+            return Helpers.format(Message.JUMP_URL, guild != 0 ? guild : "@me", channel, id);
         }
     }
 }

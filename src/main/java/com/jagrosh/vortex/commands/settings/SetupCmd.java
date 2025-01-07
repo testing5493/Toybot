@@ -22,6 +22,8 @@ import com.jagrosh.jdautilities.menu.ButtonMenu;
 import com.jagrosh.vortex.Constants;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.database.managers.AutomodManager.AutomodSettings;
+import com.jagrosh.vortex.hibernate.entities.GuildData;
+import jakarta.persistence.PersistenceException;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.PermissionOverride;
 import net.dv8tion.jda.api.entities.Role;
@@ -137,7 +139,7 @@ public class SetupCmd extends Command {
 
         @Override
         protected void execute(CommandEvent event) {
-            Role muted = vortex.getDatabase().settings.getSettings(event.getGuild()).getMutedRole(event.getGuild());
+            Role muted = vortex.getHibernate().guild_data.getGuildData(event.getGuild().getIdLong()).getMutedRole(event.getGuild());
             String confirmation;
             if (muted != null) {
                 if (!event.getSelfMember().canInteract(muted)) {
@@ -174,7 +176,7 @@ public class SetupCmd extends Command {
 
         @Override
         protected void execute(CommandEvent event) {
-            Role graveled = vortex.getDatabase().settings.getSettings(event.getGuild()).getGravelRole(event.getGuild());
+            Role graveled = vortex.getHibernate().guild_data.getGuildData(event.getGuild().getIdLong()).getGravelRole(event.getGuild());
             String confirmation;
             if (graveled != null) {
                 if (!event.getSelfMember().canInteract(graveled)) {
@@ -206,6 +208,15 @@ public class SetupCmd extends Command {
                 } else {
                     role.getManager().setPermissions().complete();
                     mutedRole = role;
+                }
+
+                try {
+                    GuildData guildData = vortex.getHibernate().guild_data.getGuildData(event.getGuild().getIdLong());
+                    guildData.setMutedRoleId(mutedRole.getIdLong());
+                    vortex.getHibernate().guild_data.updateGuildData(guildData);
+                } catch (PersistenceException e) {
+                    event.reply("An error occurred. Please try again later");
+                    return;
                 }
 
                 sb.append(event.getClient().getSuccess()).append(" Role initialized!\n");
@@ -261,6 +272,15 @@ public class SetupCmd extends Command {
                 } else {
                     role.getManager().setPermissions().complete();
                     graveledRole = role;
+                }
+
+                try {
+                    GuildData guildData = vortex.getHibernate().guild_data.getGuildData(event.getGuild().getIdLong());
+                    guildData.setGravelRoleId(graveledRole.getIdLong());
+                    vortex.getHibernate().guild_data.updateGuildData(guildData);
+                } catch (PersistenceException e) {
+                    event.reply("An error occurred. Please try again later");
+                    return;
                 }
 
                 sb.append(event.getClient().getSuccess()).append(" Role initialized!\n");

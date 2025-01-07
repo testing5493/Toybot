@@ -18,12 +18,16 @@ package com.jagrosh.vortex.commands.settings;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.LogCommand;
+import com.jagrosh.vortex.hibernate.entities.GuildData;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+
+import java.util.Objects;
 
 /**
  * @author John Grosh (john.a.grosh@gmail.com)
  */
+// TOOO: Restrict to admin only
 public class ModlogCmd extends LogCommand {
     public ModlogCmd(Vortex vortex) {
         super(vortex);
@@ -34,7 +38,7 @@ public class ModlogCmd extends LogCommand {
 
     @Override
     protected void showCurrentChannel(CommandEvent event) {
-        TextChannel tc = vortex.getDatabase().settings.getSettings(event.getGuild()).getModLogChannel(event.getGuild());
+        TextChannel tc = vortex.getHibernate().guild_data.getGuildData(event.getGuild().getIdLong()).getModlogsChannel(event.getGuild());
         if (tc == null) {
             event.replyWarning("Moderation Logs are not currently enabled on the server. Please include a channel name.");
         } else {
@@ -44,7 +48,12 @@ public class ModlogCmd extends LogCommand {
 
     @Override
     protected void setLogChannel(CommandEvent event, TextChannel tc) {
-        vortex.getDatabase().settings.setModLogChannel(event.getGuild(), tc);
+        GuildData guildData = vortex.getHibernate().guild_data.getGuildData(event.getGuild().getIdLong());
+        if (!Objects.equals(tc, guildData.getModlogsChannel(event.getGuild()))) {
+            guildData.setModlogsChannelId(tc == null ? 0 : tc.getIdLong());
+            vortex.getHibernate().guild_data.updateGuildData(guildData);
+        }
+
         if (tc == null) {
             event.replySuccess("Moderation Logs will not be sent");
         } else {

@@ -34,7 +34,10 @@ import net.dv8tion.jda.api.utils.TimeFormat;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author John Grosh (jagrosh)
@@ -164,7 +167,7 @@ public class RoleInfoCmd extends SlashCommand {
         }
 
         String formattedPermissions = FormatUtil.formatRolePermissions(role);
-        builder.addField("Permissions", formattedPermissions, formattedPermissions.length() < 16); // Arbitrary # for formatting
+        builder.addField("Permissions", formattedPermissions, formattedPermissions.length() <= 32); // Arbitrary # for formatting
 
         if (role.isPublicRole()) {
             builder.appendDescription("\nThis is the special @everyone role, which everyone technically has");

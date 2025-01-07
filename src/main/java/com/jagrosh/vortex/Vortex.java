@@ -17,22 +17,24 @@ package com.jagrosh.vortex;
 
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.WebhookClientBuilder;
-import com.jagrosh.jdautilities.command.Command;
-import com.jagrosh.jdautilities.command.CommandClient;
-import com.jagrosh.jdautilities.command.CommandClientBuilder;
-import com.jagrosh.jdautilities.command.SlashCommand;
+import com.jagrosh.jdautilities.command.*;
 import com.jagrosh.jdautilities.commons.waiter.EventWaiter;
 import com.jagrosh.vortex.automod.AutoMod;
 import com.jagrosh.vortex.commands.CommandExceptionListener;
 import com.jagrosh.vortex.commands.automod.*;
 import com.jagrosh.vortex.commands.general.*;
 import com.jagrosh.vortex.commands.moderation.*;
+import com.jagrosh.vortex.commands.moderation.pardon.UnbanCmd;
+import com.jagrosh.vortex.commands.moderation.pardon.UngravelCmd;
+import com.jagrosh.vortex.commands.moderation.pardon.UnmuteCmd;
+import com.jagrosh.vortex.commands.moderation.punish.*;
 import com.jagrosh.vortex.commands.owner.DebugCmd;
 import com.jagrosh.vortex.commands.owner.EvalCmd;
 import com.jagrosh.vortex.commands.owner.ReloadCmd;
 import com.jagrosh.vortex.commands.settings.*;
 import com.jagrosh.vortex.commands.tools.*;
 import com.jagrosh.vortex.database.Database;
+import com.jagrosh.vortex.hibernate.entities.GuildData;
 import com.jagrosh.vortex.logging.*;
 import com.jagrosh.vortex.utils.BlockingSessionController;
 import com.jagrosh.vortex.utils.FormatUtil;
@@ -65,15 +67,18 @@ import java.util.concurrent.ScheduledExecutorService;
  *
  * @author John Grosh (jagrosh)
  */
+// TODO: Double check switch statements are null safe
 @Slf4j
 public class Vortex {
     public static final Config config;
     public static final boolean BULK_PARSE_ON_START;
     public static final boolean DEVELOPER_MODE;
+    public static final boolean AUTO_CREATE_DB;
 
     private final @Getter EventWaiter eventWaiter;
     private final @Getter ScheduledExecutorService threadpool;
     private final @Getter Database database;
+    private final @Getter com.jagrosh.vortex.hibernate.api.Database hibernate;
     private final @Getter TextUploader textUploader;
     private final @Getter JDA jda;
     private final @Getter AuditLogReader auditLogReader;
@@ -99,6 +104,7 @@ public class Vortex {
 
         BULK_PARSE_ON_START = config.getBoolean("check-for-missed-logs-on-start");
         DEVELOPER_MODE = config.getBoolean("developer-mode"); // TODO: Maybe make dev mode a bit better
+        AUTO_CREATE_DB = config.getBoolean("auto-create-database");
     }
 
     public Vortex() throws Exception {
@@ -118,7 +124,7 @@ public class Vortex {
                 new SoftbanCmd(this),
                 new UnbanCmd(this),
                 new ModlogsCmd(this),
-                new CleanCmd(this),
+                new PurgeCmd(this),
                 new VoicemoveCmd(this),
                 new VoicekickCmd(this),
                 new MuteCmd(this),
@@ -132,12 +138,8 @@ public class Vortex {
 
                 // Settings
                 new SetupCmd(this),
-                new MessagelogCmd(this),
                 new ModlogCmd(this),
-                new ServerlogCmd(this),
-                new VoicelogCmd(this),
-                new AvatarlogCmd(this),
-                new ModroleCmd(this),
+                new SetRoleCmd(this),
                 new PrefixCmd(this),
                 new SettingsCmd(this),
                 new AddTagCmd(this),
@@ -170,11 +172,12 @@ public class Vortex {
 
         SlashCommand[] slashCommands = Arrays.stream(commands).filter(command -> command instanceof SlashCommand).toArray(SlashCommand[]::new);
         eventWaiter = new EventWaiter(Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "eventwaiter")), false);
+        basicLogger = new ModlogGenerator(this, config);
+        hibernate = new com.jagrosh.vortex.hibernate.api.Database(this);
         threadpool = Executors.newScheduledThreadPool(30, r -> new Thread(r, "vortex"));
         database = new Database(config.getString("database.host"), config.getString("database.username"), config.getString("database.password"));
         textUploader = new TextUploader(config.getStringList("upload-webhooks"));
         auditLogReader = new AuditLogReader(this);
-        basicLogger = new ModlogGenerator(this, config);
         messageCache = new MessageCache();
         logWebhook = new WebhookClientBuilder(config.getString("webhook-url")).build();
         autoMod = new AutoMod(this, config);
@@ -185,7 +188,7 @@ public class Vortex {
                 .setOwnerId(Constants.OWNER_ID)
                 .setEmojis(Constants.SUCCESS, Constants.WARNING, Constants.ERROR)
                 .setLinkedCacheSize(0)
-                .setGuildSettingsManager(database.settings)
+                .setGuildSettingsManager((GuildSettingsManager<GuildData>) guild -> hibernate.guild_data.getGuildData(guild.getIdLong()))
                 .setListener(listener)
                 .setScheduleExecutor(threadpool)
                 .setShutdownAutomatically(false)

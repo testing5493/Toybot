@@ -23,7 +23,7 @@ import net.dv8tion.jda.api.Permission;
 /**
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class RaidCmd extends ModCommand {
+public class RaidCmd extends ModCmd {
     public RaidCmd(Vortex vortex) {
         super(vortex, Permission.MANAGE_SERVER, Permission.KICK_MEMBERS);
         this.name = "raidmode";
@@ -34,14 +34,14 @@ public class RaidCmd extends ModCommand {
     }
 
     @Override
-    protected void execute(SlashCommandEvent event) {
+    protected void execute1(SlashCommandEvent event) {
         // TODO: Implement (maybe)
         event.reply("// TODO: Implement").queue();
     }
 
     @Override
     protected void execute(CommandEvent event) {
-        boolean active = vortex.getDatabase().settings.getSettings(event.getGuild()).isInRaidMode();
+        boolean active = vortex.getHibernate().guild_data.getGuildData(event.getGuild().getIdLong()).isInRaidMode();
         String[] parts = event.getArgs().split("\\s+", 2);
         if (parts[0].equalsIgnoreCase("off") || parts[0].equalsIgnoreCase("stop") || parts[0].equalsIgnoreCase("disable")) {
             if (active) {

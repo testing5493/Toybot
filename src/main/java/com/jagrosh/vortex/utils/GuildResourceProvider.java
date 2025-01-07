@@ -3,6 +3,7 @@ package com.jagrosh.vortex.utils;
 import net.dv8tion.jda.api.entities.Guild;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
@@ -38,6 +39,16 @@ public class GuildResourceProvider<T> {
         readLock = readWriteLock.readLock();
         writeLock = readWriteLock.writeLock();
         resourceMap = new HashMap<>(64);
+        this.resourceCreator = resourceCreator;
+    }
+
+    @DoNotUseForVerifiedBots
+    public GuildResourceProvider(Map<Long, T> map, Function<Long, T> resourceCreator) {
+        ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+        readLock = readWriteLock.readLock();
+        writeLock = readWriteLock.writeLock();
+        resourceMap = new HashMap<>();
+        resourceMap.putAll(map);
         this.resourceCreator = resourceCreator;
     }
 

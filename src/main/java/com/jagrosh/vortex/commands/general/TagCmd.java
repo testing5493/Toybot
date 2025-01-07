@@ -2,6 +2,7 @@ package com.jagrosh.vortex.commands.general;
 
 import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.commands.HybridEvent;
+import jakarta.persistence.PersistenceException;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
@@ -19,19 +20,21 @@ public class TagCmd extends GeneralHybridCmd {
 
 
     protected void execute(HybridEvent e) {
-        String tagName = e.isSlashCommandEvent() ? e.getSlashCommandEvent().optString("name") : e.getCommandEvent().getArgs();
-        tagName = tagName.trim();
+        try {
+            String tagName = e.isSlashCommandEvent() ? e.getSlashCommandEvent().optString("name") : e.getCommandEvent().getArgs();
+            tagName = tagName.trim().toLowerCase();
 
-        if (tagName.isBlank()) {
-            e.replyError("Please enter a valid tag name!");
-            return;
-        }
+            String tagValue = vortex.getHibernate().tags.getTag(e.getGuild().getIdLong(), tagName);
 
-        String tagValue = vortex.getDatabase().tags.getTagValue(e.getGuild(), tagName);
-        if (tagValue == null) {
-            e.replyError("Tag " + tagName + " not found");
-        } else {
-            e.reply(tagValue);
+            if (tagValue == null) {
+                e.replyError("Tag " + tagName + " not found");
+            } else {
+                e.reply(tagValue);
+            }
+        } catch (PersistenceException ex) {
+            e.replyError("An error occurred retrieving the tag. Please try again");
+        } catch (IllegalArgumentException ex) {
+            e.replyError("Please enter a valid tag name");
         }
     }
 }

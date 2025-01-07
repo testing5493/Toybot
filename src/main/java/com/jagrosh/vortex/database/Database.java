@@ -22,8 +22,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import org.jetbrains.annotations.NotNull;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,21 +31,18 @@ import java.util.List;
  */
 public class Database extends DatabaseConnector {
     public final AutomodManager automod; // automod settings
-    public final GuildSettingsDataManager settings; // logs and other settings
+    // public final GuildSettingsDataManager settings; // logs and other settings
     public final IgnoreManager ignores; // ignored roles and channels
-    public final AuditCacheManager auditcache; // cache of latest audit logs
-    public final TempMuteManager tempmutes;
+    // public final AuditCacheManager auditcache; // cache of latest audit logs
+    /*public final TempMuteManager tempmutes;
     public final GravelManager gravels;
-    public final TempBanManager tempbans;
+    public final TempBanManager tempbans;*/
     public final TempSlowmodeManager tempslowmodes;
     public final InviteWhitelistManager inviteWhitelist;
     public final FilterManager filters;
-    public final TagManager tags;
-    public final WarningManager warnings;
-    public final KickingManager kicks;
+    /*public final WarningManager warnings;
+    public final KickingManager kicks;*/
     private static final List<CurrentId> idCache = new ArrayList<>(1);
-    private static ModlogManager[] managers = null;
-
     private static class CurrentId {
         private final long guildId;
         private int id;
@@ -88,47 +83,20 @@ public class Database extends DatabaseConnector {
         super(host, user, pass);
 
         automod = new AutomodManager(this);
-        settings = new GuildSettingsDataManager(this);
+        // settings = new GuildSettingsDataManager(this);
         ignores = new IgnoreManager(this);
-        auditcache = new AuditCacheManager(this);
-        tempmutes = new TempMuteManager(this);
-        gravels = new GravelManager(this);
-        tempbans = new TempBanManager(this);
+        // auditcache = new AuditCacheManager(this);
+        // tempmutes = new TempMuteManager(this);
+        // gravels = new GravelManager(this);
+        // tempbans = new TempBanManager(this);
         tempslowmodes = new TempSlowmodeManager(this);
         inviteWhitelist = new InviteWhitelistManager(this);
         filters = new FilterManager(this);
-        tags = new TagManager(this);
-        warnings = new WarningManager(this);
-        kicks = new KickingManager(this);
+        // warnings = new WarningManager(this);
+        // kicks = new KickingManager(this);
 
-        managers = new ModlogManager[]{tempmutes, gravels, warnings, tempbans, kicks};
+        // managers = new ModlogManager[]{tempmutes, gravels, warnings, tempbans, kicks};
         init();
-    }
-
-    public static synchronized int genNewId(long guildId) {
-        for (CurrentId currentId : idCache) {
-            if (currentId.guildId == guildId) {
-                return ++currentId.id;
-            }
-        }
-
-        int id = -1;
-        for (ModlogManager manager : managers) {
-            id = Math.max(id, manager.getMaxId(guildId));
-        }
-
-        if (id == -1) {
-            CurrentId toBeAdded = new CurrentId(guildId, id);
-            for (int i = 0; i < idCache.size(); i++) {
-                if (idCache.get(i).equals(toBeAdded)) {
-                    idCache.remove(i);
-                    break;
-                }
-            }
-        }
-
-        idCache.add(new CurrentId(guildId, ++id));
-        return id;
     }
 
     public static String sanitise(String param) {
@@ -137,24 +105,14 @@ public class Database extends DatabaseConnector {
         return param;
     }
 
-    public static List<Modlog> getAllModlogs(long guildId, long userId) {
-        List<Modlog> modlogs = new ArrayList<>();
-        for (ModlogManager manager : managers) {
-            modlogs.addAll(manager.getModlogs(guildId, userId));
-        }
-
-        modlogs.sort(Database.Modlog::compareTo);
-        return modlogs;
-    }
-
-    /**
+    /*
      * Updates a reason
      *
      * @param guildId Guild Id
      * @param caseId Case Id
      * @param reason New Reason
      * @return The old reason, null if the case could not be found
-     */
+
     public static String updateReason(long guildId, int caseId, String reason) {
         for (ModlogManager manager : managers) {
             String oldReason = manager.updateReason(guildId, caseId, reason);
@@ -175,14 +133,5 @@ public class Database extends DatabaseConnector {
         }
 
         return null;
-    }
-
-    public static boolean deleteRow(ResultSet rs) throws SQLException {
-        if (rs.next()) {
-            rs.deleteRow();
-            return true;
-        }
-
-        return false;
-    }
+    }*/
 }

@@ -40,7 +40,7 @@ import java.util.function.Function;
  */
 // TODO: Make it so you can optionally manage different channels than the one you're in
 // TODO: Add a submcommand to turn it on or off without specifying a time for slash commands
-public class SlowmodeCmd extends ModCommand {
+public class SlowmodeCmd extends ModCmd {
     private final static int MAX_SLOWMODE = 21600;
 
     public SlowmodeCmd(Vortex vortex) {
@@ -57,7 +57,7 @@ public class SlowmodeCmd extends ModCommand {
     }
 
     @Override
-    protected void execute(SlashCommandEvent event) {
+    protected void execute1(SlashCommandEvent event) {
         String timeStr = event.getOption("time", OptionMapping::getAsString);
         String durStr = event.getOption("duration", OptionMapping::getAsString);
 

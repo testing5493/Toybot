@@ -3,6 +3,7 @@ package com.jagrosh.vortex.commands.moderation;
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.jdautilities.command.SlashCommandEvent;
 import com.jagrosh.vortex.Vortex;
+import jakarta.persistence.PersistenceException;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -10,7 +11,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
 import java.util.LinkedList;
 
-public class AddTagCmd extends ModCommand {
+public class AddTagCmd extends ModCmd {
     public AddTagCmd(Vortex vortex) {
         super(vortex, Permission.MESSAGE_MANAGE);
         this.name = "addtag";
@@ -25,7 +26,7 @@ public class AddTagCmd extends ModCommand {
     }
 
     @Override
-    protected void execute(SlashCommandEvent event) {
+    protected void execute1(SlashCommandEvent event) {
         String tagName = event.getOption("name", OptionMapping::getAsString);
         String tagValue = event.getOption("value", OptionMapping::getAsString);
 
@@ -39,8 +40,12 @@ public class AddTagCmd extends ModCommand {
             return;
         }
 
-        vortex.getDatabase().tags.addTagValue(event.getGuild(), tagName, tagValue);
-        event.reply("Successfully created the `" + tagName + "` tag!").setEphemeral(false).queue();
+        try {
+            vortex.getHibernate().tags.update(event.getGuild().getIdLong(), tagName, tagValue);
+            event.reply("Successfully created the `" + tagName + "` tag!").setEphemeral(false).queue();
+        } catch (PersistenceException e) {
+            event.reply("An error occurred updating the tags for this server. Please try again.").setEphemeral(true).queue();
+        }
     }
 
     @Override
@@ -52,18 +57,30 @@ public class AddTagCmd extends ModCommand {
 
         try {
             tagName = argsArray[0];
+            if (tagName.isBlank()) {
+                event.reply("Please enter a tag name to create");
+            }
         } catch (IndexOutOfBoundsException e) {
             event.reply("Please enter a tag name to create");
             return;
         }
 
-        tagValue = args.substring(argsArray[0].length() + 1);
+        try {
+            tagValue = args.substring(argsArray[0].length() + 1);
+        } catch (IndexOutOfBoundsException e) {
+                event.reply("Please enter a value for the tag");
+                return;
+        }
         if (tagValue.isEmpty()) {
             event.reply("Please enter a value for the tag");
             return;
         }
 
-        vortex.getDatabase().tags.addTagValue(event.getGuild(), tagName, tagValue);
-        event.reply("Successfully created the `" + tagName + "` tag!");
+        try {
+            vortex.getHibernate().tags.update(event.getGuild().getIdLong(), tagName, tagValue.toLowerCase());
+            event.reply("Successfully created the `" + tagName + "` tag!");
+        } catch (PersistenceException e) {
+            event.reply("An error occurred updating the tags for this server. Please try again.");
+        }
     }
 }

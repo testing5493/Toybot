@@ -20,24 +20,39 @@ import com.jagrosh.vortex.Vortex;
 import com.jagrosh.vortex.automod.URLResolver.ActiveURLResolver;
 import com.jagrosh.vortex.automod.URLResolver.DummyURLResolver;
 import com.jagrosh.vortex.database.managers.AutomodManager.AutomodSettings;
+import com.jagrosh.vortex.hibernate.api.ModlogManager;
+import com.jagrosh.vortex.hibernate.entities.*;
 import com.jagrosh.vortex.logging.MessageCache.CachedMessage;
 import com.jagrosh.vortex.utils.FixedCache;
+import com.jagrosh.vortex.utils.FormatUtil;
 import com.jagrosh.vortex.utils.OtherUtil;
 import com.typesafe.config.Config;
+import jakarta.persistence.PersistenceException;
+import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Guild.VerificationLevel;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.exceptions.PermissionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -47,6 +62,7 @@ import java.util.stream.Collectors;
 /**
  * @author John Grosh (jagrosh)
  */
+@Slf4j
 public class AutoMod {
     private static final Pattern INVITES = Pattern.compile("discord\\s?(?:(?:\\.|dot|\\(\\.\\)|\\(dot\\))\\s?gg|(?:app)?\\s?\\.\\s?com\\s?/\\s?invite)\\s?/\\s?([A-Z0-9-]{2,18})", Pattern.CASE_INSENSITIVE);
     private static final Pattern REF = Pattern.compile("https?://\\S+(?:/ref/|[?&#]ref(?:errer|erral)?=)\\S+", Pattern.CASE_INSENSITIVE);
@@ -87,7 +103,10 @@ public class AutoMod {
     }
 
     public void enableRaidMode(Guild guild, Member moderator, OffsetDateTime now, String reason) {
-        vortex.getDatabase().settings.enableRaidMode(guild);
+        GuildData guildData = vortex.getHibernate().guild_data.getGuildData(guild.getIdLong());
+        guildData.setRaidmode(guild.getVerificationLevel().getKey());
+        vortex.getHibernate().guild_data.updateGuildData(guildData);
+
         if (guild.getVerificationLevel().getKey() < VerificationLevel.HIGH.getKey()) {
             try {
                 guild.getManager().setVerificationLevel(VerificationLevel.HIGH).reason("Enabling Anti-Raid Mode").queue();
@@ -99,7 +118,9 @@ public class AutoMod {
     }
 
     public void disableRaidMode(Guild guild, Member moderator, OffsetDateTime now, String reason) {
-        VerificationLevel last = vortex.getDatabase().settings.disableRaidMode(guild);
+        // TODO: See if you would need to disable raid mode in the database
+        GuildData guildData = vortex.getHibernate().guild_data.getGuildData(guild.getIdLong());
+        Guild.VerificationLevel last = Guild.VerificationLevel.fromKey(guildData.getRaidmode());
         if (guild.getVerificationLevel() != last) {
             try {
                 guild.getManager().setVerificationLevel(last).reason("Disabling Anti-Raid Mode").queue();
@@ -110,13 +131,100 @@ public class AutoMod {
         // vortex.getModLogger().postRaidmodeCase(moderator, now, false, reason);
     }
 
+    private TimedLog autoPardon(TimedLog timedLog) {
+        try {
+            timedLog.setPardoningTime(Instant.now());
+            timedLog.setPardoningModId(ModlogManager.AUTOMOD_ID);
+            return switch (timedLog) {
+                case GravelLog gravelLog -> vortex.getHibernate().modlogs.logUngravel(gravelLog);
+                case MuteLog muteLog -> vortex.getHibernate().modlogs.logUnmute(muteLog);
+                case BanLog banLog -> vortex.getHibernate().modlogs.logUnban(banLog);
+                default -> throw new UnsupportedOperationException();
+            };
+        } catch (PersistenceException e) {
+            return null;
+        }
+    }
+
+    public void checkAutoPardons() {
+        JDA jda = vortex.getJda();
+        for (TimedLog timedLog : vortex.getHibernate().modlogs.checkAutoPardons()) {
+            System.out.println(timedLog);
+            Guild g = jda.getGuildById(timedLog.getGuildId());
+            if (g == null || jda.isUnavailable(g.getIdLong())) {
+                continue;
+            }
+
+            Member m = OtherUtil.getMemberCacheElseRetrieve(g, timedLog.getUserId());
+
+            if (timedLog instanceof BanLog banLog) {
+                if (!g.getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
+                    continue;
+                }
+
+                if (m != null) {
+                    banLog.setPardoningTime(Instant.now());
+                    banLog.setPardoningModId(ModlogManager.UNKNOWN_MOD_ID);
+                    try {
+                        vortex.getHibernate().modlogs.logUnban(banLog);
+                    } catch (Exception ignore) {}
+
+                    continue;
+                }
+
+                g.unban(User.fromId(timedLog.getUserId())).reason("Temporary Ban Completed").queue(s -> {
+                    autoPardon(timedLog);
+                }, f -> {
+                    if (f instanceof ErrorResponseException err) {
+                        switch (err.getErrorResponse()) {
+                            case UNKNOWN_USER -> autoPardon(timedLog);
+                            case null, default -> log.warn("Failed to unban " + timedLog + " due to " + err.getErrorResponse());
+                        }
+                    } else {
+                        log.warn("Failed to unban " + timedLog, f);
+                    }
+                });
+            } else if (timedLog instanceof GravelLog gravelLog || timedLog instanceof MuteLog muteLog) {
+                boolean isGravel = timedLog instanceof GravelLog;
+
+                GuildData guildData = vortex.getHibernate().guild_data.getGuildData(g.getIdLong());
+                Role role = isGravel ? guildData.getGravelRole(g) : guildData.getMutedRole(g);
+                if (role == null) {
+                    autoPardon(timedLog);
+                    continue;
+                }
+
+                if (m != null) {
+                    g.removeRoleFromMember(m, role)
+                            .reason(FormatUtil.capitalize(timedLog.actionType().getVerb()) + " finished")
+                            .queue(s -> autoPardon(timedLog), f -> {
+                                if (f instanceof ErrorResponseException err) {
+                                    switch (err.getErrorResponse()) {
+                                        case UNKNOWN_MEMBER, UNKNOWN_ROLE -> autoPardon(timedLog);
+                                        case MISSING_PERMISSIONS -> {}
+                                        case null, default -> log.warn("Failed to un" + timedLog.actionType().getVerb() + " " + timedLog + " due to " + err.getErrorResponse());
+                                    }
+                                } else {
+                                    log.warn("Failed to unban " + timedLog, f);
+                                }
+                            });
+                } else {
+                    autoPardon(timedLog);
+                }
+            }
+        }
+    }
+
+
+
     public void memberJoin(GuildMemberJoinEvent event) {
         // completely ignore bots for raidmode
         if (event.getMember().getUser().isBot()) {
             return;
         }
 
-        boolean inRaidMode = vortex.getDatabase().settings.getSettings(event.getGuild()).isInRaidMode();
+        GuildData guildData = vortex.getHibernate().guild_data.getGuildData(event.getGuild().getIdLong());
+        boolean inRaidMode = guildData.isInRaidMode();
         AutomodSettings ams = vortex.getDatabase().automod.getSettings(event.getGuild());
         OffsetDateTime now = OffsetDateTime.now();
         boolean kicking = false;
@@ -150,18 +258,16 @@ public class AutoMod {
                 }
             });
         } else {
-            if (vortex.getDatabase().tempmutes.isMuted(event.getMember())) {
+            List<TimedLog> timedLogs = vortex.getHibernate().modlogs.getCurrentPunishments(event.getGuild().getIdLong(), event.getMember().getIdLong());
+            for (TimedLog timedLog : timedLogs) {
                 try {
-                    event.getGuild().addRoleToMember(event.getMember(), vortex.getDatabase().settings.getSettings(event.getGuild()).getMutedRole(event.getGuild())).reason(RESTORE_MUTE_ROLE_AUDIT).queue();
-                } catch (Exception ignore) {
-                }
-            }
+                    if (timedLog instanceof MuteLog) {
+                        event.getGuild().addRoleToMember(event.getMember(), guildData.getMutedRole(event.getGuild())).reason(RESTORE_MUTE_ROLE_AUDIT).queue();
+                    } else if (timedLog instanceof GravelLog) {
+                        event.getGuild().addRoleToMember(event.getMember(), guildData.getGravelRole(event.getGuild())).reason(RESTORE_GRAVEL_ROLE_AUDIT).queue();
 
-            if (vortex.getDatabase().gravels.isGraveled(event.getMember())) {
-                try {
-                    event.getGuild().addRoleToMember(event.getMember(), vortex.getDatabase().settings.getSettings(event.getGuild()).getGravelRole(event.getGuild())).reason(RESTORE_GRAVEL_ROLE_AUDIT).queue();
-                } catch (Exception ignore) {
-                }
+                    }
+                } catch (Exception ignore) {}
             }
 
             dehoist(event.getMember());

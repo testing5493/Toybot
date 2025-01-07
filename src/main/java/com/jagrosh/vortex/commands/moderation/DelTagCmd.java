@@ -10,7 +10,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
 import java.util.Collections;
 
-public class DelTagCmd extends ModCommand {
+public class DelTagCmd extends ModCmd {
     public DelTagCmd(Vortex vortex) {
         super(vortex, Permission.MESSAGE_MANAGE);
         this.name = "deltag";
@@ -22,14 +22,14 @@ public class DelTagCmd extends ModCommand {
 
 
     @Override
-    protected void execute(SlashCommandEvent event) {
+    protected void execute1(SlashCommandEvent event) {
         String tagName = event.getOption("name", OptionMapping::getAsString);
 
         if (tagName.isBlank()) {
             event.reply("Please enter a tag to delete").setEphemeral(true).queue();
         }
 
-        if (vortex.getDatabase().tags.deleteTag(event.getGuild(), tagName)) {
+        if (vortex.getHibernate().tags.delete(event.getGuild().getIdLong(), tagName) != null) {
             event.reply("Successfully deleted the `" + tagName + "` tag").queue();
         } else {
             event.reply("Oops! The tag `" + tagName + "` could not be found.").setEphemeral(true).queue();
@@ -46,7 +46,7 @@ public class DelTagCmd extends ModCommand {
             return;
         }
 
-        if (vortex.getDatabase().tags.deleteTag(event.getGuild(), tagName)) {
+        if (vortex.getHibernate().tags.delete(event.getGuild().getIdLong(), tagName) != null) {
             event.reply("Successfully deleted the `" + tagName + "` tag");
         } else {
             event.reply("Oops! The tag `" + tagName + "` could not be found.");
